@@ -1,0 +1,36 @@
+
+/** CSS file for emscr_ide.js **/
+
+.emide {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+.CodeMirror,.code {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
+
+.toolbar button {
+	margin: 0 0.2em;
+}
+
+.statusbar {
+	padding: 0.2em;
+	height: 1em;
+	font-size: 10pt;
+}
+
+.filebrowser {
+	border: 1px solid black;
+	padding: 0.2em 0.5em;
+	overflow: auto;
+	height: 20em;
+}
+.fb-link { cursor:pointer; }
+.fb-link:hover  { color:#000090; background:rgba(255,255,102,0.4); }
+.fb-link:active { color:#FF0000; }
+
+.cm-resize-frame {
+	overflow: hidden;
+	resize: vertical;
+	height: 24em;
+	border: 1px solid grey;
+}

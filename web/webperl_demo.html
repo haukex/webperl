@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl &lt;script&gt; Demos</title>
+
+<script src="webperl.js"></script>
+
+<!-- It's possible to load a single script like this:
+
+<script type="text/perl" src="foo.pl"></script>
+
+but then only a single <script type="text/perl"> tag is allowed in the
+document, because there is only a single Perl interpreter.
+
+If you use multiple <script type="text/perl"> tags like below, they are
+concatenated into a single script and then run.
+
+If you don't have any such script tags in the document, Perl won't be
+run automatically, and you can control Perl in detail via the JS "Perl"
+object provided by webperl.js (more control over output redirection, set
+command line arguments, etc.). Most of this functionality is
+demonstrated in the included "mini IDE".
+-->
+
+<!-- Example 1: A really basic script -->
+<script type="text/perl">
+print "Hello, Perl World!\n";
+</script>
+
+<!-- Example 2: Accessing JavaScript -->
+<script type="text/perl">
+use warnings;
+use strict;
+use WebPerl qw/js/;
+
+js('document')->getElementById('my_button')
+	->addEventListener("click", sub {
+		print "You clicked 'Testing!'\n";
+	} );
+
+</script>
+
+<!-- Example 3: Using jQuery -->
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script type="text/perl">
+use warnings;
+use strict;
+use WebPerl qw/js/;
+
+my $jq = js('jQuery');
+my $btn = $jq->('<button>', { text=>"Click me!" } );
+$btn->click(sub {
+	print "You clicked the jQuery button!\n";
+} );
+$btn->appendTo( $jq->('#buttons') );
+</script>
+
+<!-- Optional STDOUT/STDERR text area (if you don't use this, output goes to Javascript console) -->
+<script>
+window.addEventListener("load", function () {
+	document.getElementById('output')
+		.appendChild( Perl.makeOutputTextarea() );
+});
+</script>
+
+</head>
+<body>
+
+<p>This is a demo of <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a>!</p>
+
+<div id="output"></div>
+<div id="buttons">
+	<button id="my_button">Testing!</button>
+</div>
+
+</body>
+</html>

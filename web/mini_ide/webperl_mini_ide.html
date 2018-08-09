@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl (IDE)</title>
+
+<!-- ----- WebPerl - http://webperl.zero-g.net -----
+
+Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, http://www.igb-berlin.de
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl 5 itself: either the GNU General Public
+License as published by the Free Software Foundation (either version 1,
+or, at your option, any later version), or the "Artistic License" which
+comes with Perl 5.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the licenses for details.
+
+You should have received a copy of the licenses along with this program.
+If not, see http://perldoc.perl.org/index-licence.html
+-->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
+<link rel="stylesheet" type="text/css" href="emscr_ide.css" />
+<style>
+button,.text {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+pre,.code,textarea {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
+.fakelink {
+	color: darkblue;
+	cursor: pointer;
+}
+.border {
+	border: 1px solid black;
+	margin: 0.5em;
+	padding: 0.2em;
+}
+#evalcode_container .CodeMirror {
+	height: 4em;
+	border: 1px solid grey;
+	margin: 0.2em 0;
+}
+.output {
+	margin-top: 0.5em;
+}
+.output textarea {
+	max-width: 100%;
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.js" integrity="sha256-uRIJ6Wfou5cTtmcCvQNA9lvsYl8sUbZXxnfG+P79ssY=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/mode/perl/perl.min.js" integrity="sha256-Uu9QBfi8gU6J/MzQunal8ewmY+i/BbCkBrcAXA5bcCM=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="emscr_ide.js"></script>
+<script src="../webperl.js"></script>
+<script>
+"use strict";
+console.debug("Running our Javascript...");
+
+window.onerror = function(event) {
+	alert('Exception thrown, see JavaScript console'); };
+
+// This is a workaround for Emscripten only being able to call main() once per page load.
+// I wouldn't recommend this for "production" use.
+var baseurl = new URL(window.location);
+baseurl = baseurl.origin + baseurl.pathname.substring(0,baseurl.pathname.lastIndexOf('/'));
+function run_perl_iframe (argv, state_callback, done_callback) {
+	var html = '<html><head><base href="'+baseurl+'"><script src="webperl.js"></scr'+'ipt></head><body></body></html>';
+	var blob = new Blob([html], {type: "text/html;charset=utf-8"});
+	var src = URL.createObjectURL(blob);
+	var iframe = $('<iframe/>',{id:'Perl_IFrame',src:src}).hide().appendTo('body');
+	iframe.on('load', function() {
+		var IFramePerl = iframe[0].contentWindow['Perl'];
+		var outbuf = '';
+		IFramePerl.output = function (str) { outbuf+=str }; //TODO Later: maybe dynamic output updating is possible?
+		IFramePerl.endAfterMain = true;
+		IFramePerl.stateChanged = function (from,to) {
+			if (state_callback) state_callback(to);
+			if (from!='Ended' && to=='Ended') {
+				iframe.remove();
+				if (done_callback) done_callback(outbuf);
+			}
+		};
+		IFramePerl.init(function () {
+			window.setTimeout(function () { IFramePerl.start(argv); }, 1);
+		});
+	});
+}
+
+var eval_cm;
+$( function() {
+	console.debug("Document is ready, setting up...");
+	$('#runperl').prop("disabled",true);
+	$('#evalperl').prop("disabled",true);
+	$('#endperl').prop("disabled",true);
+	
+	var once_out_ta = Perl.makeOutputTextarea();
+	$("#once_output").append(once_out_ta);
+	$("#once_out_clear").click(function () { $(once_out_ta).val("") });
+	
+	{
+		var multirun = $('#multi_run');
+		var multirun_toggle = $('<div/>',{text:"Hide Run Multi (via IFrame)"});
+		multirun_toggle.addClass('fakelink');
+		multirun_toggle.click(function () {
+			if (multirun.is(":visible")) {
+				multirun.hide();
+				multirun_toggle.text("Show Run Multi (via IFrame)");
+			}
+			else {
+				multirun.show();
+				multirun_toggle.text("Hide Run Multi (via IFrame)");
+			}
+		});
+		multirun.before( multirun_toggle );
+	}
+	
+	// need to set up CodeMirror while #runonce is still visible (!)
+	eval_cm = CodeMirror.fromTextArea( $('#evalcode')[0], {
+		lineNumbers: true, indentWithTabs: true,
+		tabSize: 4, indentUnit: 4  });
+	{
+		var runonce = $('#runonce');
+		var runonce_toggle = $('<div/>',{text:"Show Run & Persist"});
+		runonce_toggle.addClass('fakelink');
+		runonce_toggle.click(function () {
+			if (runonce.is(":visible")) {
+				runonce.hide();
+				runonce_toggle.text("Show Run & Persist");
+			}
+			else {
+				runonce.show();
+				runonce_toggle.text("Hide Run & Persist");
+			}
+		});
+		runonce.before( runonce_toggle );
+		runonce.hide();
+	}
+	Perl.stateChanged = function (from,to) {
+		console.debug("Perl: state changed from "+from+" to "+to);
+		$('#runstate').text("State: "+to);
+		$('#runperl' ).prop("disabled", to!="Ready");
+		$('#argv'    ).prop("disabled", to!="Ready");
+		$('#evalperl').prop("disabled", to!="Running");
+		$('#endperl' ).prop("disabled", to!="Running");
+	};
+	Perl.init(final_init);
+});
+
+function final_init () { // Called when Perl goes to Ready state
+	console.debug("Final initialization steps...");
+	
+	// set up the IDE now that the Emscripten FS object is all ready to go
+	var ide = make_emscr_ide( $('textarea#ide'), {
+			open: function(file) { $('#argv,#multi_argv').val( JSON.stringify([file]) ) },
+			save: function(file) { $('#argv,#multi_argv').val( JSON.stringify([file]) ) },
+		} );
+	
+	$('#multi_runperl').click(function () {
+		if (ide.dirtyCheck()) return;
+		$('#multi_runperl').prop("disabled",true); // we *could* run multiple Perls in parallel, I just don't recommend it (memory & performance issues)
+		var argv = JSON.parse( $('#multi_argv').val() );
+		$('#multi_out_ta').text("");
+		run_perl_iframe(argv,
+			//TODO Later: the user never gets to see the "Running" state
+			function (newstate) { $('#multi_state').text("State: "+newstate) },
+			function (output) {
+				var ta = $('#multi_out_ta');
+				ta.text(output);
+				ta[0].scrollTop = ta[0].scrollHeight;
+				$('#multi_runperl').prop("disabled",false);
+			});
+	});
+	$('#runperl').click(function () {
+		if (ide.dirtyCheck()) return;
+		var argv = JSON.parse( $('#argv').val() );
+		// run Perl async so that the window has a chance to refresh
+		window.setTimeout(function () { Perl.start(argv); }, 1);
+	});
+	$('#evalperl').click(function () {
+		var rv = Perl.eval( eval_cm.getValue() );
+		console.debug('eval returned',rv);
+	});
+	$('#endperl').click(function () {
+		if (confirm("Are you sure you want to end Perl?\nYou'll have to reload the page to restart Perl."))
+			Perl.end();
+	});
+}
+</script>
+</head>
+<body>
+
+<div class="border text" style="text-align:center"><small>Really Simple Mini IDE as a Demo for <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a></small></div>
+
+<div class="border">
+	<textarea id="ide" rows="24" cols="80"></textarea>
+</div>
+
+<div class="text border">
+	<div id="runonce">
+		<div>
+			<span class="code">ARGV:</span> <small>(JSON)</small>
+			<input type="text" id="argv" class="code" value='["--version"]' size="60" title="argv for perl (JSON)"/>
+			<button id="runperl" title="Run perl"><span class="code">perl</span> &#x25BA;</button>
+			<button id="endperl" title="End perl">end &#x25A0;</button>
+		</div>
+		<div class="statusbar" id="runstate">State: None</div>
+		<div>
+			<div id="evalcode_container"><textarea id="evalcode" rows="3" cols="80"></textarea></div>
+			<div><button id="evalperl" title="eval Perl code"><span class="code">eval</span> &#x25BA;</button></div>
+		</div>
+		<div class="output" id="once_output">
+			<span class="code">STDOUT and STDERR:</span> <button id="once_out_clear">Clear</button><br/>
+			<!-- output textarea will be inserted here -->
+		</div>
+	</div>
+</div>
+
+<div class="text border">
+	<div id="multi_run">
+		<div>
+			<span class="code">ARGV:</span> <small>(JSON)</small>
+			<input type="text" id="multi_argv" class="code" value='["--version"]' size="60" title="argv for perl (JSON)"/>
+			<button id="multi_runperl" title="Run perl"><span class="code">perl</span> &#x25BA;&#x25A0;</button><br/>
+			<small><i>(Remember to store code in a persistent storage like <span class="code">/mnt/idb</span>!)</i></small>
+		</div>
+		<div class="statusbar" id="multi_state">State: None</div>
+		<div class="output">
+			<span class="code">STDOUT and STDERR:</span><br/>
+			<textarea id="multi_out_ta" rows="24" cols="80" readonly></textarea>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>

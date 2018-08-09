@@ -1,0 +1,5 @@
+theme: jekyll-theme-minimal
+title: WebPerl
+description: Run Perl in the browser with WebPerl!
+logo: webperl.png
+show_downloads: false

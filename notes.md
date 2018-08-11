@@ -12,7 +12,9 @@ Notes -
 TODOs
 -----
 
-<https://github.com/haukex/webperl/blob/master/ToDo.md>
+- <https://github.com/haukex/webperl/blob/master/ToDo.md>
+- <https://github.com/haukex/webperl/issues>
+- <https://github.com/haukex/webperl/pulls>
 
 
 Possible Improvements

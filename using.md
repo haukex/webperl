@@ -2,12 +2,18 @@
 🕸️🐪 Using WebPerl
 ================
 
-\[ [Using](using.html) -
+\[ Using -
 [Building](building.html) -
 [Notes](notes.html) -
 [Legal](legal.html) -
-[GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
+[GitHub Wiki](https://github.com/haukex/webperl/wiki/Using-WebPerl) \]
 
 
-Nothing here yet.
+Nothing here just yet - come back soon!
+
+
+***
+
+Additional notes on using WebPerl may be found in the
+[GitHub Wiki](https://github.com/haukex/webperl/wiki/Using-WebPerl).
 

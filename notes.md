@@ -4,7 +4,7 @@
 
 \[ [Using](using.html) -
 [Building](building.html) -
-[Notes](notes.html) -
+Notes -
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
 

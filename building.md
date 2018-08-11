@@ -3,11 +3,17 @@
 ===================
 
 \[ [Using](using.html) -
-[Building](building.html) -
+Building -
 [Notes](notes.html) -
 [Legal](legal.html) -
-[GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
+[GitHub Wiki](https://github.com/haukex/webperl/wiki/Building-WebPerl) \]
 
 
-Nothing here yet.
+Nothing here just yet - come back soon!
+
+
+***
+
+Additional notes on building WebPerl may be found in the
+[GitHub Wiki](https://github.com/haukex/webperl/wiki/Building-WebPerl).
 

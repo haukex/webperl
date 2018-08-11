@@ -382,6 +382,8 @@ if (my $dist = $opts{dist}) {
 	my $zipfn = $basedir->file("$dist.zip");
 	my $zip = Archive::Zip->new();
 	$zip->addTree($basedir->subdir('web').'', dir($dist).'');
+	$zip->addFile($basedir->file($_).'', dir($dist)->file($_).'') for
+		qw/ README.md LICENSE_artistic.txt LICENSE_gpl.txt /;
 	$zip->writeToFileNamed("$zipfn") == AZ_OK or die "$zipfn write error";
 	say STDERR "# Wrote to $zipfn:";
 	my $unzip = Archive::Zip->new("$zipfn");

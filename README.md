@@ -2,16 +2,16 @@
 WebPerl
 =======
 
-This is the main WebPerl repository.
-Please see the documentation on the main site **<http://webperl.zero-g.net>**:
+Welcome to WebPerl!
+Please see the documentation on the main site:
 
-\[ [Home](https://webperl.zero-g.net/index.html) -
-[Using WebPerl](https://webperl.zero-g.net/using.html) -
-[Building WebPerl](https://webperl.zero-g.net/building.html) -
-[Wiki](https://github.com/haukex/webperl/wiki) -
-[GitHub](https://github.com/haukex/webperl) -
-[Notes](https://webperl.zero-g.net/notes.html) -
-[Legal](https://webperl.zero-g.net/legal.html) \]
+**<http://webperl.zero-g.net>**:
+[Using](https://webperl.zero-g.net/using.html),
+[Building](https://webperl.zero-g.net/building.html),
+[Notes](https://webperl.zero-g.net/notes.html)
+
+As well as the
+[GitHub Wiki](https://github.com/haukex/webperl/wiki).
 
 
 Author, Copyright, and License

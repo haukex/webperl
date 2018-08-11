@@ -2,13 +2,12 @@
 🕸️🐪 WebPerl Author, Copyright, and License
 =========================================
 
-\[ [Home](index.html) -
-[Using WebPerl](using.html) -
-[Building WebPerl](building.html) -
-[Wiki](https://github.com/haukex/webperl/wiki) -
-[GitHub](https://github.com/haukex/webperl) -
+\[ [Using](using.html) -
+[Building](building.html) -
 [Notes](notes.html) -
-[Legal](legal.html) \]
+[Legal](legal.html) -
+[GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
+
 
 **WebPerl <http://webperl.zero-g.net>**
 

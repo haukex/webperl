@@ -1,12 +1,12 @@
 
-🕸️🐪 Misc. Notes on WebPerl
-=========================
-
 \[ [Using](using.html) -
 [Building](building.html) -
 Notes -
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
+
+🕸️🐪 Misc. Notes on WebPerl
+=========================
 
 
 TODOs

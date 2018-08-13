@@ -1,12 +1,12 @@
 
-🕸️🐪 Welcome to WebPerl!
-======================
-
 \[ [Using](using.html) -
 [Building](building.html) -
 [Notes](notes.html) -
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
+
+🕸️🐪 Welcome to WebPerl!
+======================
 
 
 WebPerl uses the power of [WebAssembly](https://webassembly.org/) and

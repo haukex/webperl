@@ -32,6 +32,20 @@ var Perl = {
 	state: "Uninitialized",
 	readyCallback: null,
 	stdout_buf: "", stderr_buf: "", // for our default Perl.output implementation
+	dispatch: function (perl) {
+		Perl._call_code_args = Array.prototype.slice.call(arguments, 1);
+		Perl.eval(perl);
+		if (Perl._call_code_error) {
+			var err = Perl._call_code_error;
+			delete Perl._call_code_error;
+			throw err;
+		}
+		else {
+			var rv = Perl._call_code_rv;
+			delete Perl._call_code_rv;
+			return rv;
+		}
+	},
 };
 
 /* TODO: Embedded script should be able to influence the running of Perl,

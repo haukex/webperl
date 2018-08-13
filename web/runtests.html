@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Tests</title>
+
+<script src="webperl.js"></script>
+<script>
+"use strict";
+
+window.onerror = function(event) {
+	alert('Exception thrown, see JavaScript console'); };
+
+window.addEventListener("load", function () {
+	
+	document.getElementById('output')
+		.appendChild( Perl.makeOutputTextarea() );
+	
+	Perl.endAfterMain = true;
+	Perl.init(function () {
+		window.setTimeout(function () {
+			Perl.start(['/opt/perl/dev/WebPerl.t']);
+		}, 1);
+	});
+	
+});
+
+</script>
+
+</head>
+<body>
+<p>Running tests...</p>
+<div id="output"></div>
+</body>
+</html>

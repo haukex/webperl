@@ -54,6 +54,22 @@ $btn->click(sub {
 	print "You clicked the jQuery button!\n";
 } );
 $btn->appendTo( $jq->('#buttons') );
+
+# And a demo of AJAX using jQuery:
+use Cpanel::JSON::XS qw/encode_json/;
+use Data::Dumper;
+my $data_out = { hello => "Hello, World!\n" };
+$jq->ajax( '/ajaxtest', {
+	method => 'POST', # we're sending JSON in the POST body
+	data => encode_json($data_out),
+} )->done( sub {
+	my $data_in = shift;
+	print "AJAX Success! Data: ", Dumper($data_in->toperl);
+} )->fail( sub {
+	my ($jqXHR, $textStatus, $errorThrown) = @_;
+	print "AJAX Failed! ($errorThrown)\n";
+} );
+
 </script>
 
 <!-- Optional STDOUT/STDERR text area (if you don't use this, output goes to Javascript console) -->

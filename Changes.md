@@ -8,6 +8,7 @@ Not yet released: v0.03-beta
 
 - Fixed an issue with WebPerl::JSObject::toperl()
   where JS objects were not being converted properly.
+- Added AJAX demo
 - ...
 
 

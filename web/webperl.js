@@ -21,32 +21,7 @@
  * If not, see http://perldoc.perl.org/index-licence.html
 **/
 
-/** Public Interface:
- * Perl.output       - override this for output somewhere else
- * Perl.stateChanged - callback for state changes
- * Perl.trace        - enables debug/trace messages
- * Perl.endAfterMain - see exit(0) discussion below
- * Perl.init         - initializes the Perl interpreter. Pass this function a callback to be called when init is done
- * Perl.start        - starts up the Perl interpreter
- * Perl.eval         - evaluates the given Perl string
- * Perl.end          - Ends the Perl interpreter
- * Perl.makeOutputTextarea - creates a <textarea> and redirects output there (see HTML examples)
- */
-
-/** On our patched perlmain.c and exit(0):
- * Since we want the Perl process to persist while the webpage is open, we've patched perlmain.c so that:
- * 1. Global destruction and END blocks aren't triggered until explicitly requested by calling emperl_end_perl()
- * 2. emperl_end_perl() won't actually call exit() when the exit status is zero (because Emscripten complains when you call exit() and NO_EXIT_RUNTIME is set)
- * This has some consequences:
- * 1. An exit(0) in the main program won't have any effect other than stopping the execution of the main program at that point, the interpreter is kept running (?)
- * 2. ... TODO Later: Any other consequences?
- * As a result:
- * - Just don't call exit(0);/exit; from Perl.
- * Note that if you want to "end" the currently running Perl, so that global destruction is performed and END blocks are executed, there are several ways to do so:
- * - From JS, set Perl.endAfterMain before initializing Perl (this enables a "hack" that calls emperl_end_perl() after main() finishes)
- * - From JS, call Perl.end()
- * - From Perl, WebPerl::end_perl() (TODO Later: This doesn't cause Module.onExit to be called, right?)
- */
+/* -- Please see the documentation at http://webperl.zero-g.net/using.html -- */
 
 var Module;
 var Perl = {

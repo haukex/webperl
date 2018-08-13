@@ -94,8 +94,24 @@ window.addEventListener("load", function () {
 	}
 	else if (scripts.length) {
 		console.debug("Perl: Found",scripts.length,"embedded script(s), autorunning...");
-		//TODO: should we maybe prefix "use warnings; use 5.028;"? or at least "use WebPerl qw/js/;"?
-		Perl._saveAndRun( scripts.join(";\n") );
+		var code = scripts.join(";\n");
+		
+		// get the first five lines of code
+		var n = 5 + 1; // the contents of the <script> tag will usually begin with a newline
+		var i = -1;
+		while (n-- && i++ < code.length) {
+			i = code.indexOf("\n", i);
+			if (i < 0) break;
+		}
+		var head = i<0 ? code : code.substring(0,i);
+		// look for a "use WebPerl"
+		const regex = /^\s*use\s+WebPerl(\s|;)/m;
+		if (!regex.exec(head)) { // load WebPerl unless the user loaded it
+			console.debug("Perl: Autoloading WebPerl");
+			code = "use WebPerl 'js';\n" + code;
+		}
+		
+		Perl._saveAndRun(code);
 	}
 	else console.debug("Perl: No embedded scripts");
 });

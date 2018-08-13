@@ -171,7 +171,13 @@ Perl.init = function (readyCallback) {
 		throw "Perl: can't call init in state "+Perl.state;
 	Perl.changeState("Initializing");
 	var baseurl = new URL(getScriptURL());
-	baseurl = baseurl.origin + baseurl.pathname.substring(0,baseurl.pathname.lastIndexOf('/'));
+	if (baseurl.protocol=='file:')
+		// Note that a lot of things still won't work for file:// URLs
+		// because of the Same-Origin Policy.
+		// see e.g. https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors/CORSRequestNotHttp
+		baseurl = baseurl.href.substring(0,baseurl.href.lastIndexOf('/'));
+	else
+		baseurl = baseurl.origin + baseurl.pathname.substring(0,baseurl.pathname.lastIndexOf('/'));
 	Perl.readyCallback = readyCallback;
 	Module = {
 		noInitialRun: true,

@@ -110,9 +110,17 @@ if (!-e $C{PERLSRCDIR}) {
 	die "something went wrong with git clone" unless -d $C{PERLSRCDIR};
 	$needs_reconfig=1;
 }
-{
+GITSTUFF: {
 	my $d = pushd($C{PERLSRCDIR});
-	git 'fetch';
+	eval {
+		git 'fetch';
+	1 } or do {
+		warn $@;
+		# Maybe we don't have network connectivity
+		if (prompt("Whoops, 'git fetch' failed. Continue anyway? [Yn]","y")=~/^\s*y/i)
+			{ last GITSTUFF }
+		else { die "git fetch failed, aborting" }
+	};
 	my $myhead = git 'log', '-1', '--format=%h', $C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	my $remhead = git 'log', '-1', '--format=%h', 'origin/'.$C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	say STDERR "# Local branch is at $myhead, remote is $remhead";

@@ -23,8 +23,6 @@ WebPerl TODOs
 3. Misc
 
 	- Test if a CDN would work
-	- Optimization: When `js()` is called in void context, we don't need to
-	  return anything from JS (except errors) or set up GlueTable entries
 
 See also: "TODO" tags in code (use `findtodo.sh`)
 

@@ -369,7 +369,7 @@ if ($needs_reconfig || !-e $destdir || $opts{remakeout}) {
 
 {
 	say STDERR "# Making emperl.js...";
-	if ($opts{forceemperl})
+	if ($opts{forceemperl} || $opts{remakeout})
 		{ $C{PERLSRCDIR}->file('emperl.js')->remove
 			or die "failed to delete emperl.js" }
 	my $d = pushd($C{PERLSRCDIR});

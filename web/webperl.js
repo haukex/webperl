@@ -144,7 +144,7 @@ Perl.output = function (str,chan) { // can be overridden by the user
 	}
 };
 Perl.outputLine = function (chan,text) { // internal function
-	if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+	if (arguments.length > 2) text = Array.prototype.slice.call(arguments,1).join(' ');
 	Perl.output(text,chan);
 	Perl.output("\n",chan);
 };

@@ -132,6 +132,9 @@ for the current details.
    and build the final output, `emperl.js` along with the corresponding
    `.wasm` and `.data` file.
 
+`build.pl` provides various command-line options that allow you to control
+parts of the build process. See `build.pl --help` for details.
+
 
 Adding CPAN Modules
 -------------------

@@ -10,23 +10,61 @@
 
 
 WebPerl uses the power of [WebAssembly](https://webassembly.org/) and
-[emscripten](http://emscripten.org/) to let you run Perl 5 in the browser!
+[Emscripten](http://emscripten.org/) to let you run Perl 5 in the browser!
 
-**Notice: WebPerl is in beta.**
+**Notice: WebPerl is very much in beta.**
 Some things may not work yet, and parts of the API may still change.
 Your feedback is always appreciated!
 
 ```html
 <script src="webperl.js"></script>
 <script type="text/perl">
-use WebPerl qw/js/;
 
-print "Hello, Perl World!\n";
+print "Hello, Perl World!\n";  # goes to JavaScript console by default
 
 js('document')->getElementById('my_button')
-	->addEventListener("click", sub {
-		print "You clicked 'Testing!'\n";
+	->addEventListener('click', sub {
+		js('window')->alert("You clicked the button!");
 	} );
 </script>
 ```
+
+- [**Download `webperl_prebuilt_v0.01-beta.zip`**](https://github.com/haukex/webperl/releases/download/v0.01-beta/webperl_prebuilt_v0.01-beta.zip)
+- [**Get the sources on GitHub**](https://github.com/haukex/webperl)
+
+
+Quick Start
+-----------
+
+- Prerequisites: `perl` (a recent version is recommended, e.g. v5.26 and up),
+  [`plackup` from Plack](https://metacpan.org/pod/distribution/Plack/script/plackup),
+  and [Cpanel::JSON::XS](https://metacpan.org/pod/Cpanel::JSON::XS).
+
+- In a shell:
+  
+      $ wget https://github.com/haukex/webperl/releases/download/v0.01-beta/webperl_prebuilt_v0.01-beta.zip
+      $ unzip webperl_prebuilt_v0.01-beta.zip
+      $ cd webperl_prebuilt_v0.01-beta
+      $ plackup webperl.psgi
+      HTTP::Server::PSGI: Accepting connections at http://0:5000/
+
+- Then point your browser at
+  <http://localhost:5000/webperl_demo.html> or
+  <http://localhost:5000/mini_ide/webperl_mini_ide.html>
+
+You may also host the contents of the above ZIP archive on a webserver of your choice,
+as described in [Using WebPerl](using.html). (Note: In `webperl_demo.html`, you'll
+likely see "AJAX Failed!", which is to be expected since your webserver won't
+know how to handle the example AJAX request.)
+
+Have fun! ️🐪
+
+
+***
+
+Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, <http://www.igb-berlin.de>
+
+Please see the ["Legal" page](legal.html) for details.
 

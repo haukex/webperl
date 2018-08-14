@@ -201,7 +201,14 @@ single-process environment.
 The virtual filesystem is reloaded every time WebPerl is reloaded, so any changes are lost!
 The exception is the "`IDBFS`", which stores files in an `IndexedDB`, so they persist
 in the browser's storage across sessions. WebPerl mounts an instance of this filesystem
-at `/mnt/idb`. However, remember that users may clear this storage at any time as well,
+at `/mnt/idb`, and if you want to store files there, you **must** also use Emscripten's
+`FS.syncfs()` interface after writing files, for example:
+
+    js(q/ FS.syncfs(false, function (err) {
+    	if(err) alert("FS sync failed: "+err);
+    	else console.log("FS sync ok"); }); /);
+
+Remember that users may clear this storage at any time as well,
 so it is not really a permanent storage either.
 
 Additional information may be found at:

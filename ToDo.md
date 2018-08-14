@@ -6,26 +6,27 @@ WebPerl TODOs
 
 1. Documentation (Website)
 	
-	- Using WebPerl
-		- the user must explicitly "unregister" anonymous Perl subs (or show alternatives) to prevent %CodeTable from growing too large
-		- the user shouldn't mess with the symbol table (delete subs, redefine them, etc.)
-		- <http://kripken.github.io/emscripten-site/docs/compiling/Deploying-Pages.html>
-	- Building WebPerl
-		- test out perl -Mlazy to install all the deps (and if it works well, document)
+	- Check if intra-page links work
 
 2. Testing
 	
 	- Continue work on `WebPerl.t`
 		- More tests for Unicode support (Perl/JS interface, Perl.eval(), plus Emscripten's virtual FS)
-	- I should focus on getting the tests running in the browser instead of node.js
-		- How to package tests? How does `make test` find&handle all the various modules' `t`s?
+	- Focus on getting the tests running in the browser instead of node.js
+	- How to best package tests?
+		- If possible, a separate bundle, so that it can be loaded optionally and we don't need to rebuild
+		- How does `make test` find and handle all the various modules' `t`s?
 	- How to best disable individual tests that we know won't work? (qx etc.)
 	- How to handle the many tests that call an external Perl?
 		- patching t/test.pl's runperl() seems easiest at the moment, and we can use the iframe method from the IDE
 
 3. Misc
 
+	- If Perl writes a file to `/mnt/idb`, is it automatically `sync`ed
+	  or do we need to provide a function for that?
 	- Test if a CDN would work
+	- Optimization: When `js()` is called in void context, we don't need to
+	  return anything from JS (except errors) or set up GlueTable entries
 
 See also: "TODO" tags in code (use `findtodo.sh`)
 

@@ -10,6 +10,7 @@ Not yet released: v0.03-beta
   where JS objects were not being converted properly.
 - Added AJAX demo
 - Added WebPerl autoloading for script tags
+- Various small changes and enhancements (not user-visible)
 - ...
 
 

@@ -119,7 +119,7 @@ for the current details.
    bitcode, which the Emscripten compiler will then compile to JavaScript/WebAssembly.
    Because some steps in the build process require a working `perl` binary,
    Emscripten's compiler is used together with a supporting JavaScript file to
-   generate JavaScript code that can be run with `node.js` (called `nodeperl_dev.js`).
+   generate JavaScript/WebAssembly code that can be run with `node.js` (called `nodeperl_dev.js`).
 
 8. Run the equivalent of `make install`, which copies all the Perl modules
    etc. into the target directory that will become part of the Emscripten
@@ -130,7 +130,8 @@ for the current details.
 
 9. The Emscripten compiler is used to take the previously compiled `perl.bc`
    and build the final output, `emperl.js` along with the corresponding
-   `.wasm` and `.data` file.
+   `.wasm` and `.data` file. This step also includes the packaging of the
+   virtual filesystem.
 
 `build.pl` provides various command-line options that allow you to control
 parts of the build process. See `build.pl --help` for details.

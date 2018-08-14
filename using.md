@@ -379,9 +379,9 @@ Arguments from Perl to JavaScript function or method calls are mapped as follows
 
 ### Mappings from Perl to JavaScript
 
-Unlike the JavaScript to Perl mappings, values are generally *copied* from
+Unlike the JavaScript to Perl mappings, values are (currently) generally *copied* from
 Perl to JavaScript, instead of being *referenced*.
-The exceptions are Perl `subs`s and `WebPerl::JSObject`s.
+The exceptions are Perl `sub`s and `WebPerl::JSObject`s.
 
 - Perl arrayrefs become JavaScript arrays
 - Perl hashrefs become JavaScript objects
@@ -393,7 +393,8 @@ The exceptions are Perl `subs`s and `WebPerl::JSObject`s.
   (with its `allow_nonref` option enabled). This means that the choice
   for whether to encode a Perl scalar as a JavaScript number or string is
   left up to the module, and is subject to the usual ambiguities when
-  serializing Perl scalars.
+  serializing Perl scalars. See
+  [the `Cpanel::JSON::XS` documentation](https://metacpan.org/pod/Cpanel::JSON::XS).
 - Other references, including objects, are currently not supported.
 
 

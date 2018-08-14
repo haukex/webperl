@@ -29,7 +29,7 @@ js('document')->getElementById('my_button')
 </script>
 ```
 
-- [**Download `webperl_prebuilt_v0.01-beta.zip`**](https://github.com/haukex/webperl/releases/download/v0.01-beta/webperl_prebuilt_v0.01-beta.zip)
+- [**Download `webperl_prebuilt_v0.03-beta.zip`**](https://github.com/haukex/webperl/releases/download/v0.03-beta/webperl_prebuilt_v0.03-beta.zip)
 - [**Get the sources on GitHub**](https://github.com/haukex/webperl)
 
 
@@ -42,9 +42,9 @@ Quick Start
 
 - In a shell:
   
-      $ wget https://github.com/haukex/webperl/releases/download/v0.01-beta/webperl_prebuilt_v0.01-beta.zip
-      $ unzip webperl_prebuilt_v0.01-beta.zip
-      $ cd webperl_prebuilt_v0.01-beta
+      $ wget https://github.com/haukex/webperl/releases/download/v0.03-beta/webperl_prebuilt_v0.03-beta.zip
+      $ unzip webperl_prebuilt_v0.03-beta.zip
+      $ cd webperl_prebuilt_v0.03-beta
       $ plackup webperl.psgi
       HTTP::Server::PSGI: Accepting connections at http://0:5000/
 

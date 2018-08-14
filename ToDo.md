@@ -22,8 +22,6 @@ WebPerl TODOs
 
 3. Misc
 
-	- If Perl writes a file to `/mnt/idb`, is it automatically `sync`ed
-	  or do we need to provide a function for that?
 	- Test if a CDN would work
 	- Optimization: When `js()` is called in void context, we don't need to
 	  return anything from JS (except errors) or set up GlueTable entries

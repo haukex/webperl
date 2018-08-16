@@ -79,7 +79,7 @@ for a few patches to make things compile properly, and the major differences
 described here.
 
 [Emscripten](http://emscripten.org/) provides emulation for a number of system
-calls, most notably, it provides a virtual filesystem from which Perl can
+calls, most notably for WebPerl, it provides a virtual filesystem from which Perl can
 load its modules, since of course JavaScript in the browser is a sandboxed
 environment (no access to hardware, the local filesystem, etc.).
 However, because Perl is the *only* Emscripten process running in the browser,

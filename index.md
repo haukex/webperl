@@ -50,7 +50,8 @@ Quick Start
 
 - Then point your browser at
   <http://localhost:5000/webperl_demo.html> or
-  <http://localhost:5000/mini_ide/webperl_mini_ide.html>
+  <http://localhost:5000/mini_ide/webperl_mini_ide.html>,
+  and have a look at the HTML source of `webperl_demo.html`.
 
 You may also host the contents of the above ZIP archive on a webserver of your choice,
 as described in [Using WebPerl](using.html). (Note: In `webperl_demo.html`, you'll

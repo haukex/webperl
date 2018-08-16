@@ -23,6 +23,7 @@ WebPerl TODOs
 3. Misc
 
 	- Test if a CDN would work
+	- Perhaps create a CPAN Bundle:: module or similar for `build.pl` deps?
 
 See also: "TODO" tags in code (use `findtodo.sh`)
 

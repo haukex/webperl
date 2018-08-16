@@ -9,7 +9,7 @@ Legal -
 =========================================
 
 
-**WebPerl <http://webperl.zero-g.net>**
+**WebPerl - <http://webperl.zero-g.net>**
 
 Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
 at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),

@@ -9,6 +9,11 @@ Building -
 ===================
 
 
+**Notice: WebPerl is very much in beta.**
+Some things may not work yet, and parts of the API may still change.
+Your feedback is always appreciated!
+
+
 Prerequisites
 -------------
 

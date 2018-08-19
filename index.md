@@ -69,3 +69,8 @@ Berlin, Germany, <http://www.igb-berlin.de>
 
 Please see the ["Legal" page](legal.html) for details.
 
+***
+
+You can find the source for this page at
+<https://github.com/haukex/webperl/blob/gh-pages/index.md>
+

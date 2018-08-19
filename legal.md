@@ -29,3 +29,9 @@ See the licenses for details.
 You should have received a copy of the licenses along with this program.
 If not, see <http://perldoc.perl.org/index-licence.html>.
 
+
+***
+
+You can find the source for this page at
+<https://github.com/haukex/webperl/blob/gh-pages/legal.md>
+

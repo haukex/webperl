@@ -37,8 +37,16 @@ otherwise you may see warnings like
 "falling back to ArrayBuffer instantiation".
 For example, in an Apache `.htaccess` file, you can say: `AddType application/wasm .wasm`
 
-Note that opening the files locally (via `file://`) will likely not work
-due to browsers' Same-Origin Policy.
+Note that opening the files locally (via `file://`) may not work
+due to browsers' Same-Origin Policy. However, there are some workarounds:
+
+* On Linux, the "wasm streaming compile failed: TypeError: Response has unsupported MIME type /
+falling back to ArrayBuffer instantiation" warnings can be worked around by
+adding the line `application/wasm	wasm` to `~/.mime.types` or `/etc/mime.types`
+* In Firefox, if your files reside in different directories, the same-origin policy can be
+made more lax for `file://` URIs by disabling the
+[security.fileuri.strict_origin_policy](http://kb.mozillazine.org/Security.fileuri.strict_origin_policy)
+option. **But be aware** of the security implications of disabling this option!
 
 See also the Emscripten deployment notes at
 <http://kripken.github.io/emscripten-site/docs/compiling/Deploying-Pages.html>,

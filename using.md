@@ -300,7 +300,25 @@ Defaults to `false`.
 Enable this option at any time to get additional trace-level output
 to `console.debug()`. Defaults to `false`.
 
+#### `Perl.addStateChangeListener`
+
+**Added in `v0.05-beta`.**
+
+Pass this function a `function (from,to) {...}` to register a new handler
+for state changes of the Perl interpreter.
+
+The states currently are:
+
+- `"Uninitialized"` - `Perl.init` has not been called yet.
+- `"Initializing"` - `Perl.init` is currently operating.
+- `"Ready" - `Perl.init` is finished and `Perl.start` can be called.
+- `"Running"` - The Perl interpreter is running, `Perl.eval` and `Perl.end` may be called
+- `"Ended"` - The Perl interpreter has ended. You might receive several
+  state change notifications for this state.
+
 #### `Perl.stateChanged`
+
+**Deprecated in `v0.05-beta`.** Use `Perl.addStateChangeListener` instead.
 
 Set this to a `function (from,to) {...}` to handle state changes of the Perl interpreter.
 Defaults to a simple implementation that logs via `console.debug()`.

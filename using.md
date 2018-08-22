@@ -265,6 +265,10 @@ Runs Perl with the given `argv` array. If `argv` is not provided, uses Emscripte
 
 Evaluates the given Perl code. Currently always returns a string.
 
+The functionality of this function *may* be expanded upon in the future
+to return more than just a string. See the discussion in
+[Mappings from Perl to JavaScript](#mappings-from-perl-to-javascript).
+
 #### `Perl.end()`
 
 Ends the Perl interpreter. See the discussion under
@@ -392,7 +396,7 @@ Arguments from Perl to JavaScript function or method calls are mapped as follows
 
 ### Mappings from Perl to JavaScript
 
-Unlike the JavaScript to Perl mappings, values are (currently) generally *copied* from
+Unlike the JavaScript to Perl mappings, values are (currently¹) generally *copied* from
 Perl to JavaScript, instead of being *referenced*.
 The exceptions are Perl `sub`s and `WebPerl::JSObject`s.
 
@@ -409,6 +413,14 @@ The exceptions are Perl `sub`s and `WebPerl::JSObject`s.
   serializing Perl scalars. See
   [the `Cpanel::JSON::XS` documentation](https://metacpan.org/pod/Cpanel::JSON::XS).
 - Other references, including objects, are currently not supported.
+
+¹ So far, the focus of WebPerl has been to replace JavaScript with Perl, and
+therefore on accessing JavaScript from Perl, and not as much the other
+way around, that is, doing complex things with Perl from JavaScript code.
+For example, currently, `Perl.eval()` always returns a string, but could in the
+future be extended to return more than that, similar to `WebPerl::js()`,
+and then the passing of Perl values to JavaScript could be accomplished
+differently as well.
 
 
 ***

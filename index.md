@@ -12,6 +12,10 @@
 WebPerl uses the power of [WebAssembly](https://webassembly.org/) and
 [Emscripten](http://emscripten.org/) to let you run Perl 5 in the browser!
 
+WebPerl does not translate your Perl code to JavaScript, instead, it is
+a port of the `perl` binary to WebAssembly, so that you have the full
+power of Perl at your disposal!
+
 **Notice: WebPerl is very much in beta.**
 Some things may not work yet, and parts of the API may still change.
 Your feedback is always appreciated!

@@ -362,6 +362,8 @@ if ($needs_reconfig || !-e $destdir || $opts{remakeout}) {
 	safelink( $C{PERLSRCDIR}->file('ext','WebPerl','WebPerl.pm'),
 		$destdir->file('lib','5.28.0','wasm','WebPerl.pm') ); #TODO: should figure this directory out dynamically
 	
+	#TODO Later: Provide an easy way for users to add files to the virtual file system
+	
 	say STDERR "# Done rebuilding $destdir";
 }
 

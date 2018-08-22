@@ -467,6 +467,68 @@ and then the passing of Perl values to JavaScript could be accomplished
 differently as well.
 
 
+The Mini IDE
+------------
+
+**Warning:** The "mini IDE" included with WebPerl is currently *not* meant to
+be a full-featured IDE in which you're supposed to develop your WebPerl scripts.
+It started out as a way to simply inspect Emscripten's
+[virtual filesystem](#virtual-filesystem), and quickly test some features.
+Please consider it more of a *demo* of some of the things that are possible,
+and don't be surprised that it doesn't have many of the features you might
+expect from an IDE, and it has a few "quirks" (you are of course free to provide
+patches, if you like `;-)` ).
+
+Note the default encoding for files is assumed to be UTF-8.
+
+### The Editor
+
+- 📄 "New File" - Clears the editor and starts a new file.
+
+- ⬆ "File from Disk" - Allows you to select a file from your local computer
+  for upload *into the editor*, i.e. it does not save anything into the
+  virtual file system; you need to use "Save File" to do that.
+
+- ⬇ "Download editor contents" - Allows you to download the text as currently
+  shown in the editor as a file to your local disk.
+
+- 📁 "Open File" - Lets you browse the virtual file system and select a file
+  to open in the editor. Click the "Open File" button again to cancel the open.
+
+- 💾 "Save File" - Saves the text currently shown in the editor into the
+  file named in the "File Name" text box, so enter the file name there **first**.
+  Remember that to persist something in the [virtual filesystem](#virtual-filesystem)
+  longer than the current page, you need to save the file in a location like `/mnt/idb`.
+
+### "Run & Persist"
+
+This controls the Perl interpreter that is part of the current page.
+[Remember](#the-perl-interpreter-and-its-environment) that there can be only
+one Perl interpreter in a page at once, and it can only run once, which means
+that if you edit the code in the editor, you'll need to save the file to
+a location like `/mnt/idb` and re-load the entire page for the changes
+to be able to take effect.
+
+The advantage of this mode is that it most resembles the way WebPerl is
+intended to be run as part of a web page - it starts once when the page
+is loaded (or in this case, when you click "Run"), and is then suspended
+after `main()` finishes, so that control passes back to the browser, and
+JavaScript can then call any handlers you've installed for things like click events.
+
+### "Run Multi (via IFrame)"
+
+This provides a "hacked" way to run multiple Perl interpreters without reloading
+the entire page, by loading a new page in an `<iframe>`. The script is run there,
+and when `main()` exits, Perl is ended, and its output fetched into the "output"
+textarea. The advantage of this mode is that it allows quicker edit-and-run cycles,
+which is good for testing, the disadvantage is that you can't really interact with
+Perl from the browser while it is running.
+
+Remember to first save your script in a location like `/mnt/idb`, because
+otherwise the Perl instance in the `iframe` won't be able to see it
+(since it gets a fresh copy of the virtual file system).
+
+
 ***
 
 Additional notes on using WebPerl may be found in the

@@ -57,7 +57,7 @@ Running the Build
        $ git clone https://github.com/haukex/webperl.git
        $ cd webperl
 
-2. Install the [prerequisites](#Prerequisites).
+2. Install the [prerequisites](#prerequisites).
 
 3. Edit the configuration file, `./build/emperl_config.sh`, to fit
    your system. For a first build, just make sure the path to

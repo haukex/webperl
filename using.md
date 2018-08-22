@@ -14,6 +14,19 @@ Some things may not work yet, and parts of the API may still change.
 Your feedback is always appreciated!
 
 
+- [Basic Usage](#basic-usage)
+	- [Serving WebPerl](#serving-webperl)
+	- [Including Perl code in your HTML](#including-perl-code-in-your-html)
+- [The Perl Interpreter and its Environment](#the-perl-interpreter-and-its-environment)
+	- [Memory Management and Anonymous `sub`s](#memory-management-and-anonymous-subs)
+	- [Virtual Filesystem](#virtual-filesystem)
+- [webperl.js](#webperljs)
+	- The JS `Perl` object
+- [WebPerl.pm](#webperlpm)
+	- Perl <-> JavaScript mappings
+- [The Mini IDE](#the-mini-ide)
+
+
 Basic Usage
 -----------
 
@@ -70,7 +83,7 @@ list, then add `use WebPerl ...;` as one of the first five lines of your Perl co
 
 If you don't have any such script tags in the document, Perl won't be run
 automatically, and you can control Perl in detail via the JavaScript `Perl`
-object provided by [webperl.js](#webperl.js).
+object provided by [webperl.js](#webperljs).
 
 Note that unlike JavaScript, which is run immediately, WebPerl will always be loaded
 and run asynchronously from the page load. If you use `<script type="text/perl">` tags,

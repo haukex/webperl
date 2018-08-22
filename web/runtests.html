@@ -16,8 +16,14 @@ window.addEventListener("load", function () {
 	document.getElementById('output')
 		.appendChild( Perl.makeOutputTextarea() );
 	
+	var status = document.getElementById("status");
 	Perl.endAfterMain = true;
+	Perl.addStateChangeListener( function (from,to) {
+		if (from!="Ended" && to=="Ended")
+			status.textContent = "Tests finished, see output:";
+	} );
 	Perl.init(function () {
+		status.textContent = "Running tests...";
 		window.setTimeout(function () {
 			Perl.start(['/opt/perl/dev/WebPerl.t']);
 		}, 1);
@@ -29,7 +35,7 @@ window.addEventListener("load", function () {
 
 </head>
 <body>
-<p>Running tests...</p>
+<p id="status">Loading tests...</p>
 <div id="output"></div>
 </body>
 </html>

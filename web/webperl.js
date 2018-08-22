@@ -125,10 +125,18 @@ Perl._saveAndRun = function (script) {
 Perl.changeState = function (newState) {
 	var oldState = Perl.state;
 	Perl.state = newState;
-	if (Perl.stateChanged) Perl.stateChanged(oldState,newState);
+	if (Perl.stateChanged) {
+		console.info("Perl.stateChanged is deprecated, please use Perl.addStateChangeListener instead");
+		Perl.stateChanged(oldState,newState);
+	}
+	for( var i=0 ; i<Perl.stateChangeListeners.length ; i++ )
+		Perl.stateChangeListeners[i](oldState,newState);
 };
-Perl.stateChanged = function (from,to) { //TODO: allow multiple listeners
+Perl.stateChangeListeners = [ function (from,to) {
 	console.debug("Perl: state changed from "+from+" to "+to);
+} ];
+Perl.addStateChangeListener = function (handler) {
+	Perl.stateChangeListeners.push(handler);
 };
 
 // chan: 1=STDOUT, 2=STDERR

@@ -3,6 +3,12 @@ WebPerl Changelog
 =================
 
 
+not yet released: v0.05-beta
+----------------------------
+- Added Perl.addStateChangeListener and deprecated Perl.stateChanged
+- ...
+
+
 2018-08-14: v0.03-beta
 ----------------------
 

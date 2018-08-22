@@ -87,7 +87,8 @@ for a few patches to make things compile properly, and the major differences
 described here.
 
 [Emscripten](http://emscripten.org/) provides emulation for a number of system
-calls, most notably for WebPerl, it provides a virtual filesystem from which Perl can
+calls, most notably for WebPerl, it provides a
+[**virtual filesystem** (details below)](#virtual-filesystem) from which Perl can
 load its modules, since of course JavaScript in the browser is a sandboxed
 environment (no access to hardware, the local filesystem, etc.).
 However, because Perl is the *only* Emscripten process running in the browser,
@@ -201,40 +202,83 @@ is generated for them, because it is assumed you won't delete them from the
 symbol table - so please don't do that. Also, don't rename or redefine `sub`s
 after having passed them to JavaScript, as that will probably cause mysterious behvaior.
 
-### Virtual File System
+### Virtual Filesystem
 
 Emscripten provides a virtual file system that also provides a few "fake" files such
 as `/home/web_user`, `/dev`, and others, so that it resembles a normal *NIX file system.
 Perl's libraries (`*.pm`) are installed into this virtual file system at `/opt/perl`.
-Note that because the `perl` binary is compiled to WebAssembly and XS libraries
-statically linked into it, you won't find any `perl` binary or library files in the
+Note that because the `perl` binary is compiled to WebAssembly and XS libraries are
+statically linked into it, you won't find any `perl` binary or shared library files in the
 virtual file system, or for that matter any other binaries, since this is a
 single-process environment.
 
-The virtual filesystem is reloaded every time WebPerl is reloaded, so any changes are lost!
-The exception is the "`IDBFS`", which stores files in an `IndexedDB`, so they persist
+It is important to keep apart the different ways to access files:
+
+- There's your local file system and the web server's file system, to which WebPerl does *not* have direct access.
+  There are only a few ways to get files from a local file system into WebPerl:
+  - The user can upload files from their local system using a file upload control and JavaScript.
+    The "mini IDE" included with WebPerl includes a demo of this, see
+    `file_upload` and `upload_file` in
+    [`emscr_ide.js`](https://github.com/haukex/webperl/blob/master/web/mini_ide/emscr_ide.js).
+    (Also, `file_download` shows a way to send files to the user's browser.)
+  - An RPC service that you set up on your webserver would allow WebPerl to communicate
+    with the server, and the service can provide access to the files on the server.
+    For one example, see
+    [`webperl.psgi`](https://github.com/haukex/webperl/blob/master/web/webperl.psgi)
+    for the server side and
+    [`webperl_demo.html`](https://github.com/haukex/webperl/blob/master/web/webperl_demo.html)
+    for the client side.
+  - For more permanent additions to the virtual filesystem, you could compile files
+    into Emscripten's virtual file system (mentioned below).
+  
+- All that WebPerl can see directly is the virtual file system provided by Emscripten.
+  More details are below.
+  
+- When you use the JavaScript `Perl` object provided by `webperl.js` to control Perl,
+  the `argv` you supply to `Perl.start` references files in the virtual file system.
+  
+- A `<script type="text/perl" src="foo.pl"></script>` tag will cause `webperl.js`
+  to fetch `foo.pl` from the *web server*, not the virtual filesystem!
+
+While a WebPerl instance is running, you can modify files in the virtual file system
+as you might be used to from regular Perl. But the virtual filesystem is reloaded every
+time WebPerl is reloaded, so any changes are lost! The exception is the "`IDBFS`"
+provided by Emscripten, which stores files in an `IndexedDB`, so they typically persist
 in the browser's storage across sessions. WebPerl mounts an instance of this filesystem
-at `/mnt/idb`, and if you want to store files there, you **must** also use Emscripten's
-`FS.syncfs()` interface after writing files, for example:
+at `/mnt/idb`, which you are free to use. If you want your Perl script to write to files
+there, you **must** also use Emscripten's `FS.syncfs()` interface after writing files,
+for example:
 
     js(q/ FS.syncfs(false, function (err) {
     	if(err) alert("FS sync failed: "+err);
     	else console.log("FS sync ok"); }); /);
 
-Remember that users may clear this storage at any time as well,
-so it is not really a permanent storage either.
+Remember that users may clear this storage at any time, so it is not really a permanent storage
+either. If you need to safely store files, it's best to store them on the user's machine
+(or the web server, if they are different machines) using one of the methods described above.
 
-Additional information may be found at:
+In particular, even though you might make heavy use of `/mnt/idb` when testing with the "mini IDE",
+remember that this storage is *not* a way to distribute files to your users, and in fact, some
+users' browsers may automatically regularly clear the `IndexedDB`, or have it disabled altogether.
+For providing your application to your users, either use `<script type="text/perl">` tags,
+compile the script into the virtual file system, or use the JavaScript `Perl` object.
+
+You might also put files into the virtual filesystem more permanently by modifying the "make install"
+step of [`build.pl`](https://github.com/haukex/webperl/blob/master/build/build.pl).
+Keep in mind that like the other files in the virtual file system,
+any modifications will be lost once WebPerl is reloaded, and the only way to modify them
+is re-running `build.pl`.
+
+Additional information on the virtual file system may be found at:
 
 - <http://kripken.github.io/emscripten-site/docs/porting/files/file_systems_overview.html>
 - <http://kripken.github.io/emscripten-site/docs/api_reference/Filesystem-API.html>
 - <http://kripken.github.io/emscripten-site/docs/api_reference/advanced-apis.html#advanced-file-system-api>
 
-The "mini IDE" included with WebPerl includes some code to show possibilities
-of getting and sending files from/to the user through the browser. You also have
-the possibility of implementing an RPC mechanism to access local files, if you need to.
-
 Note that WebPerl's build process strips any POD from the Perl libraries, to reduce download size.
+
+By the way, I don't recommend relying on the initial working directory when WebPerl
+starts; either `chdir` to a known location, or always use absolute filenames.
 
 
 webperl.js

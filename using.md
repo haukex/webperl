@@ -461,7 +461,7 @@ The exceptions are Perl `sub`s and `WebPerl::JSObject`s.
 - Perl hashrefs become JavaScript objects
 - Perl coderefs become JavaScript functions - 
   **Warning:** please see the discussion in
-  ["Memory Management and Anonymous `sub`s"](#memory-Management-and-anonymous-subs)!
+  ["Memory Management and Anonymous `sub`s"](#memory-management-and-anonymous-subs)!
 - Perl `WebPerl::JSObject`s become references to the wrapped JavaScript objects
 - Perl numbers/strings are copied to JavaScript via `Cpanel::JSON::XS::encode_json`
   (with its `allow_nonref` option enabled). This means that the choice

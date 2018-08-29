@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Regex Demo</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css"
+	integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
+<style>
+body {
+	margin: 0.4em;
+}
+div {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+pre,tt,textarea {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
+pre {
+	margin: 0;
+}
+.sample {
+	border: 1px solid black;
+	margin: 0.2em;
+	padding: 0.2em;
+	min-width: 10em;
+	min-height: 1em;
+	display: flow-root;
+}
+pre.samptxt {
+	padding: 2px 20px 2px 2px;
+	display: inline-block;
+}
+textarea.samp_ta {
+	min-width: 10em;
+	min-height: 1em;
+	max-width: calc(100% - 20px);
+	padding: 1px;
+	display: inline-block;
+}
+.closebtn {
+	float: right;
+	cursor: pointer;
+}
+.nomatch {
+	background-color: rgba(255,200,200,255);
+}
+.match {
+	background-color: lightblue;
+}
+.capture {
+	background-color: lightgreen;
+}
+</style>
+
+<script src="webperl.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+
+<script type="text/perl">
+use warnings;
+use 5.028;
+use WebPerl qw/js/;
+my $jq = js('jQuery');
+
+sub sample_init {
+	my $samp = shift;
+	my $samptxt = $samp->children(".samptxt");
+	my $samp_ta = $jq->('<textarea/>', {class=>"samp_ta"});
+	$samp_ta->hide();
+	$samp_ta->appendTo($samp);
+	my $closebtn = $jq->('<div/>', {html=>"&#x1F5D9;",class=>"closebtn"});
+	$closebtn->appendTo($samp);
+	$samp->click(sub {
+		return if $samp_ta->is(':visible');
+		$samp_ta->width( $samp->width - $closebtn->width - 4 );
+		$samp_ta->height($samptxt->height);
+		$samp_ta->val($samptxt->text);
+		$samptxt->hide;
+		$samp_ta->show;
+		$samp_ta->focus;
+	});
+	$samp_ta->focusout(sub {
+		$samptxt->text($samp_ta->val);
+		$samptxt->height($samp_ta->height);
+		$samp_ta->hide;
+		$samptxt->show;
+		update();
+	});
+	$samp_ta->on('input', sub {
+		$samp_ta->height($samp_ta->[0]->{scrollHeight}-2); # subtract padding
+	});
+	$closebtn->click(sub { $samp->remove });
+}
+$jq->(".sample")->each(sub{ sample_init($jq->($_[1])) });
+
+my $addsamp = $jq->("#addsamp");
+sub newsamp {
+	my $text = @_ ? shift : 'New Sample';
+	my $samptxt = $jq->('<pre/>',{class=>"samptxt",text=>$text});
+	my $samp = $jq->('<div/>',{class=>"sample"})->append($samptxt);
+	$samp->insertBefore($addsamp->parent);
+	sample_init($samp);
+	update();
+}
+$addsamp->click(sub { newsamp() });
+
+my $thisurl_ta = $jq->("#thisurl");
+my $ta_regex = $jq->("#regex");
+my $ta_flags = $jq->("#flags");
+$ta_regex->change(\&update);
+$ta_regex->keyup( \&update);
+$ta_flags->change(\&update);
+$ta_flags->keyup( \&update);
+update();
+
+sub update {
+	my $regex = $ta_regex->val;
+	my $flags = $ta_flags->val;
+	my $regex_str = 'm{'.$regex.'}'.$flags;
+	eval "''=~$regex_str;1" or return;
+	my @samps;
+	for my $samptxt ($jq->('.samptxt')->@*) {
+		$samptxt = $jq->($samptxt);
+		my $text = $samptxt->text;
+		push @samps, $text;
+		my @m;
+		my $code = $flags=~/g/
+			? 'push @m,[[@-],[@+]] while $text=~'.$regex_str.'; scalar @m'
+			: '$text=~'.$regex_str.' and push @m,[[@-],[@+]]; scalar @m';
+		if (eval $code) {
+			$samptxt->removeClass('nomatch');
+			my %hi;
+			for my $m (@m) {
+				my ($s,$e) = @$m;
+				$hi{shift @$s}{match}++;
+				$hi{$_}{cap}++ for @$s;
+				$hi{$_}{end}++ for @$e;
+			}
+			my $html='';
+			my $p=0;
+			for my $i (sort {$a<=>$b} keys %hi) {
+				$html .= substr($text,$p,$i-$p);
+				$html .= '</span>' for 1..$hi{$i}{end}//0;
+				$html .= '<span class="match">' for 1..$hi{$i}{match}//0;
+				$html .= '<span class="capture">' for 1..$hi{$i}{cap}//0;
+			} continue { $p=$i }
+			$html .= substr($text,$p);
+			$samptxt->html($html);
+		}
+		else {
+			$samptxt->text($text);
+			$samptxt->addClass('nomatch');
+		}
+	}
+	
+	my $i=1;
+	my $hash = '#' . $jq->param( { regex=>$regex, flags=>$flags,
+		map { "samp".$i++ => $_ } @samps } );
+	my $baseurl = js('window.location')->{href} =~ s/#.*\z//r;
+	$thisurl_ta->text( $baseurl . $hash );
+}
+
+$jq->('#urlcopy')->click(sub {
+	$thisurl_ta->[0]->select;
+	js(q{ document.execCommand("copy"); });
+});
+
+sub hashchange {
+	my $hash = js('window.location')->{hash};
+	return unless $hash=~/^#.*\bregex=/;
+	my %res;
+	my $decode = js('decodeURIComponent');
+	for my $c (split /&/, substr $hash, 1) {
+		my ($k,$v) = split /=/, $c;
+		$res{ $decode->($k=~tr/+/ /r) } = $decode->($v=~tr/+/ /r);
+	}
+	if (exists $res{regex} && exists $res{flags}) {
+		$ta_regex->text($res{regex});
+		$ta_flags->text($res{flags});
+		if (exists $res{samp1}) {
+			$jq->(".sample")->remove();
+			for (my $i=1;exists $res{"samp$i"};$i++) {
+				newsamp($res{"samp$i"});
+			}
+		}
+	}
+	else { js('window.location')->{hash}='' }
+}
+hashchange();
+js('$(window)')->on('hashchange',\&hashchange);
+
+</script>
+
+</head>
+<body>
+
+<div style="margin-bottom:1em"><b>Perl Regex Tester</b>
+- powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a></div>
+
+<div style="margin-bottom:1em">
+<tt style="vertical-align: top;">m{</tt
+	><textarea id="regex" rows="1" cols="50" style="height:1.2em">wo(.)</textarea
+	><tt style="vertical-align: text-bottom;">}</tt
+	><textarea id="flags" rows="1" cols="5" style="height:1.2em">gi</textarea>
+</div>
+
+<div class="sample">
+	<pre class="samptxt">Hello, World!</pre>
+</div>
+<div class="sample">
+	<pre class="samptxt">Oh, what a wonderful world!</pre>
+</div>
+<div style="text-align:right">
+	<span id="addsamp" style="cursor:pointer">Add Sample</span>
+</div>
+
+<div>
+	URL:
+	<textarea id="thisurl" rows="1" cols="50" style="height:1.2em" readonly="readonly"></textarea>
+	<span id="urlcopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span>
+</div>
+
+</body>
+</html>

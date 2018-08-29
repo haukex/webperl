@@ -6,4 +6,5 @@
 /web/emperl.data
 /web/jquery*.js
 /web/codemirror*
+/web/normalize.css
 /pages/

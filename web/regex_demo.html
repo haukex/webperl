@@ -2,7 +2,7 @@
 <html lang="en-us">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>WebPerl Regex Demo</title>
+<title>WebPerl Regex Tester</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css"
 	integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
@@ -28,13 +28,15 @@ pre {
 	display: flow-root;
 }
 pre.samptxt {
-	padding: 2px 20px 2px 2px;
+	padding: 2px;
 	display: inline-block;
 }
 textarea.samp_ta {
 	min-width: 10em;
 	min-height: 1em;
-	max-width: calc(100% - 20px);
+	max-width: calc(100% - 1.5em);
+	width: 100%;
+	border: 1px solid grey;
 	padding: 1px;
 	display: inline-block;
 }
@@ -54,6 +56,8 @@ textarea.samp_ta {
 </style>
 
 <script src="webperl.js"></script>
+<!--script src="https://webperlcdn.zero-g.net/v0.03-beta/webperl.js"
+	integrity="sha256-PWdMdWEx3axFU/29XiOPUwenmlsBM+5f+kc2omoKxPs=" crossorigin="anonymous"></script-->
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
 	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
@@ -63,17 +67,19 @@ use 5.028;
 use WebPerl qw/js/;
 my $jq = js('jQuery');
 
+$jq->('#perlinfo')->text("perl $^V");
+
 sub sample_init {
 	my $samp = shift;
 	my $samptxt = $samp->children(".samptxt");
 	my $samp_ta = $jq->('<textarea/>', {class=>"samp_ta"});
 	$samp_ta->hide();
 	$samp_ta->appendTo($samp);
-	my $closebtn = $jq->('<div/>', {html=>"&#x1F5D9;",class=>"closebtn"});
+	my $closebtn = $jq->('<div/>', {html=>"&#x1F5D9;",class=>"closebtn",
+		title=>"Delete Sample"});
 	$closebtn->appendTo($samp);
 	$samp->click(sub {
 		return if $samp_ta->is(':visible');
-		$samp_ta->width( $samp->width - $closebtn->width - 4 );
 		$samp_ta->height($samptxt->height);
 		$samp_ta->val($samptxt->text);
 		$samptxt->hide;
@@ -90,7 +96,7 @@ sub sample_init {
 	$samp_ta->on('input', sub {
 		$samp_ta->height($samp_ta->[0]->{scrollHeight}-2); # subtract padding
 	});
-	$closebtn->click(sub { $samp->remove });
+	$closebtn->click(sub { $samp->remove; update() });
 }
 $jq->(".sample")->each(sub{ sample_init($jq->($_[1])) });
 
@@ -196,13 +202,15 @@ js('$(window)')->on('hashchange',\&hashchange);
 <body>
 
 <div style="margin-bottom:1em"><b>Perl Regex Tester</b>
-- powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a></div>
+- powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
 
 <div style="margin-bottom:1em">
-<tt style="vertical-align: top;">m{</tt
-	><textarea id="regex" rows="1" cols="50" style="height:1.2em">wo(.)</textarea
+<div><tt style="vertical-align: top;">m{</tt
+	><textarea id="regex" rows="1" cols="50" style="height:1.2em"
+		title="Perl Regular Expression">wo(.)</textarea
 	><tt style="vertical-align: text-bottom;">}</tt
-	><textarea id="flags" rows="1" cols="5" style="height:1.2em">gi</textarea>
+	><textarea id="flags" rows="1" cols="5" style="height:1.2em"
+		title="Flags for Regular Expression">gi</textarea></div>
 </div>
 
 <div class="sample">
@@ -215,11 +223,13 @@ js('$(window)')->on('hashchange',\&hashchange);
 	<span id="addsamp" style="cursor:pointer">Add Sample</span>
 </div>
 
-<div>
+<div style="margin-top:0.5em">
 	URL:
-	<textarea id="thisurl" rows="1" cols="50" style="height:1.2em" readonly="readonly"></textarea>
+	<textarea id="thisurl" rows="2" cols="80" style="height:2.4em;font-size:0.8em" readonly="readonly"></textarea>
 	<span id="urlcopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span>
 </div>
+
+<pre id="perlinfo" style="margin-top:0.5em"></pre>
 
 </body>
 </html>

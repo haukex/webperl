@@ -203,6 +203,10 @@ $ta_flags->change(\&update);
 $ta_flags->keyup( \&update);
 update();
 
+$ta_regex->on('input', sub {
+	$ta_regex->height($ta_regex->[0]->{scrollHeight});
+});
+
 sub update {
 	my $regex = $ta_regex->val;
 	my $flags = $ta_flags->val;
@@ -217,7 +221,9 @@ sub update {
 	# check regex for syntax errors
 	my ($warn,$err) = ('','');
 	$warn .= "Notice: The empty pattern has special behavior, see perlop!\n"
-		."        Here, a workaround is used so it acts as a true empty pattern." unless length $regex;
+		."        Here, a workaround is used so it acts as a true empty pattern.\n" unless length $regex;
+	$warn .= "\\n is recommended over literal newlines\n" if $regex=~/\n/ && $flags!~/x/;
+	$warn .= "\\t is recommended over literal tabs\n" if $regex=~/\t/ && $flags!~/x/;
 	my $ok = do {
 		local $SIG{__WARN__} = sub { $warn .= shift };
 		eval( $precode.($re_debug?'use re "debug";':'')."''=~$regex_str;1") };
@@ -293,9 +299,7 @@ sub update {
 		    print "### Sample: \"$sample\"\n";
 		ENDCODE
 		$sampcode =~ s{__SAMPLES__}{ join ",\n", map {"        ".pp($_)} @samps }e;
-		
 		$sampcode .= $precode=~s/^/    /mgr if length $precode;
-		
 		if ($flags=~/g/) {
 			$sampcode .= <<~'ENDCODE';
 			    while ( $sample =~ __REGEX__ ) {
@@ -313,7 +317,12 @@ sub update {
 			    }
 			ENDCODE
 		}
-		$sampcode =~ s/__REGEX__/$regex_str/;
+		my $re = $regex_str;
+		if ( $re=~/\n/ && $flags=~/x/ ) {
+			$re =~ s/^/            /mg;
+			$re = "\n".$re;
+		}
+		$sampcode =~ s/__REGEX__/$re/;
 		$sampcode .= "}\n";
 		$samplecode_ta->text($sampcode);
 	}
@@ -343,6 +352,7 @@ sub hashchange {
 	}
 	if (exists $res{regex} && exists $res{flags}) {
 		$ta_regex->text($res{regex});
+		$ta_regex->height($ta_regex->[0]->{scrollHeight});
 		$ta_flags->text($res{flags});
 		if (exists $res{pre}) {
 			$precode_ta->text($res{pre});

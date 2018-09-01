@@ -152,6 +152,29 @@ $re_debug_hide->click(sub{
 $re_debug_hide->hide;
 $ta_debugout->hide;
 
+my $sampcodebtn = $jq->('#sampcodebtn');
+my $codecopy = $jq->('#codecopy');
+my $samplecode_ta = $jq->('#samplecode');
+$sampcodebtn->click(sub{
+	if ($samplecode_ta->is(':visible')) {
+		$samplecode_ta->hide;
+		$codecopy->hide;
+		$sampcodebtn->text('Show Example Perl Code');
+	}
+	else {
+		$samplecode_ta->show;
+		$codecopy->show;
+		$sampcodebtn->text('Hide Example Perl Code');
+		update();
+	}
+});
+$codecopy->click(sub {
+	$samplecode_ta->[0]->select;
+	js(q{ document.execCommand("copy"); });
+});
+$samplecode_ta->hide;
+$codecopy->hide;
+
 my $thisurl_ta = $jq->("#thisurl");
 my $ta_regex = $jq->("#regex");
 my $ta_flags = $jq->("#flags");
@@ -172,6 +195,7 @@ sub update {
 		"NOTE: The empty regex $regex_str requires a workaround with /(?:)/," # https://www.perlmonks.org/?node_id=1221517
 		."\n this will be reflected in the debug output";
 	
+	# check regex for syntax errors
 	my ($warn,$err) = ('','');
 	$warn .= "Notice: The empty pattern has special behavior, see perlop!\n"
 		."        Here, a workaround is used so it acts as a true empty pattern." unless length $regex;
@@ -185,6 +209,7 @@ sub update {
 	$warnmsgs->text($warn);
 	return if !$ok;
 	
+	# apply regex to the samples and do highlighting
 	my @samps;
 	for my $samptxt ($jq->('.samptxt')->@*) {
 		$samptxt = $jq->($samptxt);
@@ -235,6 +260,44 @@ sub update {
 		}
 	}
 	
+	# generate sample Perl code
+	if ($samplecode_ta->is(':visible')) {
+		my $sampcode = <<~'ENDCODE';
+		use warnings;
+		use strict;
+		
+		my @samples = (
+		__SAMPLES__
+		    );
+		
+		for my $sample (@samples) {
+		    print "### Sample: \"$sample\"\n";
+		ENDCODE
+		$sampcode =~ s{__SAMPLES__}{ join ",\n", map {"        ".pp($_)} @samps }e;
+		
+		if ($flags=~/g/) {
+			$sampcode .= <<~'ENDCODE';
+			    while ( $sample =~ __REGEX__ ) {
+			        print "Match! \"$&\"\n";
+			    }
+			ENDCODE
+		}
+		else {
+			$sampcode .= <<~'ENDCODE';
+			    if ( $sample =~ __REGEX__ ) {
+			        print "Match! \"$&\"\n";
+			    }
+			    else {
+			        print "No match!\n";
+			    }
+			ENDCODE
+		}
+		$sampcode =~ s/__REGEX__/$regex_str/;
+		$sampcode .= "}\n";
+		$samplecode_ta->text($sampcode);
+	}
+	
+	# generate URL
 	my $i=1;
 	my $hash = '#' . $jq->param( { regex=>$regex, flags=>$flags,
 		map { "samp".$i++ => $_ } @samps } );
@@ -297,7 +360,13 @@ js('$(window)')->on('hashchange',\&hashchange);
 	<pre class="samptxt">Oh, what a wonderful world!</pre>
 </div>
 <div style="text-align:right">
-	<span id="addsamp" style="cursor:pointer">Add Sample</span>
+	<button id="addsamp">Add Sample</button>
+</div>
+
+<div style="margin-top:0.5em">
+	<button id="sampcodebtn">Show Example Perl Code</button>
+	<span id="codecopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span><br/>
+	<textarea id="samplecode" rows="20" cols="80" style="font-size:0.8em" readonly="readonly"></textarea>
 </div>
 
 <div style="margin-top:0.5em">

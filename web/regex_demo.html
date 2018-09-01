@@ -123,8 +123,9 @@ sub newsamp {
 	$samp->insertBefore($addsamp->parent);
 	sample_init($samp);
 	update();
+	return $samp;
 }
-$addsamp->click(sub { newsamp() });
+$addsamp->click(sub { newsamp('')->click });
 
 our $re_debug=0;
 my $ta_debugout = $jq->('#debugout');

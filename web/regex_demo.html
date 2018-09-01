@@ -65,6 +65,8 @@ textarea.samp_ta {
 use warnings;
 use 5.028;
 use WebPerl qw/js/;
+use File::Temp qw/tempfile/;
+use Data::Dumper ();
 my $jq = js('jQuery');
 
 $jq->('#perlinfo')->text("perl $^V");
@@ -111,12 +113,30 @@ sub newsamp {
 }
 $addsamp->click(sub { newsamp() });
 
-my $debug=0;
-my $re_debug = $jq->('#re_debug');
-$re_debug->change(sub {
-	$debug = $re_debug->is(':checked');
-	update() if $debug;
+our $re_debug=0;
+my $ta_debugout = $jq->('#debugout');
+my $re_debug_hide = $jq->('#re_debug_hide');
+$jq->('#re_debug')->click(sub {
+	open my $olderr, '>&', \*STDERR or die "dup STDERR: $!";
+	my ($fh,$fn) = tempfile(UNLINK=>1);
+	open STDERR, '>&', $fh or die "open STDERR: $!";
+	
+	{ local $re_debug=1; update(); }
+	
+	open STDERR, '>&', $olderr or die "dup \$olderr: $!";
+	close $fh;
+	my $err = do { open my $fh, '<', $fn or die $!; local $/; <$fh> };
+	
+	$ta_debugout->text($err);
+	$ta_debugout->show;
+	$re_debug_hide->show;
 });
+$re_debug_hide->click(sub{
+	$re_debug_hide->hide;
+	$ta_debugout->hide;
+});
+$re_debug_hide->hide;
+$ta_debugout->hide;
 
 my $thisurl_ta = $jq->("#thisurl");
 my $ta_regex = $jq->("#regex");
@@ -132,12 +152,12 @@ sub update {
 	my $regex = $ta_regex->val;
 	my $flags = $ta_flags->val;
 	my $regex_str = 'm{'.$regex.'}'.$flags;
-	$debug and say STDERR "##### ##### ##### ##### ##### $regex_str ##### ##### ##### ##### #####";
+	$re_debug and say STDERR "##### ##### ##### $regex_str ##### ##### #####";
 	
 	my $err = '';
 	my $ok = do {
 		local $SIG{__WARN__} = sub { $err .= shift };
-		eval( ($debug?'use re "debug";':'')."''=~$regex_str;1") };
+		eval( ($re_debug?'use re "debug";':'')."''=~$regex_str;1") };
 	$ok or $err .= $@||"Unknown error";
 	$err =~ s/\bat .+? line \d+(?:\.$|,\h)//mg;
 	$errmsgs->text($err);
@@ -147,13 +167,15 @@ sub update {
 	for my $samptxt ($jq->('.samptxt')->@*) {
 		$samptxt = $jq->($samptxt);
 		my $text = $samptxt->text;
-		$debug and say STDERR "----- ----- ----- ----- ----- \"$text\" ----- ----- ----- ----- -----";
+		$re_debug and say STDERR "----- ----- ----- ",
+			Data::Dumper->new([$text])->Useqq(1)->Terse(1)->Indent(0)->Dump,
+			" ----- ----- -----";
 		push @samps, $text;
 		my @m;
 		my $code = $flags=~/g/
 			? 'push @m,[[@-],[@+]] while $text=~'.$regex_str.'; scalar @m'
 			: '$text=~'.$regex_str.' and push @m,[[@-],[@+]]; scalar @m';
-		$debug and $code = 'use re "debug";'.$code;
+		$re_debug and $code = 'use re "debug";'.$code;
 		if (eval $code) {
 			$samptxt->removeClass('nomatch');
 			my %hi;
@@ -253,8 +275,11 @@ js('$(window)')->on('hashchange',\&hashchange);
 <pre id="perlinfo" style="margin-top:0.5em"></pre>
 
 <div style="margin-top:0.5em">
-	<input type="checkbox" id="re_debug" />
-	<label for="re_debug"><tt>use re "debug";</tt> (see console)</label>
+	<div>
+		<button id="re_debug"><tt>use re "debug";</tt></button>
+		<button id="re_debug_hide">Hide</button>
+	</div>
+	<textarea id="debugout" rows="25" cols="80" readonly="readonly"></textarea>
 </div>
 
 </body>

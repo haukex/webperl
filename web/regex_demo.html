@@ -44,7 +44,10 @@ textarea.samp_ta {
 	float: right;
 	cursor: pointer;
 }
-.nomatch {
+.re_warns {
+	background-color: rgba(255,255,200,255);
+}
+.nomatch, .re_errors {
 	background-color: rgba(255,200,200,255);
 }
 .match {
@@ -152,6 +155,7 @@ my $thisurl_ta = $jq->("#thisurl");
 my $ta_regex = $jq->("#regex");
 my $ta_flags = $jq->("#flags");
 my $errmsgs = $jq->("#errmsgs");
+my $warnmsgs = $jq->("#warnmsgs");
 $ta_regex->change(\&update);
 $ta_regex->keyup( \&update);
 $ta_flags->change(\&update);
@@ -163,14 +167,21 @@ sub update {
 	my $flags = $ta_flags->val;
 	my $regex_str = 'm{'.$regex.'}'.$flags;
 	$re_debug and say STDERR "##### ##### ##### $regex_str ##### ##### #####";
+	$re_debug and !length($regex) and say STDERR
+		"NOTE: The empty regex $regex_str requires a workaround with /(?:)/," # https://www.perlmonks.org/?node_id=1221517
+		."\n this will be reflected in the debug output";
 	
-	my $err = '';
+	my ($warn,$err) = ('','');
+	$warn .= "Notice: The empty pattern has special behavior, see perlop!\n"
+		."        Here, a workaround is used so it acts as a true empty pattern." unless length $regex;
 	my $ok = do {
-		local $SIG{__WARN__} = sub { $err .= shift };
+		local $SIG{__WARN__} = sub { $warn .= shift };
 		eval( ($re_debug?'use re "debug";':'')."''=~$regex_str;1") };
 	$ok or $err .= $@||"Unknown error";
-	$err =~ s/\bat .+? line \d+(?:\.$|,\h)//mg;
+	s/\bat .+? line \d+(?:\.$|,\h)//mg for $warn,$err;
+	$ok or $err .= "Matching aborted!";
 	$errmsgs->text($err);
+	$warnmsgs->text($warn);
 	return if !$ok;
 	
 	my @samps;
@@ -180,11 +191,12 @@ sub update {
 		$re_debug and say STDERR "----- ----- ----- ",pp($text)," ----- ----- -----";
 		push @samps, $text;
 		my @m;
-		my $code = $flags=~/g/
-			? 'push @m,[[@-],[@+]] while $text=~'.$regex_str.'; scalar @m'
-			: '$text=~'.$regex_str.' and push @m,[[@-],[@+]]; scalar @m';
-		$re_debug and $code = 'use re "debug";'.$code;
-		if (eval $code) {
+		my $code = ($re_debug?'use re "debug";':'')
+			. (length($regex)?'':"''=~/(?:)/$flags;")
+			. ($flags=~/g/
+				? 'push @m,[[@-],[@+]] while $text=~'.$regex_str.'; scalar @m'
+				: '$text=~'.$regex_str.' and push @m,[[@-],[@+]]; scalar @m');
+		if (eval $code) { #TODO Later: maybe merge this with the above error checking?
 			$samptxt->removeClass('nomatch');
 			my %hi;
 			$re_debug and say STDERR '@-/@+ are ',pp(\@m);
@@ -273,7 +285,8 @@ js('$(window)')->on('hashchange',\&hashchange);
 	><tt style="vertical-align: text-bottom;">}</tt
 	><textarea id="flags" rows="1" cols="5" style="height:1.2em"
 		title="Flags for Regular Expression">gi</textarea></div>
-<pre id="errmsgs" class="nomatch"></pre>
+<pre id="warnmsgs" class="re_warns"></pre>
+<pre id="errmsgs" class="re_errors"></pre>
 </div>
 
 <div class="sample">

@@ -111,9 +111,17 @@ sub newsamp {
 }
 $addsamp->click(sub { newsamp() });
 
+my $debug=0;
+my $re_debug = $jq->('#re_debug');
+$re_debug->change(sub {
+	$debug = $re_debug->is(':checked');
+	update() if $debug;
+});
+
 my $thisurl_ta = $jq->("#thisurl");
 my $ta_regex = $jq->("#regex");
 my $ta_flags = $jq->("#flags");
+my $errmsgs = $jq->("#errmsgs");
 $ta_regex->change(\&update);
 $ta_regex->keyup( \&update);
 $ta_flags->change(\&update);
@@ -124,16 +132,28 @@ sub update {
 	my $regex = $ta_regex->val;
 	my $flags = $ta_flags->val;
 	my $regex_str = 'm{'.$regex.'}'.$flags;
-	eval "''=~$regex_str;1" or return;
+	$debug and say STDERR "##### ##### ##### ##### ##### $regex_str ##### ##### ##### ##### #####";
+	
+	my $err = '';
+	my $ok = do {
+		local $SIG{__WARN__} = sub { $err .= shift };
+		eval( ($debug?'use re "debug";':'')."''=~$regex_str;1") };
+	$ok or $err .= $@||"Unknown error";
+	$err =~ s/\bat .+? line \d+(?:\.$|,\h)//mg;
+	$errmsgs->text($err);
+	return if !$ok;
+	
 	my @samps;
 	for my $samptxt ($jq->('.samptxt')->@*) {
 		$samptxt = $jq->($samptxt);
 		my $text = $samptxt->text;
+		$debug and say STDERR "----- ----- ----- ----- ----- \"$text\" ----- ----- ----- ----- -----";
 		push @samps, $text;
 		my @m;
 		my $code = $flags=~/g/
 			? 'push @m,[[@-],[@+]] while $text=~'.$regex_str.'; scalar @m'
 			: '$text=~'.$regex_str.' and push @m,[[@-],[@+]]; scalar @m';
+		$debug and $code = 'use re "debug";'.$code;
 		if (eval $code) {
 			$samptxt->removeClass('nomatch');
 			my %hi;
@@ -211,6 +231,7 @@ js('$(window)')->on('hashchange',\&hashchange);
 	><tt style="vertical-align: text-bottom;">}</tt
 	><textarea id="flags" rows="1" cols="5" style="height:1.2em"
 		title="Flags for Regular Expression">gi</textarea></div>
+<pre id="errmsgs" class="nomatch"></pre>
 </div>
 
 <div class="sample">
@@ -230,6 +251,11 @@ js('$(window)')->on('hashchange',\&hashchange);
 </div>
 
 <pre id="perlinfo" style="margin-top:0.5em"></pre>
+
+<div style="margin-top:0.5em">
+	<input type="checkbox" id="re_debug" />
+	<label for="re_debug"><tt>use re "debug";</tt> (see console)</label>
+</div>
 
 </body>
 </html>

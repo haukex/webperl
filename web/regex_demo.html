@@ -366,7 +366,7 @@ js('$(window)')->on('hashchange',\&hashchange);
 </head>
 <body>
 
-<div style="margin-bottom:1em"><b>Perl Regex Tester</b>
+<div style="margin-bottom:1em;font-size:1.2em"><b>Perl Regex Tester</b>
 - powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
 
 <div style="margin-bottom:1em">
@@ -404,20 +404,20 @@ my $x = "foo";  # example
 </div>
 
 <div style="margin-top:0.5em">
-	URL:
-	<textarea id="thisurl" rows="2" cols="80" style="height:2.4em;font-size:0.8em" readonly="readonly"></textarea>
-	<span id="urlcopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span>
-</div>
-
-<pre id="perlinfo" style="margin-top:0.5em"></pre>
-
-<div style="margin-top:0.5em">
 	<div>
 		<button id="re_debug"><tt>use re "debug";</tt></button>
 		<button id="re_debug_hide">Hide</button>
 	</div>
 	<textarea id="debugout" rows="25" cols="80" readonly="readonly"></textarea>
 </div>
+
+<div style="margin-top:0.5em">
+	URL:
+	<textarea id="thisurl" rows="2" cols="80" style="height:2.4em;font-size:0.8em" readonly="readonly"></textarea>
+	<span id="urlcopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span>
+</div>
+
+<pre id="perlinfo" style="margin-top:0.5em"></pre>
 
 </body>
 </html>

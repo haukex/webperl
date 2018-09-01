@@ -175,6 +175,23 @@ $codecopy->click(sub {
 $samplecode_ta->hide;
 $codecopy->hide;
 
+my $precodebtn = $jq->('#precodebtn');
+my $precode_ta = $jq->('#precode');
+$precodebtn->click(sub{
+	if ($precode_ta->is(':visible')) {
+		$precode_ta->hide;
+		$precodebtn->text("Add Preamble Code");
+	}
+	else {
+		$precode_ta->show;
+		$precodebtn->text("Disable Preamble Code");
+	}
+	update();
+});
+$precode_ta->hide;
+$precode_ta->change(\&update);
+$precode_ta->keyup( \&update);
+
 my $thisurl_ta = $jq->("#thisurl");
 my $ta_regex = $jq->("#regex");
 my $ta_flags = $jq->("#flags");
@@ -189,6 +206,8 @@ update();
 sub update {
 	my $regex = $ta_regex->val;
 	my $flags = $ta_flags->val;
+	my $precode = $precode_ta->is(':visible') ? $precode_ta->val : '';
+	$precode .= "\n" if length $precode && substr($precode,-1) ne "\n";
 	my $regex_str = 'm{'.$regex.'}'.$flags;
 	$re_debug and say STDERR "##### ##### ##### $regex_str ##### ##### #####";
 	$re_debug and !length($regex) and say STDERR
@@ -201,7 +220,7 @@ sub update {
 		."        Here, a workaround is used so it acts as a true empty pattern." unless length $regex;
 	my $ok = do {
 		local $SIG{__WARN__} = sub { $warn .= shift };
-		eval( ($re_debug?'use re "debug";':'')."''=~$regex_str;1") };
+		eval( $precode.($re_debug?'use re "debug";':'')."''=~$regex_str;1") };
 	$ok or $err .= $@||"Unknown error";
 	s/\bat .+? line \d+(?:\.$|,\h)//mg for $warn,$err;
 	$ok or $err .= "Matching aborted!";
@@ -217,7 +236,7 @@ sub update {
 		$re_debug and say STDERR "----- ----- ----- ",pp($text)," ----- ----- -----";
 		push @samps, $text;
 		my @m;
-		my $code = ($re_debug?'use re "debug";':'')
+		my $code = $precode . ($re_debug?'use re "debug";':'')
 			. (length($regex)?'':"''=~/(?:)/$flags;")
 			. ($flags=~/g/
 				? 'push @m,[[@-],[@+]] while $text=~'.$regex_str.'; scalar @m'
@@ -275,6 +294,8 @@ sub update {
 		ENDCODE
 		$sampcode =~ s{__SAMPLES__}{ join ",\n", map {"        ".pp($_)} @samps }e;
 		
+		$sampcode .= $precode=~s/^/    /mgr if length $precode;
+		
 		if ($flags=~/g/) {
 			$sampcode .= <<~'ENDCODE';
 			    while ( $sample =~ __REGEX__ ) {
@@ -300,6 +321,7 @@ sub update {
 	# generate URL
 	my $i=1;
 	my $hash = '#' . $jq->param( { regex=>$regex, flags=>$flags,
+		( length $precode ? (pre=>$precode) : () ),
 		map { "samp".$i++ => $_ } @samps } );
 	my $baseurl = js('window.location')->{href} =~ s/#.*\z//r;
 	$thisurl_ta->text( $baseurl . $hash );
@@ -322,6 +344,11 @@ sub hashchange {
 	if (exists $res{regex} && exists $res{flags}) {
 		$ta_regex->text($res{regex});
 		$ta_flags->text($res{flags});
+		if (exists $res{pre}) {
+			$precode_ta->text($res{pre});
+			$precode_ta->show;
+			$precodebtn->text("Disable Preamble Code");
+		}
 		if (exists $res{samp1}) {
 			$jq->(".sample")->remove();
 			for (my $i=1;exists $res{"samp$i"};$i++) {
@@ -341,6 +368,13 @@ js('$(window)')->on('hashchange',\&hashchange);
 
 <div style="margin-bottom:1em"><b>Perl Regex Tester</b>
 - powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
+
+<div style="margin-bottom:1em">
+<div><button id="precodebtn">Add Preamble Code</button></div>
+<textarea id="precode" rows="3" cols="80">
+my $x = "foo";  # example
+</textarea>
+</div>
 
 <div style="margin-bottom:1em">
 <div><tt style="vertical-align: top;">m{</tt

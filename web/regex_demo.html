@@ -49,9 +49,16 @@ textarea.samp_ta {
 }
 .match {
 	background-color: lightblue;
+	border: 1px solid blue;
 }
 .capture {
 	background-color: lightgreen;
+}
+.capture.zlen {
+	border: 1px solid green;
+}
+.zlen:hover:after {
+	content: " ";
 }
 </style>
 
@@ -68,6 +75,9 @@ use WebPerl qw/js/;
 use File::Temp qw/tempfile/;
 use Data::Dumper ();
 my $jq = js('jQuery');
+
+sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
+	->Sortkeys(1)->Quotekeys(0)->Indent(0)->Purity(1)->Dump }
 
 $jq->('#perlinfo')->text("perl $^V");
 
@@ -167,9 +177,7 @@ sub update {
 	for my $samptxt ($jq->('.samptxt')->@*) {
 		$samptxt = $jq->($samptxt);
 		my $text = $samptxt->text;
-		$re_debug and say STDERR "----- ----- ----- ",
-			Data::Dumper->new([$text])->Useqq(1)->Terse(1)->Indent(0)->Dump,
-			" ----- ----- -----";
+		$re_debug and say STDERR "----- ----- ----- ",pp($text)," ----- ----- -----";
 		push @samps, $text;
 		my @m;
 		my $code = $flags=~/g/
@@ -179,19 +187,31 @@ sub update {
 		if (eval $code) {
 			$samptxt->removeClass('nomatch');
 			my %hi;
-			for my $m (@m) {
-				my ($s,$e) = @$m;
-				$hi{shift @$s}{match}++;
-				$hi{$_}{cap}++ for @$s;
-				$hi{$_}{end}++ for @$e;
+			$re_debug and say STDERR '@-/@+ are ',pp(\@m);
+			for my $i (0..$#m) {
+				my ($s,$e) = $m[$i]->@*;
+				for my $j (0..$#$e) { # Use @+ to count all capture groups instead of @-!
+					next if !defined($$s[$j]) && !defined($$e[$j]);
+					my $name = "Match ".($i+1).($j?" Capture Group $j":"");
+					if ($$s[$j]==$$e[$j]) {
+						push @{ $hi{$$s[$j]}{
+								$j==0 ? 'zlen_match' : 'zlen_cap' }
+							}, $name  }
+					else {
+						push @{ $hi{$$s[$j]}{ $j==0 ? 'match' : 'cap' } }, $name;
+						$hi{$$e[$j]}{end}++  }
+				}
 			}
+			$re_debug and say STDERR 'highlights are ',pp(\%hi);
 			my $html='';
 			my $p=0;
 			for my $i (sort {$a<=>$b} keys %hi) {
 				$html .= substr($text,$p,$i-$p);
-				$html .= '</span>' for 1..$hi{$i}{end}//0;
-				$html .= '<span class="match">' for 1..$hi{$i}{match}//0;
-				$html .= '<span class="capture">' for 1..$hi{$i}{cap}//0;
+				$html .= '</span>' x ($hi{$i}{end}//0);
+				$html .= "<span class='zlen match' title='$_'></span>" for @{ $hi{$i}{zlen_match}//[] };
+				$html .= "<span class='zlen capture' title='$_'></span>" for @{ $hi{$i}{zlen_cap}//[] };
+				$html .= "<span class='match' title='$_'>" for @{ $hi{$i}{match}//[] };
+				$html .= "<span class='capture' title='$_'>" for @{ $hi{$i}{cap}//[] };
 			} continue { $p=$i }
 			$html .= substr($text,$p);
 			$samptxt->html($html);

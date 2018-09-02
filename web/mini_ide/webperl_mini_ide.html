@@ -86,6 +86,7 @@ function run_perl_iframe (argv, state_callback, done_callback) {
 			if (from!='Ended' && to=='Ended') {
 				iframe.remove();
 				if (done_callback) done_callback(outbuf);
+				URL.revokeObjectURL(src);
 			}
 		} );
 		IFramePerl.init(function () {

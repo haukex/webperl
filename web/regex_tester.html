@@ -252,6 +252,7 @@ update();
 sub run_code {
 	my ($context,$code,$input,$callback) = @_;
 	my (@warns,@output);
+	#TODO Later: Capture STDOUT too? (and STDERR, instead of $SIG{__WARN__})?
 	my $ok = do {
 		local $SIG{__WARN__} = sub { push @warns, shift };
 		eval "package RunCode {$code\n};1" };

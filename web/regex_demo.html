@@ -109,11 +109,13 @@ sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
 
 sub sample_init {
 	my $samp = shift;
+	state $samp_id = 'a';
+	$samp->attr('id',"samp_".$samp_id++) unless $samp->attr('id');
 	my $samptxt = $samp->children(".samptxt");
 	my $samp_ta = $jq->('<textarea/>', {class=>"samp_ta"});
 	$samp_ta->hide();
 	$samp_ta->appendTo($samp);
-	my $closebtn = $jq->('<div/>', {html=>"&#x1F5D9;",class=>"closebtn",
+	my $closebtn = $jq->('<div/>', {html=>"&#x274E;",class=>"closebtn",
 		title=>"Delete Sample"});
 	$closebtn->appendTo($samp);
 	$jq->('<pre/>', {class=>'re_warns'})->appendTo($samp);
@@ -248,18 +250,16 @@ hashchange();
 update();
 
 sub run_code {
-	my ($code,$inp) = @_;
-	my @warns;
+	my ($context,$code,$input,$callback) = @_;
+	my (@warns,@output);
 	my $ok = do {
 		local $SIG{__WARN__} = sub { push @warns, shift };
-		package run_code;
-		our $input = $inp;
-		our @output = ();
-		eval "$code;1" };
+		eval "package RunCode {$code\n};1" };
 	my $err = $ok ? undef : $@||"Unknown error";
 	defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
 	chomp(@warns);
-	return { warns=>\@warns, $ok ? (out=>\@run_code::output) : (err=>$err) }
+	$callback->( { ctx=>$context, warns=>\@warns,
+		$ok ? (out=>\@output) : (err=>$err) } );
 }
 
 sub update {
@@ -275,7 +275,6 @@ sub actual_update {
 	my $precode = $precode_ta->is(':visible') ? $precode_ta->val : '';
 	$precode .= "\n" if length $precode && substr($precode,-1) ne "\n";
 	my $regex_str = 'm{'.$regex.'}'.$flags;
-	$re_debug and say STDERR "##### ##### ##### $regex_str ##### ##### #####";
 	$re_debug and !length($regex) and say STDERR
 		"NOTE: The empty regex $regex_str requires a workaround with /(?:)/," # https://www.perlmonks.org/?node_id=1221517
 		."\n this will be reflected in the debug output";
@@ -288,61 +287,18 @@ sub actual_update {
 	state $warnmsgs = $jq->("#warnmsgs");
 	$warnmsgs->text($warn);
 	
-	# apply regex to the samples and do highlighting
 	my @samps;
 	for my $sample (map {$jq->($_)} $jq->('.sample')->@*) {
 		my $samptxt = $sample->children('.samptxt');
-		my $re_warns = $sample->children('.re_warns');
-		my $re_errs = $sample->children('.re_errors');
 		my $text = $samptxt->text;
-		$re_debug and say STDERR "----- ----- ----- ",pp($text)," ----- ----- -----";
-		push @samps, $text;
-		my $code = $precode . ($re_debug?'use re "debug";':'')
+		push @samps, $text; # for use below
+		my $code = $precode . ($re_debug?'use re "debug";'
+			. 'say STDERR '.pp('##### ##### ##### '.pp($text).' =~ '.pp($regex_str).' ##### ##### #####').';':'')
 			. (length($regex)?'':"''=~/(?:)/$flags;")
 			. 'push @output,[[@-],[@+]] ' . ($flags=~/g/?'while':'if') . ' $input=~'.$regex_str;
-		my $rv = run_code($code, $text);
-		$re_warns->text( join "\n", $rv->{warns}->@* );
-		if ( $rv->{out} && $rv->{out}->@* ) {
-			$re_errs->text('');
-			$samptxt->removeClass('nomatch');
-			my %hi;
-			$re_debug and say STDERR '@-/@+ are ',pp($rv->{out});
-			for my $i (0..$#{$rv->{out}}) {
-				my ($s,$e) = $rv->{out}[$i]->@*;
-				for my $j (0..$#$e) { # Use @+ to count all capture groups instead of @-!
-					next if !defined($$s[$j]) && !defined($$e[$j]);
-					my $name = "Match ".($i+1).($j?" Capture Group $j":"");
-					if ($$s[$j]==$$e[$j]) {
-						push @{ $hi{$$s[$j]}{
-								$j==0 ? 'zlen_match' : 'zlen_cap' }
-							}, $name  }
-					else {
-						push @{ $hi{$$s[$j]}{ $j==0 ? 'match' : 'cap' } }, $name;
-						$hi{$$e[$j]}{end}++  }
-				}
-			}
-			$re_debug and say STDERR 'highlights are ',pp(\%hi);
-			my $html='';
-			my $p=0;
-			for my $i (sort {$a<=>$b} keys %hi) {
-				$html .= substr($text,$p,$i-$p);
-				$html .= '</span>' x ($hi{$i}{end}//0);
-				$html .= "<span class='zlen match' title='$_'></span>" for @{ $hi{$i}{zlen_match}//[] };
-				$html .= "<span class='zlen capture' title='$_'></span>" for @{ $hi{$i}{zlen_cap}//[] };
-				$html .= "<span class='match' title='$_'>" for @{ $hi{$i}{match}//[] };
-				$html .= "<span class='capture' title='$_'>" for @{ $hi{$i}{cap}//[] };
-			} continue { $p=$i }
-			$html .= substr($text,$p);
-			$samptxt->html($html);
-		}
-		else {
-			$re_errs->text($rv->{out} ? '' : $rv->{err});
-			$rv->{out} && $samptxt->addClass('nomatch');
-			$samptxt->text($text);
-		}
+		run_code($sample->attr('id'), $code, $text, \&run_code_callback);
 	}
 	
-	# generate sample Perl code
 	if ($samplecode_ta->is(':visible')) {
 		my $sampcode = <<~'ENDCODE';
 		use warnings;
@@ -361,6 +317,7 @@ sub actual_update {
 			$sampcode .= <<~'ENDCODE';
 			    while ( $sample =~ __REGEX__ ) {
 			        print "Match! \"$&\"\n";
+			        # can use $1, $2, etc. here
 			    }
 			ENDCODE
 		}
@@ -368,6 +325,7 @@ sub actual_update {
 			$sampcode .= <<~'ENDCODE';
 			    if ( $sample =~ __REGEX__ ) {
 			        print "Match! \"$&\"\n";
+			        # can use $1, $2, etc. here
 			    }
 			    else {
 			        print "No match!\n";
@@ -384,7 +342,6 @@ sub actual_update {
 		$samplecode_ta->text($sampcode);
 	}
 	
-	# generate URL
 	my $i=1;
 	my $hash = '#' . $jq->param( { regex=>$regex, flags=>$flags,
 		( length $precode ? (pre=>$precode) : () ),
@@ -392,6 +349,58 @@ sub actual_update {
 		map { "samp".$i++ => $_ } @samps } );
 	my $baseurl = js('window.location')->{href} =~ s/#.*\z//r;
 	$thisurl_ta->text( $baseurl . $hash );
+}
+sub run_code_callback {
+	my $rv = shift;
+	my $sample = $jq->('#'.$rv->{ctx});
+	if (!$sample->{length}) {
+		warn "got callback for nonexistent sample ".$rv->{context};
+		return }
+	my $samptxt  = $sample->children('.samptxt');
+	my $re_warns = $sample->children('.re_warns');
+	my $re_errs  = $sample->children('.re_errors');
+	my $text = $samptxt->text;
+	$re_warns->text( join "\n", $rv->{warns}->@* );
+	if ( $rv->{out} && $rv->{out}->@* ) {
+		$re_errs->text('');
+		$samptxt->removeClass('nomatch');
+		my %hi;
+		$re_debug and say STDERR '@-/@+ are ',pp($rv->{out});
+		for my $i (0..$#{$rv->{out}}) {
+			my ($s,$e) = $rv->{out}[$i]->@*;
+			for my $j (0..$#$e) { # Use @+ to count all capture groups instead of @-!
+				next if !defined($$s[$j]) && !defined($$e[$j]);
+				my $name = "Match ".($i+1).($j?" Capture Group $j":"");
+				if ($$s[$j]==$$e[$j]) {
+					push @{ $hi{$$s[$j]}{
+							$j==0 ? 'zlen_match' : 'zlen_cap' }
+						}, $name  }
+				else {
+					push @{ $hi{$$s[$j]}{ $j==0 ? 'match' : 'cap' } }, $name;
+					$hi{$$e[$j]}{end}++  }
+			}
+		}
+		$re_debug and say STDERR 'highlights are ',pp(\%hi);
+		my $html='';
+		my $p=0;
+		for my $i (sort {$a<=>$b} keys %hi) {
+			$html .= substr($text,$p,$i-$p);
+			#TODO: capture groups overlapping following matches don't work right
+			# e.g. "Oh, what a wonderful world!" =~ m{a(.)(?=.(....))}gi
+			$html .= '</span>' x ($hi{$i}{end}//0);
+			$html .= "<span class='zlen match' title='$_'></span>" for @{ $hi{$i}{zlen_match}//[] };
+			$html .= "<span class='zlen capture' title='$_'></span>" for @{ $hi{$i}{zlen_cap}//[] };
+			$html .= "<span class='match' title='$_'>" for @{ $hi{$i}{match}//[] };
+			$html .= "<span class='capture' title='$_'>" for @{ $hi{$i}{cap}//[] };
+		} continue { $p=$i }
+		$html .= substr($text,$p);
+		$samptxt->html($html);
+	}
+	else {
+		$re_errs->text($rv->{out} ? '' : $rv->{err});
+		$rv->{out} && $samptxt->addClass('nomatch');
+		$samptxt->text($text);
+	}
 }
 
 sub hashchange {

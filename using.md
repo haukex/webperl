@@ -344,6 +344,7 @@ It also provides the functions `unregister`, `sub_once`, and `sub1`
 in ["Memory Management and Anonymous `sub`s"](#memory-management-and-anonymous-subs).
 For convenience, it can also re-export `encode_json`, so you can
 request it directly from `WebPerl` instead of needing to `use` another module.
+Additional functions, like `js_new()`, are documented below.
 All functions are exported only on request.
 
 Note that WebPerl will also enable autoflush for `STDOUT`.
@@ -439,6 +440,21 @@ For example, currently, `Perl.eval()` always returns a string, but could in the
 future be extended to return more than that, similar to `WebPerl::js()`,
 and then the passing of Perl values to JavaScript could be accomplished
 differently as well.
+
+### `js_new()`
+
+This function is a convenience function for calling JavaScript's `new`.
+The first argument is the name of the class, the following arguments are
+passed to the constructor. It returns the same thing as the `js()` function,
+in this case that would be the new object. For example:
+
+	js_new('Blob', ["<html></html>"], {type=>"text/html;charset=utf-8"})
+
+is the same as calling this in JavaScript:
+
+	new Blob(["<html></html>"], {type:"text/html;charset=utf-8"})
+
+This function was added in WebPerl `v0.05-beta`.
 
 
 ***

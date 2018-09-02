@@ -124,7 +124,7 @@ GITSTUFF: {
 	my $myhead = git 'log', '-1', '--format=%h', $C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	my $remhead = git 'log', '-1', '--format=%h', 'origin/'.$C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	say STDERR "# Local branch is at $myhead, remote is $remhead";
-	if ($myhead ne $remhead) {
+	if ($myhead ne $remhead) { #TODO Later: This should also check which git commit is newer!
 		if (prompt("Would you like to update? WARNING: Unsaved local changes may be lost! [Yn]","y")=~/^\s*y/i) {
 			eval {
 				if ($C{CLOBBER_BRANCH}) {

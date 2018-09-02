@@ -49,6 +49,15 @@ Limitations
   (Emscripten apparently only supports asm.js dynamic linking when dynamic memory growth is disabled, which is not very useful)
 
 
+Miscellaneous
+-------------
+
+- Generating a [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) value:
+  
+      $ perl -wMstrict -MDigest -le 'open my $fh, "<:raw", "web/webperl.js" or die $!;
+        print Digest->new("SHA-256")->addfile($fh)->b64digest'
+
+
 Prior Art
 ---------
 

@@ -70,8 +70,7 @@ window.onerror = function(event) {
 
 // This is a workaround for Emscripten only being able to call main() once per page load.
 // I wouldn't recommend this for "production" use.
-var baseurl = new URL(window.location);
-baseurl = baseurl.origin + baseurl.pathname.substring(0,baseurl.pathname.lastIndexOf('/'));
+var baseurl = Perl.Util.baseurl(window.location);
 function run_perl_iframe (argv, state_callback, done_callback) {
 	var html = '<html><head><base href="'+baseurl+'"><script src="webperl.js"></scr'+'ipt></head><body></body></html>';
 	var blob = new Blob([html], {type: "text/html;charset=utf-8"});

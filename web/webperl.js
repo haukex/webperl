@@ -27,6 +27,7 @@ var Module;
 var Perl = {
 	trace: false,         // user may enable this
 	endAfterMain: false,  // user may enable this (before Perl.init)
+	Util: {},
 	// internal variables:
 	initStepsLeft: 2, // Must match number of Perl.initStepFinished() calls!
 	state: "Uninitialized",
@@ -179,18 +180,21 @@ var getScriptURL = (function() { // with thanks to https://stackoverflow.com/a/2
 	return function() { return myScript.src; };
 })();
 
+Perl.Util.baseurl = function (urlstr) {
+	var url = new URL(urlstr);
+	if (url.protocol=='file:')
+		return url.href.substring(0, url.href.lastIndexOf('/'));
+	else
+		return url.origin + url.pathname.substring(0, url.pathname.lastIndexOf('/'));
+};
+
 Perl.init = function (readyCallback) {
 	if (Perl.state != "Uninitialized")
 		throw "Perl: can't call init in state "+Perl.state;
 	Perl.changeState("Initializing");
-	var baseurl = new URL(getScriptURL());
-	if (baseurl.protocol=='file:')
-		// Note that a lot of things still won't work for file:// URLs
-		// because of the Same-Origin Policy.
-		// see e.g. https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors/CORSRequestNotHttp
-		baseurl = baseurl.href.substring(0,baseurl.href.lastIndexOf('/'));
-	else
-		baseurl = baseurl.origin + baseurl.pathname.substring(0,baseurl.pathname.lastIndexOf('/'));
+	// Note that a lot of things still won't work for file:// URLs because of the Same-Origin Policy.
+	// see e.g. https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors/CORSRequestNotHttp
+	var baseurl = Perl.Util.baseurl(getScriptURL());
 	Perl.readyCallback = readyCallback;
 	Module = {
 		noInitialRun: true,

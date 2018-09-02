@@ -27,6 +27,8 @@ var Module;
 var Perl = {
 	trace: false,         // user may enable this
 	endAfterMain: false,  // user may enable this (before Perl.init)
+	noMountIdbfs: false,  // user may enable this (before Perl.start)
+	WebPerlVersion: 'v0.05-beta',
 	Util: {},
 	// internal variables:
 	initStepsLeft: 2, // Must match number of Perl.initStepFinished() calls!
@@ -51,7 +53,10 @@ var Perl = {
 
 /* TODO: Embedded script should be able to influence the running of Perl,
  * the cleanest would probably be to set properties on the Perl object,
- * such as Perl.autorun = false or Perl.argv = [...]. */
+ * such as Perl.autorun = false or Perl.argv = [...]. It should be possible
+ * for the user to do this for embedded scripts also! Will probably need
+ * to change the initialization of Perl so that the user can set its properties
+ * *before* loading webperl.js. */
 
 window.addEventListener("load", function () {
 	// Note: to get the content of script tags with jQuery: $('script[type="text/perl"]').html()
@@ -223,6 +228,11 @@ Perl.init = function (readyCallback) {
 		},
 		preRun: [
 			function () {
+				if (Perl.noMountIdbfs) {
+					console.debug("Perl: doing preRun, skipping IndexDB filesystem");
+					Perl.initStepFinished();
+					return;
+				}
 				console.debug("Perl: doing preRun, fetching IndexDB filesystem...");
 				try { FS.mkdir('/mnt'); } catch(e) {}
 				try { FS.mkdir('/mnt/idb'); } catch(e) {}

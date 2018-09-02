@@ -3,11 +3,13 @@ WebPerl Changelog
 =================
 
 
-not yet released: v0.05-beta
+2018-09-02: v0.05-beta
 ----------------------------
 - Added Perl.addStateChangeListener and deprecated Perl.stateChanged
 - Added WebPerl::js_new()
-- ...
+- Added regex_tester.html
+- Added Perl.noMountIdbfs
+- A few other minor fixes and updates
 
 
 2018-08-14: v0.03-beta

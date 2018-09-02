@@ -107,8 +107,6 @@ my $jq = js('jQuery');
 sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
 	->Sortkeys(1)->Quotekeys(0)->Indent(0)->Purity(1)->Dump }
 
-$jq->('#perlinfo')->text("perl $^V");
-
 sub sample_init {
 	my $samp = shift;
 	my $samptxt = $samp->children(".samptxt");
@@ -154,7 +152,7 @@ sub newsamp {
 }
 $addsamp->click(sub { newsamp('')->click });
 
-our $re_debug=0;
+our $re_debug=0; #TODO Later: this is actually a parameter to update()
 my $ta_debugout = $jq->('#debugout');
 my $re_debug_hide = $jq->('#re_debug_hide');
 $jq->('#re_debug')->click(sub {
@@ -188,13 +186,14 @@ $sampcodebtn->click(sub{
 		$codecopy->hide;
 		$sampcodebtn->text('Show Example Perl Code');
 	}
-	else {
-		$samplecode_ta->show;
-		$codecopy->show;
-		$sampcodebtn->text('Hide Example Perl Code');
-		update();
-	}
+	else { sampcode_show() }
 });
+sub sampcode_show {
+	$samplecode_ta->show;
+	$codecopy->show;
+	$sampcodebtn->text('Hide Example Perl Code');
+	update();
+}
 $codecopy->click(sub {
 	$samplecode_ta->[0]->select;
 	js(q{ document.execCommand("copy"); });
@@ -209,29 +208,41 @@ $precodebtn->click(sub{
 		$precode_ta->hide;
 		$precodebtn->text("Add Preamble Code");
 	}
-	else {
-		$precode_ta->show;
-		$precodebtn->text("Disable Preamble Code");
-	}
+	else { precode_show() }
 	update();
 });
+sub precode_show {
+	$precode_ta->text(shift) if @_;
+	$precode_ta->show;
+	$precodebtn->text("Disable Preamble Code");
+}
 $precode_ta->hide;
 $precode_ta->change(\&update);
 $precode_ta->keyup( \&update);
 
 my $thisurl_ta = $jq->("#thisurl");
+$jq->('#urlcopy')->click(sub {
+	$thisurl_ta->[0]->select;
+	js(q{ document.execCommand("copy"); });
+});
+
+$jq->('#perlinfo')->text("perl $^V");
+
 my $ta_regex = $jq->("#regex");
 my $ta_flags = $jq->("#flags");
-my $warnmsgs = $jq->("#warnmsgs");
 $ta_regex->change(\&update);
 $ta_regex->keyup( \&update);
 $ta_flags->change(\&update);
 $ta_flags->keyup( \&update);
-update();
+
+js('$(window)')->on('hashchange',\&hashchange);
 
 $ta_regex->on('input', sub {
 	$ta_regex->height($ta_regex->[0]->{scrollHeight});
 });
+
+hashchange();
+update();
 
 sub run_code {
 	my ($code,$inp) = @_;
@@ -264,6 +275,7 @@ sub update {
 		."        Here, a workaround is used so it acts as a true empty pattern.\n" unless length $regex;
 	$warn .= "\\n is recommended over literal newlines\n" if $regex=~/\n/ && $flags!~/x/;
 	$warn .= "\\t is recommended over literal tabs\n" if $regex=~/\t/ && $flags!~/x/;
+	state $warnmsgs = $jq->("#warnmsgs");
 	$warnmsgs->text($warn);
 	
 	# apply regex to the samples and do highlighting
@@ -372,11 +384,6 @@ sub update {
 	$thisurl_ta->text( $baseurl . $hash );
 }
 
-$jq->('#urlcopy')->click(sub {
-	$thisurl_ta->[0]->select;
-	js(q{ document.execCommand("copy"); });
-});
-
 sub hashchange {
 	my $hash = js('window.location')->{hash};
 	return unless $hash=~/^#.*\bregex=/;
@@ -390,16 +397,8 @@ sub hashchange {
 		$ta_regex->text($res{regex});
 		$ta_regex->height($ta_regex->[0]->{scrollHeight});
 		$ta_flags->text($res{flags});
-		if ($res{showsampcode}) {
-			$samplecode_ta->show;
-			$codecopy->show;
-			$sampcodebtn->text('Hide Example Perl Code');
-		}
-		if (exists $res{pre}) {
-			$precode_ta->text($res{pre});
-			$precode_ta->show;
-			$precodebtn->text("Disable Preamble Code");
-		}
+		sampcode_show() if $res{showsampcode};
+		precode_show($res{pre}) if exists $res{pre};
 		if (exists $res{samp1}) {
 			$jq->(".sample")->remove();
 			for (my $i=1;exists $res{"samp$i"};$i++) {
@@ -410,8 +409,6 @@ sub hashchange {
 	}
 	else { js('window.location')->{hash}='' }
 }
-hashchange();
-js('$(window)')->on('hashchange',\&hashchange);
 
 </script>
 

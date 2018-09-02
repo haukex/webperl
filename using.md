@@ -352,12 +352,38 @@ discussion under
 ["The Perl Interpreter and its Environment"](#the-perl-interpreter-and-its-environment).
 Defaults to `false`.
 
+#### `Perl.noMountIdbfs`
+
+If set to `true` before calling `Perl.start()`, then WebPerl will not automatically
+mount the IDBFS filesystem (see ["Virtual File System"](#virtual-file-system).
+Defaults to `false`.
+
+This option was added in `v0.05-beta`.
+
 #### `Perl.trace`
 
 Enable this option at any time to get additional trace-level output
 to `console.debug()`. Defaults to `false`.
 
+#### `Perl.addStateChangeListener`
+
+**Added in `v0.05-beta`.**
+
+Pass this function a `function (from,to) {...}` to register a new handler
+for state changes of the Perl interpreter.
+
+The states currently are:
+
+- `"Uninitialized"` - `Perl.init` has not been called yet.
+- `"Initializing"` - `Perl.init` is currently operating.
+- `"Ready" - `Perl.init` is finished and `Perl.start` can be called.
+- `"Running"` - The Perl interpreter is running, `Perl.eval` and `Perl.end` may be called
+- `"Ended"` - The Perl interpreter has ended. You might receive several
+  state change notifications for this state.
+
 #### `Perl.stateChanged`
+
+**Deprecated in `v0.05-beta`.** Use `Perl.addStateChangeListener` instead.
 
 Set this to a `function (from,to) {...}` to handle state changes of the Perl interpreter.
 Defaults to a simple implementation that logs via `console.debug()`.
@@ -383,6 +409,7 @@ It also provides the functions `unregister`, `sub_once`, and `sub1`
 in ["Memory Management and Anonymous `sub`s"](#memory-management-and-anonymous-subs).
 For convenience, it can also re-export `encode_json`, so you can
 request it directly from `WebPerl` instead of needing to `use` another module.
+Additional functions, like `js_new()`, are documented below.
 All functions are exported only on request.
 
 Note that WebPerl will also enable autoflush for `STDOUT`.
@@ -478,6 +505,21 @@ For example, currently, `Perl.eval()` always returns a string, but could in the
 future be extended to return more than that, similar to `WebPerl::js()`,
 and then the passing of Perl values to JavaScript could be accomplished
 differently as well.
+
+### `js_new()`
+
+This function is a convenience function for calling JavaScript's `new`.
+The first argument is the name of the class, the following arguments are
+passed to the constructor. It returns the same thing as the `js()` function,
+in this case that would be the new object. For example:
+
+	js_new('Blob', ["<html></html>"], {type=>"text/html;charset=utf-8"})
+
+is the same as calling this in JavaScript:
+
+	new Blob(["<html></html>"], {type:"text/html;charset=utf-8"})
+
+This function was added in WebPerl `v0.05-beta`.
 
 
 The Mini IDE

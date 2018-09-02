@@ -152,7 +152,9 @@ sub newsamp {
 }
 $addsamp->click(sub { newsamp('')->click });
 
-our $re_debug=0; #TODO Later: this is actually a parameter to update()
+# $re_debug is actually a parameter to update()/actual_update(), but since
+# we register &update as a event handler, it'll get passed varying parameters
+our $re_debug=0;
 my $ta_debugout = $jq->('#debugout');
 my $re_debug_hide = $jq->('#re_debug_hide');
 $jq->('#re_debug')->click(sub {
@@ -260,6 +262,13 @@ sub run_code {
 }
 
 sub update {
+	state $timeout_id;
+	state $window = js('window');
+	$window->clearTimeout($timeout_id) if defined $timeout_id;
+	if ($re_debug) { $timeout_id=undef; actual_update() }
+	else { $timeout_id = $window->setTimeout(\&actual_update, 100) }
+}
+sub actual_update {
 	my $regex = $ta_regex->val;
 	my $flags = $ta_flags->val;
 	my $precode = $precode_ta->is(':visible') ? $precode_ta->val : '';

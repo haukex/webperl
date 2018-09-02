@@ -295,6 +295,14 @@ discussion under
 ["The Perl Interpreter and its Environment"](#the-perl-interpreter-and-its-environment).
 Defaults to `false`.
 
+#### `Perl.noMountIdbfs`
+
+If set to `true` before calling `Perl.start()`, then WebPerl will not automatically
+mount the IDBFS filesystem (see ["Virtual File System"](#virtual-file-system).
+Defaults to `false`.
+
+This option was added in `v0.05-beta`.
+
 #### `Perl.trace`
 
 Enable this option at any time to get additional trace-level output

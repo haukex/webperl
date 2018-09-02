@@ -159,7 +159,7 @@ my $ta_debugout = $jq->('#debugout');
 my $re_debug_hide = $jq->('#re_debug_hide');
 $jq->('#re_debug')->click(sub {
 	open my $olderr, '>&', \*STDERR or die "dup STDERR: $!";
-	my ($fh,$fn) = tempfile(UNLINK=>1);
+	my ($fh,$fn) = tempfile();
 	open STDERR, '>&', $fh or die "open STDERR: $!";
 	
 	{ local $re_debug=1; update(); }
@@ -167,6 +167,7 @@ $jq->('#re_debug')->click(sub {
 	open STDERR, '>&', $olderr or die "dup \$olderr: $!";
 	close $fh;
 	my $err = do { open my $fh, '<', $fn or die $!; local $/; <$fh> };
+	unlink($fn)==1 or warn "unlink $fn: $!";
 	
 	$ta_debugout->text($err);
 	$ta_debugout->show;

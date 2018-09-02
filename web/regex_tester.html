@@ -231,7 +231,7 @@ $jq->('#urlcopy')->click(sub {
 	js(q{ document.execCommand("copy"); });
 });
 
-$jq->('#perlinfo')->text("perl $^V");
+$jq->('#perlinfo')->text("perl $^V, WebPerl ".js('Perl.WebPerlVersion'));
 
 my $ta_regex = $jq->("#regex");
 my $ta_flags = $jq->("#flags");
@@ -440,7 +440,7 @@ sub hashchange {
 
 <div style="margin-bottom:1em">
 <div><button id="precodebtn">Add Preamble Code</button></div>
-<textarea id="precode" rows="3" cols="80">
+<textarea id="precode" rows="3" cols="80" style="display:none">
 my $x = "foo";  # example
 </textarea>
 </div>
@@ -468,7 +468,7 @@ my $x = "foo";  # example
 <div style="margin-top:0.5em">
 	<button id="sampcodebtn">Show Example Perl Code</button>
 	<span id="codecopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span><br/>
-	<textarea id="samplecode" rows="20" cols="80" style="font-size:0.8em" readonly="readonly"></textarea>
+	<textarea id="samplecode" rows="20" cols="80" style="font-size:0.8em;display:none" readonly="readonly"></textarea>
 </div>
 
 <div style="margin-top:0.5em">
@@ -476,7 +476,7 @@ my $x = "foo";  # example
 		<button id="re_debug"><tt>use re "debug";</tt></button>
 		<button id="re_debug_hide">Hide</button>
 	</div>
-	<textarea id="debugout" rows="25" cols="80" readonly="readonly"></textarea>
+	<textarea id="debugout" rows="25" cols="80" readonly="readonly" style="display:none"></textarea>
 </div>
 
 <div style="margin-top:0.5em">
@@ -485,7 +485,7 @@ my $x = "foo";  # example
 	<span id="urlcopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span>
 </div>
 
-<pre id="perlinfo" style="margin-top:0.5em"></pre>
+<pre id="perlinfo" style="margin-top:0.5em">perl v?, WebPerl v?</pre>
 
 <div style="margin-top:1em;font-size:0.8em">
 Author, Copyright, and License: see

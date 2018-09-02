@@ -107,6 +107,84 @@ my $jq = js('jQuery');
 sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
 	->Sortkeys(1)->Quotekeys(0)->Indent(0)->Purity(1)->Dump }
 
+our $RUN_CODE_IN_IFRAME=0;
+
+my $runcode_iframe;
+my $runcode_message_callback; # assume a single callback for now
+if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/
+	my $iframe_html = <<~'END_IFRAME_HTML';
+		<html>
+		<head>
+		<script src="https://webperlcdn.zero-g.net/v0.05-beta/webperl.js"
+			integrity="sha256-0RqUAQu0lcyxE1cPEuyrchvz0YkDITr41FYfTL4Prtk" crossorigin="anonymous"></scr__ipt>
+		<script>
+		Perl.noMountIdbfs=true; // we're sandboxed
+		</scr__ipt>
+		<script type="text/perl">
+		use warnings;
+		use 5.028;
+		use WebPerl qw/js/;
+		js('window')->addEventListener('message', sub {
+			my ($event) = @_;
+			my $data = $event->{data}->toperl;
+			die "Bad arguments" unless ref $data eq 'ARRAY'
+				&& @$data==3 && !grep {ref} @$data;
+			my ($context,$code,$input) = @$data;
+			# --- begin code copied from sub run_code ---
+			my (@warns,@output);
+			my $ok = do {
+				local $SIG{__WARN__} = sub { push @warns, shift };
+				eval "package RunCode {$code\n};1" };
+			my $err = $ok ? undef : $@||"Unknown error";
+			defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
+			chomp(@warns);
+			my $rv = { ctx=>$context, warns=>\@warns, $ok ? (out=>\@output) : (err=>$err) };
+			# --- end code copied from sub run_code ---
+			my $origin = $event->{origin} eq 'null' ? '*' : $event->{origin};
+			$event->{source}->postMessage($rv, $origin);
+		}, undef);
+		</scr__ipt>
+		</he__ad>
+		<body></bo__dy>
+		</ht__ml>
+		END_IFRAME_HTML
+	$iframe_html=~s#</\w+\K__(?=\w+>)##ig;
+	my $iframe_blob_url = js('URL')->createObjectURL(
+		WebPerl::js_new('Blob',[$iframe_html],{type=>"text/html;charset=utf-8"}) );
+	my $iframe = $jq->('<iframe/>', {id=>'PerlEval_IFrame', sandbox=>'allow-scripts',
+		src=>$iframe_blob_url} )->hide->appendTo('body');
+	$runcode_iframe = $iframe->[0]{contentWindow};
+	my $got_response;
+	my $window = js('window');
+	$window->addEventListener('message', sub {
+		my ($event) = @_;
+		state $compare = js('(function(x,y){return x===y})');
+		return unless $event->{origin} eq 'null'
+			&& $compare->($event->{source},$runcode_iframe);
+		my $data = $event->{data}->toperl;
+		die "Bad arguments" unless ref $data eq 'HASH'
+			&& exists $data->{ctx}   && !ref $data->{ctx}
+			&& exists $data->{warns} &&  ref $data->{warns} eq 'ARRAY'
+			&& ( exists $data->{out} &&  ref $data->{out} eq 'ARRAY'
+			  || exists $data->{err} && !ref $data->{err} );
+		$got_response = 1;
+		if (!defined $runcode_message_callback)
+			{ warn "recived runcode result without a callback" }
+		else { $runcode_message_callback->($data) }
+	}, undef);
+	# poll until the iframe is loaded
+	my $start_time = time;
+	my $intid; $intid = $window->setInterval(sub {
+		if (time-$start_time>10) {
+			$window->alert("Failed to get response from Perl in IFrame, loading failed?");
+			$window->clearInterval($intid);
+		}
+		elsif ($got_response)
+			{ $window->clearInterval($intid) }
+		else { update() }
+	}, 500);
+}
+
 sub sample_init {
 	my $samp = shift;
 	state $samp_id = 'a';
@@ -160,6 +238,8 @@ our $re_debug=0;
 my $ta_debugout = $jq->('#debugout');
 my $re_debug_hide = $jq->('#re_debug_hide');
 $jq->('#re_debug')->click(sub {
+	#TODO: re_debug no longer works in IFrame! (ugly "workaround" below)
+	# Not only this capturing, but also $re_debug is unset by the time the callback gets called
 	open my $olderr, '>&', \*STDERR or die "dup STDERR: $!";
 	my ($fh,$fn) = tempfile();
 	open STDERR, '>&', $fh or die "open STDERR: $!";
@@ -171,6 +251,8 @@ $jq->('#re_debug')->click(sub {
 	my $err = do { open my $fh, '<', $fn or die $!; local $/; <$fh> };
 	unlink($fn)==1 or warn "unlink $fn: $!";
 	
+	$err .= "\n### Please see the JavaScript console! ###\n"
+		if $RUN_CODE_IN_IFRAME;
 	$ta_debugout->text($err);
 	$ta_debugout->show;
 	$re_debug_hide->show;
@@ -251,6 +333,11 @@ update();
 
 sub run_code {
 	my ($context,$code,$input,$callback) = @_;
+	if ($RUN_CODE_IN_IFRAME) {
+		$runcode_message_callback = $callback; # assume a single callback for now
+		$runcode_iframe->postMessage([$context,$code,$input], '*');
+		return }
+	# --- begin code copied to iframe ---
 	my (@warns,@output);
 	#TODO Later: Capture STDOUT too? (and STDERR, instead of $SIG{__WARN__})?
 	my $ok = do {
@@ -259,8 +346,9 @@ sub run_code {
 	my $err = $ok ? undef : $@||"Unknown error";
 	defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
 	chomp(@warns);
-	$callback->( { ctx=>$context, warns=>\@warns,
-		$ok ? (out=>\@output) : (err=>$err) } );
+	my $rv = { ctx=>$context, warns=>\@warns, $ok ? (out=>\@output) : (err=>$err) };
+	# --- end code copied to iframe ---
+	$callback->($rv);
 }
 
 sub update {
@@ -414,6 +502,7 @@ sub hashchange {
 		$res{ $decode->($k=~tr/+/ /r) } = $decode->($v=~tr/+/ /r);
 	}
 	if (exists $res{regex} && exists $res{flags}) {
+		#TODO: need to use ->val for textareas everywhere!
 		$ta_regex->text($res{regex});
 		$ta_regex->height($ta_regex->[0]->{scrollHeight});
 		$ta_flags->text($res{flags});

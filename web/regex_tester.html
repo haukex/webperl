@@ -253,7 +253,7 @@ $jq->('#re_debug')->click(sub {
 	
 	$err .= "\n### Please see the JavaScript console! ###\n"
 		if $RUN_CODE_IN_IFRAME;
-	$ta_debugout->text($err);
+	$ta_debugout->val($err);
 	$ta_debugout->show;
 	$re_debug_hide->show;
 });
@@ -299,7 +299,7 @@ $precodebtn->click(sub{
 	update();
 });
 sub precode_show {
-	$precode_ta->text(shift) if @_;
+	$precode_ta->val(shift) if @_;
 	$precode_ta->show;
 	$precodebtn->text("Disable Preamble Code");
 }
@@ -428,7 +428,7 @@ sub actual_update {
 		}
 		$sampcode =~ s/__REGEX__/$re/;
 		$sampcode .= "}\n";
-		$samplecode_ta->text($sampcode);
+		$samplecode_ta->val($sampcode);
 	}
 	
 	my $i=1;
@@ -437,7 +437,7 @@ sub actual_update {
 		( $samplecode_ta->is(':visible') ? (showsampcode=>1) : () ),
 		map { "samp".$i++ => $_ } @samps } );
 	my $baseurl = js('window.location')->{href} =~ s/#.*\z//r;
-	$thisurl_ta->text( $baseurl . $hash );
+	$thisurl_ta->val( $baseurl . $hash );
 }
 sub run_code_callback {
 	my $rv = shift;
@@ -502,10 +502,9 @@ sub hashchange {
 		$res{ $decode->($k=~tr/+/ /r) } = $decode->($v=~tr/+/ /r);
 	}
 	if (exists $res{regex} && exists $res{flags}) {
-		#TODO: need to use ->val for textareas everywhere!
-		$ta_regex->text($res{regex});
+		$ta_regex->val($res{regex});
 		$ta_regex->height($ta_regex->[0]->{scrollHeight});
-		$ta_flags->text($res{flags});
+		$ta_flags->val($res{flags});
 		sampcode_show() if $res{showsampcode};
 		precode_show($res{pre}) if exists $res{pre};
 		if (exists $res{samp1}) {

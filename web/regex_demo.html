@@ -366,6 +366,7 @@ sub update {
 	my $i=1;
 	my $hash = '#' . $jq->param( { regex=>$regex, flags=>$flags,
 		( length $precode ? (pre=>$precode) : () ),
+		( $samplecode_ta->is(':visible') ? (showsampcode=>1) : () ),
 		map { "samp".$i++ => $_ } @samps } );
 	my $baseurl = js('window.location')->{href} =~ s/#.*\z//r;
 	$thisurl_ta->text( $baseurl . $hash );
@@ -389,6 +390,11 @@ sub hashchange {
 		$ta_regex->text($res{regex});
 		$ta_regex->height($ta_regex->[0]->{scrollHeight});
 		$ta_flags->text($res{flags});
+		if ($res{showsampcode}) {
+			$samplecode_ta->show;
+			$codecopy->show;
+			$sampcodebtn->text('Hide Example Perl Code');
+		}
 		if (exists $res{pre}) {
 			$precode_ta->text($res{pre});
 			$precode_ta->show;
@@ -400,6 +406,7 @@ sub hashchange {
 				newsamp($res{"samp$i"});
 			}
 		}
+		update();
 	}
 	else { js('window.location')->{hash}='' }
 }

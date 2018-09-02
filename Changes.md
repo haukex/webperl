@@ -6,6 +6,7 @@ WebPerl Changelog
 not yet released: v0.05-beta
 ----------------------------
 - Added Perl.addStateChangeListener and deprecated Perl.stateChanged
+- Added WebPerl::js_new()
 - ...
 
 

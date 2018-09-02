@@ -45,10 +45,14 @@ textarea.samp_ta {
 	cursor: pointer;
 }
 .re_warns {
+	clear: both;
 	background-color: rgba(255,255,200,255);
 }
-.nomatch, .re_errors {
+.re_errors {
 	background-color: rgba(255,200,200,255);
+}
+.nomatch {
+	background-color: rgba(200,200,200,255);
 }
 .match {
 	background-color: lightblue;
@@ -93,6 +97,8 @@ sub sample_init {
 	my $closebtn = $jq->('<div/>', {html=>"&#x1F5D9;",class=>"closebtn",
 		title=>"Delete Sample"});
 	$closebtn->appendTo($samp);
+	$jq->('<pre/>', {class=>'re_warns'})->appendTo($samp);
+	$jq->('<pre/>', {class=>'re_errors'})->appendTo($samp);
 	$samp->click(sub {
 		return if $samp_ta->is(':visible');
 		$samp_ta->height($samptxt->height);
@@ -195,7 +201,6 @@ $precode_ta->keyup( \&update);
 my $thisurl_ta = $jq->("#thisurl");
 my $ta_regex = $jq->("#regex");
 my $ta_flags = $jq->("#flags");
-my $errmsgs = $jq->("#errmsgs");
 my $warnmsgs = $jq->("#warnmsgs");
 $ta_regex->change(\&update);
 $ta_regex->keyup( \&update);
@@ -206,6 +211,21 @@ update();
 $ta_regex->on('input', sub {
 	$ta_regex->height($ta_regex->[0]->{scrollHeight});
 });
+
+sub run_code {
+	my ($code,$inp) = @_;
+	my @warns;
+	my $ok = do {
+		local $SIG{__WARN__} = sub { push @warns, shift };
+		package run_code;
+		our $input = $inp;
+		our @output = ();
+		eval "$code;1" };
+	my $err = $ok ? undef : $@||"Unknown error";
+	defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
+	chomp(@warns);
+	return { warns=>\@warns, $ok ? (out=>\@run_code::output) : (err=>$err) }
+}
 
 sub update {
 	my $regex = $ta_regex->val;
@@ -218,41 +238,34 @@ sub update {
 		"NOTE: The empty regex $regex_str requires a workaround with /(?:)/," # https://www.perlmonks.org/?node_id=1221517
 		."\n this will be reflected in the debug output";
 	
-	# check regex for syntax errors
-	my ($warn,$err) = ('','');
+	my $warn = '';
 	$warn .= "Notice: The empty pattern has special behavior, see perlop!\n"
 		."        Here, a workaround is used so it acts as a true empty pattern.\n" unless length $regex;
 	$warn .= "\\n is recommended over literal newlines\n" if $regex=~/\n/ && $flags!~/x/;
 	$warn .= "\\t is recommended over literal tabs\n" if $regex=~/\t/ && $flags!~/x/;
-	my $ok = do {
-		local $SIG{__WARN__} = sub { $warn .= shift };
-		eval( $precode.($re_debug?'use re "debug";':'')."''=~$regex_str;1") };
-	$ok or $err .= $@||"Unknown error";
-	s/\bat .+? line \d+(?:\.$|,\h)//mg for $warn,$err;
-	$ok or $err .= "Matching aborted!";
-	$errmsgs->text($err);
 	$warnmsgs->text($warn);
-	return if !$ok;
 	
 	# apply regex to the samples and do highlighting
 	my @samps;
-	for my $samptxt ($jq->('.samptxt')->@*) {
-		$samptxt = $jq->($samptxt);
+	for my $sample (map {$jq->($_)} $jq->('.sample')->@*) {
+		my $samptxt = $sample->children('.samptxt');
+		my $re_warns = $sample->children('.re_warns');
+		my $re_errs = $sample->children('.re_errors');
 		my $text = $samptxt->text;
 		$re_debug and say STDERR "----- ----- ----- ",pp($text)," ----- ----- -----";
 		push @samps, $text;
-		my @m;
 		my $code = $precode . ($re_debug?'use re "debug";':'')
 			. (length($regex)?'':"''=~/(?:)/$flags;")
-			. ($flags=~/g/
-				? 'push @m,[[@-],[@+]] while $text=~'.$regex_str.'; scalar @m'
-				: '$text=~'.$regex_str.' and push @m,[[@-],[@+]]; scalar @m');
-		if (eval $code) { #TODO Later: maybe merge this with the above error checking?
+			. 'push @output,[[@-],[@+]] ' . ($flags=~/g/?'while':'if') . ' $input=~'.$regex_str;
+		my $rv = run_code($code, $text);
+		$re_warns->text( join "\n", $rv->{warns}->@* );
+		if ( $rv->{out} && $rv->{out}->@* ) {
+			$re_errs->text('');
 			$samptxt->removeClass('nomatch');
 			my %hi;
-			$re_debug and say STDERR '@-/@+ are ',pp(\@m);
-			for my $i (0..$#m) {
-				my ($s,$e) = $m[$i]->@*;
+			$re_debug and say STDERR '@-/@+ are ',pp($rv->{out});
+			for my $i (0..$#{$rv->{out}}) {
+				my ($s,$e) = $rv->{out}[$i]->@*;
 				for my $j (0..$#$e) { # Use @+ to count all capture groups instead of @-!
 					next if !defined($$s[$j]) && !defined($$e[$j]);
 					my $name = "Match ".($i+1).($j?" Capture Group $j":"");
@@ -280,8 +293,9 @@ sub update {
 			$samptxt->html($html);
 		}
 		else {
+			$re_errs->text($rv->{out} ? '' : $rv->{err});
+			$rv->{out} && $samptxt->addClass('nomatch');
 			$samptxt->text($text);
-			$samptxt->addClass('nomatch');
 		}
 	}
 	
@@ -394,7 +408,6 @@ my $x = "foo";  # example
 	><textarea id="flags" rows="1" cols="5" style="height:1.2em"
 		title="Flags for Regular Expression">gi</textarea></div>
 <pre id="warnmsgs" class="re_warns"></pre>
-<pre id="errmsgs" class="re_errors"></pre>
 </div>
 
 <div class="sample">

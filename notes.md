@@ -62,7 +62,7 @@ Release Checklist
 
 - Update version numbers everywhere; use `grep` to find them, for example:
   
-      $ grep -Er --exclude-dir=.git --exclude-dir=emperl5 --exclude=emperl.* '0\.0[0-9]' * emperl5/ext/WebPerl
+      $ grep -Er --exclude-dir=work --exclude-dir=.git --exclude-dir=emperl5 --exclude=emperl.* '0\.0[0-9]' * emperl5/ext/WebPerl emperl5/hints/emscripten.sh
   
   At a minimum there is:
 	- `web/webperl.js` - `Perl.WebPerlVersion`

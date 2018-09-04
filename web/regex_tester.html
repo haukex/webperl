@@ -446,12 +446,9 @@ sub run_code_callback {
 		warn "got callback for nonexistent sample ".$rv->{context};
 		return }
 	my $samptxt  = $sample->children('.samptxt');
-	my $re_warns = $sample->children('.re_warns');
-	my $re_errs  = $sample->children('.re_errors');
 	my $text = $samptxt->text;
-	$re_warns->text( join "\n", $rv->{warns}->@* );
+	my $errs = '';
 	if ( $rv->{out} && $rv->{out}->@* ) {
-		$re_errs->text('');
 		$samptxt->removeClass('nomatch');
 		my %hi;
 		$re_debug and say STDERR '@-/@+ are ',pp($rv->{out});
@@ -466,30 +463,61 @@ sub run_code_callback {
 						}, $name  }
 				else {
 					push @{ $hi{$$s[$j]}{ $j==0 ? 'match' : 'cap' } }, $name;
-					$hi{$$e[$j]}{end}++  }
+					push @{ $hi{$$e[$j]}{ $j==0 ? 'match_end' : 'cap_end' } }, $name;
+				}
 			}
 		}
 		$re_debug and say STDERR 'highlights are ',pp(\%hi);
 		my $html='';
 		my $p=0;
+		my (%active_match,%active_caps);
 		for my $i (sort {$a<=>$b} keys %hi) {
-			$html .= substr($text,$p,$i-$p);
-			#TODO: capture groups overlapping following matches don't work right
-			# e.g. "Oh, what a wonderful world!" =~ m{a(.)(?=.(....))}gi
-			$html .= '</span>' x ($hi{$i}{end}//0);
+			
+			$html .= escape_html(substr($text,$p,$i-$p));
+			
+			$html .= "</span>" if keys %active_caps;
+			delete $active_caps{$_} for @{ $hi{$i}{cap_end}//[] };
+			
+			$html .= "</span>" if keys %active_match && $hi{$i}{match_end};
+			delete $active_match{$_} for @{ $hi{$i}{match_end}//[] };
+			
 			$html .= "<span class='zlen match' title='$_'></span>" for @{ $hi{$i}{zlen_match}//[] };
 			$html .= "<span class='zlen capture' title='$_'></span>" for @{ $hi{$i}{zlen_cap}//[] };
-			$html .= "<span class='match' title='$_'>" for @{ $hi{$i}{match}//[] };
-			$html .= "<span class='capture' title='$_'>" for @{ $hi{$i}{cap}//[] };
+			
+			$active_match{$_}++ for @{ $hi{$i}{match}//[] };
+			$html .= "<span class='match' title='"
+				.join(", ",sort keys %active_match)
+				."'>" if keys %active_match && $hi{$i}{match};
+			
+			$active_caps{$_}++ for @{ $hi{$i}{cap}//[] };
+			$html .= "<span class='capture' title='"
+				.join(", ",(sort keys %active_match),(sort keys %active_caps))
+				."'>" if keys %active_caps;
+			
+			# normally won't happen, unless the user does something pretty tricky
+			push @{ $rv->{warns} }, "Overlapping matches ("
+				.join(", ", sort keys %active_match)
+				.") will not be highlighted correctly"
+					if keys(%active_match)>1;
+			
 		} continue { $p=$i }
-		$html .= substr($text,$p);
+		$html .= escape_html(substr($text,$p));
 		$samptxt->html($html);
 	}
 	else {
-		$re_errs->text($rv->{out} ? '' : $rv->{err});
-		$rv->{out} && $samptxt->addClass('nomatch');
+		if ($rv->{out})
+			{ $samptxt->addClass('nomatch') }
+		else
+			{ $errs = $rv->{err} }
 		$samptxt->text($text);
 	}
+	$sample->children('.re_warns')->text( join "\n", $rv->{warns}->@* );
+	$sample->children('.re_errors')->text($errs);
+}
+
+sub escape_html { # apparently no built-in JS function for this (?), so do it manually
+	state $m = { '&'=>'&amp;', '<'=>'&lt;', '>'=>'&gt;', '"'=>'&quot;', "'"=>'&#039;' };
+	shift =~ s/([&<>"'])/$$m{$1}/gr;
 }
 
 sub hashchange {

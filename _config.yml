@@ -4,4 +4,4 @@ description: Run Perl in the browser with WebPerl!
 logo: webperl.png
 show_downloads: false
 exclude:
-    - regex.html
+    - CNAME

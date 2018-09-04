@@ -109,6 +109,18 @@ sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
 
 our $RUN_CODE_IN_IFRAME=0;
 
+my $run_code_body = <<'END_CODE';
+	my (@warns,@output);
+	#TODO Later: Capture STDOUT too? (and STDERR, instead of $SIG{__WARN__})?
+	my $ok = do {
+		local $SIG{__WARN__} = sub { push @warns, shift };
+		eval "package RunCode {$code\n};1" };
+	my $err = $ok ? undef : $@||"Unknown error";
+	defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
+	chomp(@warns);
+	my $rv = { ctx=>$context, warns=>\@warns, $ok ? (out=>\@output) : (err=>$err) };
+END_CODE
+
 my $runcode_iframe;
 my $runcode_message_callback; # assume a single callback for now
 if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/
@@ -130,16 +142,7 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 			die "Bad arguments" unless ref $data eq 'ARRAY'
 				&& @$data==3 && !grep {ref} @$data;
 			my ($context,$code,$input) = @$data;
-			# --- begin code copied from sub run_code ---
-			my (@warns,@output);
-			my $ok = do {
-				local $SIG{__WARN__} = sub { push @warns, shift };
-				eval "package RunCode {$code\n};1" };
-			my $err = $ok ? undef : $@||"Unknown error";
-			defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
-			chomp(@warns);
-			my $rv = { ctx=>$context, warns=>\@warns, $ok ? (out=>\@output) : (err=>$err) };
-			# --- end code copied from sub run_code ---
+			__RUNCODEBODY__
 			my $origin = $event->{origin} eq 'null' ? '*' : $event->{origin};
 			$event->{source}->postMessage($rv, $origin);
 		}, undef);
@@ -149,6 +152,7 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 		</ht__ml>
 		END_IFRAME_HTML
 	$iframe_html=~s#</\w+\K__(?=\w+>)##ig;
+	$iframe_html=~s/__RUNCODEBODY__/$run_code_body/;
 	my $iframe_blob_url = js('URL')->createObjectURL(
 		WebPerl::js_new('Blob',[$iframe_html],{type=>"text/html;charset=utf-8"}) );
 	my $iframe = $jq->('<iframe/>', {id=>'PerlEval_IFrame', sandbox=>'allow-scripts',
@@ -331,25 +335,15 @@ $ta_regex->on('input', sub {
 hashchange();
 update();
 
-sub run_code {
+*run_code = eval( q{ sub {
 	my ($context,$code,$input,$callback) = @_;
 	if ($RUN_CODE_IN_IFRAME) {
 		$runcode_message_callback = $callback; # assume a single callback for now
 		$runcode_iframe->postMessage([$context,$code,$input], '*');
 		return }
-	# --- begin code copied to iframe ---
-	my (@warns,@output);
-	#TODO Later: Capture STDOUT too? (and STDERR, instead of $SIG{__WARN__})?
-	my $ok = do {
-		local $SIG{__WARN__} = sub { push @warns, shift };
-		eval "package RunCode {$code\n};1" };
-	my $err = $ok ? undef : $@||"Unknown error";
-	defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
-	chomp(@warns);
-	my $rv = { ctx=>$context, warns=>\@warns, $ok ? (out=>\@output) : (err=>$err) };
-	# --- end code copied to iframe ---
+	__RUNCODEBODY__
 	$callback->($rv);
-}
+} } =~ s/__RUNCODEBODY__/$run_code_body/r ) || die( $@||"unknown error" );
 
 sub update {
 	state $timeout_id;

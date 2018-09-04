@@ -54,15 +54,16 @@ Release Checklist
 
 - Update `Changes.md` with all changes since last release
   
-  As an example, to list changes between `v0.03-beta` and `v0.05-beta`, excluding the regex tester:
+  As an example, to list changes since a specific version, excluding the regex tester:
   
-      $ git log --stat v0.03-beta..v0.05-beta -- . ':!web/regex_demo.html' ':!web/regex_tester.html' ':!.gitignore'
+      $ git log --stat v0.05-beta.. -- . ':!web/regex_tester.html' ':!.gitignore'
   
 	- Also make sure that the documentation in `using.md` etc. mentions when features were added/deprecated
 
 - Update version numbers everywhere; use `grep` to find them, for example:
   
-      $ grep -Er --exclude-dir=work --exclude-dir=.git --exclude-dir=emperl5 --exclude=emperl.* '0\.0[0-9]' * emperl5/ext/WebPerl emperl5/hints/emscripten.sh
+      $ grep -Er --exclude-dir=work --exclude-dir=.git --exclude-dir=emperl5 --exclude=emperl.* '0\.0[0-9]' .
+      $ ( cd emperl5; grep -Er '0\.0[0-9]' `git diff --numstat --diff-filter=A v5.28.0 HEAD | cut -f3` )
   
   At a minimum there is:
 	- `web/webperl.js` - `Perl.WebPerlVersion`
@@ -74,22 +75,22 @@ Release Checklist
       $ perl -wMstrict -MDigest -le 'open my $fh, "<:raw", "web/webperl.js" or die $!;
         print Digest->new("SHA-256")->addfile($fh)->b64digest'
 
-- Build and create dist, e.g. `build/build.pl --reconfig --dist=webperl_prebuilt_v0.05-beta`
+- Build and create dist, e.g. `build/build.pl --reconfig --dist=webperl_prebuilt_v0.07-beta`
 
-- Test all build results, both from file:// and http://localhost
+- Test all build results, both from `file://...` and `http://localhost`
 
-- Add tags, the `webperl` repo gets an annotated tag such as `v0.05-beta`,
-  and the `emperl5` repo gets an unannotated tag such as `webperl_v0.05-beta`,
+- Add tags, the `webperl` repo gets an annotated tag such as `v0.07-beta`,
+  and the `emperl5` repo gets an unannotated tag such as `webperl_v0.07-beta`,
   then `git push --tags`
 
 - Create a release on GitHub and upload the `webperl_prebuilt_*.zip` as an asset
-
-- If there was a `pages_for_vX.XX` branch of `gh-pages`, don't forget to merge that
 
 - Uploading to AWS S3:
 	1. Run `gzip -9` on `emperl.*` and `webperl.js`
 	2. Rename them to remove the `.gz` ending
 	3. Upload them with the appropriate `Content-Type` (see e.g. `web/webperl.psgi`) and a `Content-Encoding` of `gzip`
+
+- If there was a `pages_for_vX.XX` branch of `gh-pages`, don't forget to merge that
 
 
 Prior Art

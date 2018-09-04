@@ -33,6 +33,7 @@ with the following differences:
 - URL updated to https://github.com/haukex/webperl/blob/gh-pages/regex.html
 -->
 
+<meta name="viewport" content="width=600" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css"
 	integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
 <style>
@@ -102,8 +103,8 @@ textarea.samp_ta {
 </style>
 
 <!--script src="webperl.js"></script-->
-<script src="https://webperlcdn.zero-g.net/v0.05-beta/webperl.js"
-	integrity="sha256-0RqUAQu0lcyxE1cPEuyrchvz0YkDITr41FYfTL4Prtk" crossorigin="anonymous"></script>
+<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
+	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
 	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
@@ -156,8 +157,8 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 	my $iframe_html = <<~'END_IFRAME_HTML';
 		<html>
 		<head>
-		<script src="https://webperlcdn.zero-g.net/v0.05-beta/webperl.js"
-			integrity="sha256-0RqUAQu0lcyxE1cPEuyrchvz0YkDITr41FYfTL4Prtk" crossorigin="anonymous"></scr__ipt>
+		<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
+			integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc" crossorigin="anonymous"></scr__ipt>
 		<script>
 		Perl.noMountIdbfs=true; // we're sandboxed
 		</scr__ipt>
@@ -279,6 +280,7 @@ $sampcodebtn->click(sub{
 		$samplecode_ta->hide;
 		$codecopy->hide;
 		$sampcodebtn->text('Show Example Perl Code');
+		update();
 	}
 	else { sampcode_show() }
 });
@@ -387,7 +389,7 @@ sub actual_update {
 				.'print(STDERR Data::Dumper->new([$input],["input"])->Indent(0)->Dump,'
 				.'"\n-- Code --\n",' . pp($code) . ',"----\n")}' . "\n"
 				. $code . "\n"
-				. q{print STDERR "----\n",Data::Dumper->new([\@output],["*output"])->Indent(0)->Dump;};
+				. q{print STDERR "----\n",Data::Dumper->new([\@output],["*output"])->Indent(0)->Dump,"\n";};
 		run_code($sample->attr('id'), $code, $text, \&run_code_callback);
 	}
 	

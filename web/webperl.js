@@ -28,7 +28,7 @@ var Perl = {
 	trace: false,         // user may enable this
 	endAfterMain: false,  // user may enable this (before Perl.init)
 	noMountIdbfs: false,  // user may enable this (before Perl.start)
-	WebPerlVersion: 'v0.05-beta',
+	WebPerlVersion: 'v0.07-beta',
 	Util: {},
 	// internal variables:
 	initStepsLeft: 2, // Must match number of Perl.initStepFinished() calls!

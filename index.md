@@ -36,6 +36,9 @@ js('document')->getElementById('my_button')
 - [**Download `webperl_prebuilt_v0.05-beta.zip`**](https://github.com/haukex/webperl/releases/download/v0.05-beta/webperl_prebuilt_v0.05-beta.zip)
 - [**Get the sources on GitHub**](https://github.com/haukex/webperl)
 
+For a web application written with WebPerl, see the
+[**WebPerl Regex Tester** (beta)](regex.html)!
+
 
 Quick Start
 -----------

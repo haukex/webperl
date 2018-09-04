@@ -65,8 +65,11 @@ textarea.samp_ta {
 	float: right;
 	cursor: pointer;
 }
-.re_warns {
+.re_output {
 	clear: both;
+	background-color: rgba(234,234,234,255);
+}
+.re_warns {
 	background-color: rgba(255,255,200,255);
 }
 .re_errors {
@@ -100,7 +103,6 @@ textarea.samp_ta {
 use warnings;
 use 5.028;
 use WebPerl qw/js/;
-use File::Temp qw/tempfile/;
 use Data::Dumper ();
 my $jq = js('jQuery');
 
@@ -111,14 +113,33 @@ our $RUN_CODE_IN_IFRAME=0;
 
 my $run_code_body = <<'END_CODE';
 	my (@warns,@output);
-	#TODO Later: Capture STDOUT too? (and STDERR, instead of $SIG{__WARN__})?
+	
+	require File::Temp;
+	my ($fh1,$fn1) = File::Temp::tempfile();
+	open my $oldout, '>&', \*STDOUT or die "dup STDOUT: $!";
+	open STDOUT, '>&', $fh1 or die "open STDOUT: $!";
+	my ($fh2,$fn2) = File::Temp::tempfile();
+	open my $olderr, '>&', \*STDERR or die "dup STDERR: $!";
+	open STDERR, '>&', $fh2 or die "open STDERR: $!";
+	
 	my $ok = do {
 		local $SIG{__WARN__} = sub { push @warns, shift };
 		eval "package RunCode {$code\n};1" };
 	my $err = $ok ? undef : $@||"Unknown error";
+	
+	open STDERR, '>&', $olderr or die "dup \$olderr: $!";
+	close $fh2;
+	open STDOUT, '>&', $oldout or die "dup \$oldout: $!";
+	close $fh1;
+	my $stdout = do { open my $fh, '<', $fn1 or die $!; local $/; <$fh> };
+	my $stderr = do { open my $fh, '<', $fn2 or die $!; local $/; <$fh> };
+	unlink($fn1,$fn2)==2 or warn "unlink('$fn1','$fn2'): $!";
+	
 	defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
 	chomp(@warns);
-	my $rv = { ctx=>$context, warns=>\@warns, $ok ? (out=>\@output) : (err=>$err) };
+	my $rv = { ctx=>$context, warns=>\@warns,
+		$ok ? (out=>\@output) : (err=>$err),
+		stdout => $stdout, stderr => $stderr };
 END_CODE
 
 my $runcode_iframe;
@@ -200,6 +221,7 @@ sub sample_init {
 	my $closebtn = $jq->('<div/>', {html=>"&#x274E;",class=>"closebtn",
 		title=>"Delete Sample"});
 	$closebtn->appendTo($samp);
+	$jq->('<pre/>', {class=>'re_output'})->appendTo($samp);
 	$jq->('<pre/>', {class=>'re_warns'})->appendTo($samp);
 	$jq->('<pre/>', {class=>'re_errors'})->appendTo($samp);
 	$samp->click(sub {
@@ -239,34 +261,7 @@ $addsamp->click(sub { newsamp('')->click });
 # $re_debug is actually a parameter to update()/actual_update(), but since
 # we register &update as a event handler, it'll get passed varying parameters
 our $re_debug=0;
-my $ta_debugout = $jq->('#debugout');
-my $re_debug_hide = $jq->('#re_debug_hide');
-$jq->('#re_debug')->click(sub {
-	#TODO: re_debug no longer works in IFrame! (ugly "workaround" below)
-	# Not only this capturing, but also $re_debug is unset by the time the callback gets called
-	open my $olderr, '>&', \*STDERR or die "dup STDERR: $!";
-	my ($fh,$fn) = tempfile();
-	open STDERR, '>&', $fh or die "open STDERR: $!";
-	
-	{ local $re_debug=1; update(); }
-	
-	open STDERR, '>&', $olderr or die "dup \$olderr: $!";
-	close $fh;
-	my $err = do { open my $fh, '<', $fn or die $!; local $/; <$fh> };
-	unlink($fn)==1 or warn "unlink $fn: $!";
-	
-	$err .= "\n### Please see the JavaScript console! ###\n"
-		if $RUN_CODE_IN_IFRAME;
-	$ta_debugout->val($err);
-	$ta_debugout->show;
-	$re_debug_hide->show;
-});
-$re_debug_hide->click(sub{
-	$re_debug_hide->hide;
-	$ta_debugout->hide;
-});
-$re_debug_hide->hide;
-$ta_debugout->hide;
+$jq->('#re_debug')->click(sub { local $re_debug=1; update() });
 
 my $sampcodebtn = $jq->('#sampcodebtn');
 my $codecopy = $jq->('#codecopy');
@@ -358,13 +353,14 @@ sub actual_update {
 	my $precode = $precode_ta->is(':visible') ? $precode_ta->val : '';
 	$precode .= "\n" if length $precode && substr($precode,-1) ne "\n";
 	my $regex_str = 'm{'.$regex.'}'.$flags;
-	$re_debug and !length($regex) and say STDERR
-		"NOTE: The empty regex $regex_str requires a workaround with /(?:)/," # https://www.perlmonks.org/?node_id=1221517
-		."\n this will be reflected in the debug output";
 	
 	my $warn = '';
-	$warn .= "Notice: The empty pattern has special behavior, see perlop!\n"
-		."        Here, a workaround is used so it acts as a true empty pattern.\n" unless length $regex;
+	if (not length $regex) {
+		$warn .= "Notice: The empty pattern has special behavior, see perlop!\n"
+				."        Here, a workaround is used so it acts as a true empty pattern.\n";
+		if ($re_debug) # https://www.perlmonks.org/?node_id=1221517
+			{ $warn .= "        The workaround uses /(?:)/, which you will see in the debug output.\n" }
+	}
 	$warn .= "\\n is recommended over literal newlines\n" if $regex=~/\n/ && $flags!~/x/;
 	$warn .= "\\t is recommended over literal tabs\n" if $regex=~/\t/ && $flags!~/x/;
 	state $warnmsgs = $jq->("#warnmsgs");
@@ -375,10 +371,15 @@ sub actual_update {
 		my $samptxt = $sample->children('.samptxt');
 		my $text = $samptxt->text;
 		push @samps, $text; # for use below
-		my $code = $precode . ($re_debug?'use re "debug";'
-			. 'say STDERR '.pp('##### ##### ##### '.pp($text).' =~ '.pp($regex_str).' ##### ##### #####').';':'')
-			. (length($regex)?'':"''=~/(?:)/$flags;")
-			. 'push @output,[[@-],[@+]] ' . ($flags=~/g/?'while':'if') . ' $input=~'.$regex_str;
+		my $code = $precode . ( $re_debug ? "use re \"debug\";\n" : '' )
+			. ( length($regex) ? '' : "''=~/(?:)/$flags; # // workaround\n" )
+			. 'push @output,[[@-],[@+]] ' . ($flags=~/g/?'while':'if') . ' $input=~'.$regex_str.";\n";
+		$re_debug and
+			$code = 'BEGIN{require Data::Dumper;'
+				.'print(STDERR Data::Dumper->new([$input],["input"])->Indent(0)->Dump,'
+				.'"\n-- Code --\n",' . pp($code) . ',"----\n")}' . "\n"
+				. $code . "\n"
+				. q{print STDERR "----\n",Data::Dumper->new([\@output],["*output"])->Indent(0)->Dump;};
 		run_code($sample->attr('id'), $code, $text, \&run_code_callback);
 	}
 	
@@ -449,7 +450,6 @@ sub run_code_callback {
 	if ( $rv->{out} && $rv->{out}->@* ) {
 		$samptxt->removeClass('nomatch');
 		my %hi;
-		$re_debug and say STDERR '@-/@+ are ',pp($rv->{out});
 		for my $i (0..$#{$rv->{out}}) {
 			my ($s,$e) = $rv->{out}[$i]->@*;
 			for my $j (0..$#$e) { # Use @+ to count all capture groups instead of @-!
@@ -465,7 +465,6 @@ sub run_code_callback {
 				}
 			}
 		}
-		$re_debug and say STDERR 'highlights are ',pp(\%hi);
 		my $html='';
 		my $p=0;
 		my (%active_match,%active_caps);
@@ -509,7 +508,16 @@ sub run_code_callback {
 			{ $errs = $rv->{err} }
 		$samptxt->text($text);
 	}
+	my $stdoe = '';
+	for my $s (qw/stdout stderr/) {
+		next unless length $rv->{$s} && $rv->{$s}=~/\S/;
+		$rv->{$s} =~ s/\A\n+|\n+\z//g;
+		$stdoe .= "### ".uc($s)." ###\n".$rv->{$s}."\n";
+	}
+	$sample->children('.re_output')->text($stdoe);
+	unshift @{ $rv->{warns} }, "### Warnings ###" if $rv->{warns}->@*;
 	$sample->children('.re_warns')->text( join "\n", $rv->{warns}->@* );
+	$errs = "### Errors ###\n$errs" if $errs=~/\S/;
 	$sample->children('.re_errors')->text($errs);
 }
 
@@ -586,11 +594,7 @@ my $x = "foo";  # example
 </div>
 
 <div style="margin-top:0.5em">
-	<div>
-		<button id="re_debug"><tt>use re "debug";</tt></button>
-		<button id="re_debug_hide">Hide</button>
-	</div>
-	<textarea id="debugout" rows="25" cols="80" readonly="readonly" style="display:none"></textarea>
+	<button id="re_debug"><tt>use re "debug";</tt></button>
 </div>
 
 <div style="margin-top:0.5em">

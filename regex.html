@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Regex Tester</title>
+
+<!-- ----- WebPerl - http://webperl.zero-g.net -----
+
+Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, http://www.igb-berlin.de
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl 5 itself: either the GNU General Public
+License as published by the Free Software Foundation (either version 1,
+or, at your option, any later version), or the "Artistic License" which
+comes with Perl 5.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the licenses for details.
+
+You should have received a copy of the licenses along with this program.
+If not, see http://perldoc.perl.org/index-licence.html
+-->
+
+<!-- This is essentially a copy of
+https://github.com/haukex/webperl/blob/master/web/regex_tester.html
+with the following differences:
+- webperl.js from CDN
+- $RUN_CODE_IN_IFRAME enabled
+- URL updated to https://github.com/haukex/webperl/blob/gh-pages/regex.html
+-->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css"
+	integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
+<style>
+body {
+	margin: 0.4em;
+}
+div {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+pre,tt,textarea {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
+pre {
+	margin: 0;
+}
+.sample {
+	border: 1px solid black;
+	margin: 0.2em;
+	padding: 0.2em;
+	min-width: 10em;
+	min-height: 1em;
+	display: flow-root;
+}
+pre.samptxt {
+	padding: 2px;
+	display: inline-block;
+}
+textarea.samp_ta {
+	min-width: 10em;
+	min-height: 1em;
+	max-width: calc(100% - 1.5em);
+	width: 100%;
+	border: 1px solid grey;
+	padding: 1px;
+	display: inline-block;
+}
+.closebtn {
+	float: right;
+	cursor: pointer;
+}
+.re_output {
+	clear: both;
+	background-color: rgba(234,234,234,255);
+}
+.re_warns {
+	background-color: rgba(255,255,200,255);
+}
+.re_errors {
+	background-color: rgba(255,200,200,255);
+}
+.nomatch {
+	background-color: rgba(200,200,200,255);
+}
+.match {
+	background-color: lightblue;
+	border: 1px solid blue;
+}
+.capture {
+	background-color: lightgreen;
+}
+.capture.zlen {
+	border: 1px solid green;
+}
+.zlen:hover:after {
+	content: " ";
+}
+</style>
+
+<!--script src="webperl.js"></script-->
+<script src="https://webperlcdn.zero-g.net/v0.05-beta/webperl.js"
+	integrity="sha256-0RqUAQu0lcyxE1cPEuyrchvz0YkDITr41FYfTL4Prtk" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+
+<script type="text/perl">
+use warnings;
+use 5.028;
+use WebPerl qw/js/;
+use Data::Dumper ();
+my $jq = js('jQuery');
+
+sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
+	->Sortkeys(1)->Quotekeys(0)->Indent(0)->Purity(1)->Dump }
+
+our $RUN_CODE_IN_IFRAME=1;
+
+my $run_code_body = <<'END_CODE';
+	my (@warns,@output);
+	
+	require File::Temp;
+	my ($fh1,$fn1) = File::Temp::tempfile();
+	open my $oldout, '>&', \*STDOUT or die "dup STDOUT: $!";
+	open STDOUT, '>&', $fh1 or die "open STDOUT: $!";
+	my ($fh2,$fn2) = File::Temp::tempfile();
+	open my $olderr, '>&', \*STDERR or die "dup STDERR: $!";
+	open STDERR, '>&', $fh2 or die "open STDERR: $!";
+	
+	my $ok = do {
+		local $SIG{__WARN__} = sub { push @warns, shift };
+		eval "package RunCode {$code\n};1" };
+	my $err = $ok ? undef : $@||"Unknown error";
+	
+	open STDERR, '>&', $olderr or die "dup \$olderr: $!";
+	close $fh2;
+	open STDOUT, '>&', $oldout or die "dup \$oldout: $!";
+	close $fh1;
+	my $stdout = do { open my $fh, '<', $fn1 or die $!; local $/; <$fh> };
+	my $stderr = do { open my $fh, '<', $fn2 or die $!; local $/; <$fh> };
+	unlink($fn1,$fn2)==2 or warn "unlink('$fn1','$fn2'): $!";
+	
+	defined && s/\bat .+? line \d+(?:\.$|,\h)//mg for (@warns,$err);
+	chomp(@warns);
+	my $rv = { ctx=>$context, warns=>\@warns,
+		$ok ? (out=>\@output) : (err=>$err),
+		stdout => $stdout, stderr => $stderr };
+END_CODE
+
+my $runcode_iframe;
+my $runcode_message_callback; # assume a single callback for now
+if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/
+	my $iframe_html = <<~'END_IFRAME_HTML';
+		<html>
+		<head>
+		<script src="https://webperlcdn.zero-g.net/v0.05-beta/webperl.js"
+			integrity="sha256-0RqUAQu0lcyxE1cPEuyrchvz0YkDITr41FYfTL4Prtk" crossorigin="anonymous"></scr__ipt>
+		<script>
+		Perl.noMountIdbfs=true; // we're sandboxed
+		</scr__ipt>
+		<script type="text/perl">
+		use warnings;
+		use 5.028;
+		use WebPerl qw/js/;
+		js('window')->addEventListener('message', sub {
+			my ($event) = @_;
+			my $data = $event->{data}->toperl;
+			die "Bad arguments" unless ref $data eq 'ARRAY'
+				&& @$data==3 && !grep {ref} @$data;
+			my ($context,$code,$input) = @$data;
+			__RUNCODEBODY__
+			my $origin = $event->{origin} eq 'null' ? '*' : $event->{origin};
+			$event->{source}->postMessage($rv, $origin);
+		}, undef);
+		</scr__ipt>
+		</he__ad>
+		<body></bo__dy>
+		</ht__ml>
+		END_IFRAME_HTML
+	$iframe_html=~s#</\w+\K__(?=\w+>)##ig;
+	$iframe_html=~s/__RUNCODEBODY__/$run_code_body/;
+	my $iframe_blob_url = js('URL')->createObjectURL(
+		WebPerl::js_new('Blob',[$iframe_html],{type=>"text/html;charset=utf-8"}) );
+	my $iframe = $jq->('<iframe/>', {id=>'PerlEval_IFrame', sandbox=>'allow-scripts',
+		src=>$iframe_blob_url} )->hide->appendTo('body');
+	$runcode_iframe = $iframe->[0]{contentWindow};
+	my $got_response;
+	my $window = js('window');
+	$window->addEventListener('message', sub {
+		my ($event) = @_;
+		state $compare = js('(function(x,y){return x===y})');
+		return unless $event->{origin} eq 'null'
+			&& $compare->($event->{source},$runcode_iframe);
+		my $data = $event->{data}->toperl;
+		die "Bad arguments" unless ref $data eq 'HASH'
+			&& exists $data->{ctx}   && !ref $data->{ctx}
+			&& exists $data->{warns} &&  ref $data->{warns} eq 'ARRAY'
+			&& ( exists $data->{out} &&  ref $data->{out} eq 'ARRAY'
+			  || exists $data->{err} && !ref $data->{err} );
+		$got_response = 1;
+		if (!defined $runcode_message_callback)
+			{ warn "recived runcode result without a callback" }
+		else { $runcode_message_callback->($data) }
+	}, undef);
+	# poll until the iframe is loaded
+	my $start_time = time;
+	my $intid; $intid = $window->setInterval(sub {
+		if (time-$start_time>10) {
+			$window->alert("Failed to get response from Perl in IFrame, loading failed?");
+			$window->clearInterval($intid);
+		}
+		elsif ($got_response)
+			{ $window->clearInterval($intid) }
+		else { update() }
+	}, 500);
+}
+
+sub sample_init {
+	my $samp = shift;
+	state $samp_id = 'a';
+	$samp->attr('id',"samp_".$samp_id++) unless $samp->attr('id');
+	my $samptxt = $samp->children(".samptxt");
+	my $samp_ta = $jq->('<textarea/>', {class=>"samp_ta"});
+	$samp_ta->hide();
+	$samp_ta->appendTo($samp);
+	my $closebtn = $jq->('<div/>', {html=>"&#x274E;",class=>"closebtn",
+		title=>"Delete Sample"});
+	$closebtn->appendTo($samp);
+	$jq->('<pre/>', {class=>'re_output'})->appendTo($samp);
+	$jq->('<pre/>', {class=>'re_warns'})->appendTo($samp);
+	$jq->('<pre/>', {class=>'re_errors'})->appendTo($samp);
+	$samp->click(sub {
+		return if $samp_ta->is(':visible');
+		$samp_ta->height($samptxt->height);
+		$samp_ta->val($samptxt->text);
+		$samptxt->hide;
+		$samp_ta->show;
+		$samp_ta->focus;
+	});
+	$samp_ta->focusout(sub {
+		$samptxt->text($samp_ta->val);
+		$samptxt->height($samp_ta->height);
+		$samp_ta->hide;
+		$samptxt->show;
+		update();
+	});
+	$samp_ta->on('input', sub {
+		$samp_ta->height($samp_ta->[0]->{scrollHeight}-2); # subtract padding
+	});
+	$closebtn->click(sub { $samp->remove; update() });
+}
+$jq->(".sample")->each(sub{ sample_init($jq->($_[1])) });
+
+my $addsamp = $jq->("#addsamp");
+sub newsamp {
+	my $text = @_ ? shift : 'New Sample';
+	my $samptxt = $jq->('<pre/>',{class=>"samptxt",text=>$text});
+	my $samp = $jq->('<div/>',{class=>"sample"})->append($samptxt);
+	$samp->insertBefore($addsamp->parent);
+	sample_init($samp);
+	update();
+	return $samp;
+}
+$addsamp->click(sub { newsamp('')->click });
+
+# $re_debug is actually a parameter to update()/actual_update(), but since
+# we register &update as a event handler, it'll get passed varying parameters
+our $re_debug=0;
+$jq->('#re_debug')->click(sub { local $re_debug=1; update() });
+
+my $sampcodebtn = $jq->('#sampcodebtn');
+my $codecopy = $jq->('#codecopy');
+my $samplecode_ta = $jq->('#samplecode');
+$sampcodebtn->click(sub{
+	if ($samplecode_ta->is(':visible')) {
+		$samplecode_ta->hide;
+		$codecopy->hide;
+		$sampcodebtn->text('Show Example Perl Code');
+	}
+	else { sampcode_show() }
+});
+sub sampcode_show {
+	$samplecode_ta->show;
+	$codecopy->show;
+	$sampcodebtn->text('Hide Example Perl Code');
+	update();
+}
+$codecopy->click(sub {
+	$samplecode_ta->[0]->select;
+	js(q{ document.execCommand("copy"); });
+});
+$samplecode_ta->hide;
+$codecopy->hide;
+
+my $precodebtn = $jq->('#precodebtn');
+my $precode_ta = $jq->('#precode');
+$precodebtn->click(sub{
+	if ($precode_ta->is(':visible')) {
+		$precode_ta->hide;
+		$precodebtn->text("Add Preamble Code");
+	}
+	else { precode_show() }
+	update();
+});
+sub precode_show {
+	$precode_ta->val(shift) if @_;
+	$precode_ta->show;
+	$precodebtn->text("Disable Preamble Code");
+}
+$precode_ta->hide;
+$precode_ta->change(\&update);
+$precode_ta->keyup( \&update);
+
+my $thisurl_ta = $jq->("#thisurl");
+$jq->('#urlcopy')->click(sub {
+	$thisurl_ta->[0]->select;
+	js(q{ document.execCommand("copy"); });
+});
+
+$jq->('#perlinfo')->text("perl $^V, WebPerl ".js('Perl.WebPerlVersion'));
+
+my $ta_regex = $jq->("#regex");
+my $ta_flags = $jq->("#flags");
+$ta_regex->change(\&update);
+$ta_regex->keyup( \&update);
+$ta_flags->change(\&update);
+$ta_flags->keyup( \&update);
+
+js('$(window)')->on('hashchange',\&hashchange);
+
+$ta_regex->on('input', sub {
+	$ta_regex->height($ta_regex->[0]->{scrollHeight});
+});
+
+hashchange();
+update();
+
+*run_code = eval( q{ sub {
+	my ($context,$code,$input,$callback) = @_;
+	if ($RUN_CODE_IN_IFRAME) {
+		$runcode_message_callback = $callback; # assume a single callback for now
+		$runcode_iframe->postMessage([$context,$code,$input], '*');
+		return }
+	__RUNCODEBODY__
+	$callback->($rv);
+} } =~ s/__RUNCODEBODY__/$run_code_body/r ) || die( $@||"unknown error" );
+
+sub update {
+	state $timeout_id;
+	state $window = js('window');
+	$window->clearTimeout($timeout_id) if defined $timeout_id;
+	if ($re_debug) { $timeout_id=undef; actual_update() }
+	else { $timeout_id = $window->setTimeout(\&actual_update, 100) }
+}
+sub actual_update {
+	my $regex = $ta_regex->val;
+	my $flags = $ta_flags->val;
+	my $precode = $precode_ta->is(':visible') ? $precode_ta->val : '';
+	$precode .= "\n" if length $precode && substr($precode,-1) ne "\n";
+	my $regex_str = 'm{'.$regex.'}'.$flags;
+	
+	my $warn = '';
+	if (not length $regex) {
+		$warn .= "Notice: The empty pattern has special behavior, see perlop!\n"
+				."        Here, a workaround is used so it acts as a true empty pattern.\n";
+		if ($re_debug) # https://www.perlmonks.org/?node_id=1221517
+			{ $warn .= "        The workaround uses /(?:)/, which you will see in the debug output.\n" }
+	}
+	$warn .= "\\n is recommended over literal newlines\n" if $regex=~/\n/ && $flags!~/x/;
+	$warn .= "\\t is recommended over literal tabs\n" if $regex=~/\t/ && $flags!~/x/;
+	state $warnmsgs = $jq->("#warnmsgs");
+	$warnmsgs->text($warn);
+	
+	my @samps;
+	for my $sample (map {$jq->($_)} $jq->('.sample')->@*) {
+		my $samptxt = $sample->children('.samptxt');
+		my $text = $samptxt->text;
+		push @samps, $text; # for use below
+		my $code = $precode . ( $re_debug ? "use re \"debug\";\n" : '' )
+			. ( length($regex) ? '' : "''=~/(?:)/$flags; # // workaround\n" )
+			. 'push @output,[[@-],[@+]] ' . ($flags=~/g/?'while':'if') . ' $input=~'.$regex_str.";\n";
+		$re_debug and
+			$code = 'BEGIN{require Data::Dumper;'
+				.'print(STDERR Data::Dumper->new([$input],["input"])->Indent(0)->Dump,'
+				.'"\n-- Code --\n",' . pp($code) . ',"----\n")}' . "\n"
+				. $code . "\n"
+				. q{print STDERR "----\n",Data::Dumper->new([\@output],["*output"])->Indent(0)->Dump;};
+		run_code($sample->attr('id'), $code, $text, \&run_code_callback);
+	}
+	
+	if ($samplecode_ta->is(':visible')) {
+		my $sampcode = <<~'ENDCODE';
+		use warnings;
+		use strict;
+		
+		my @samples = (
+		__SAMPLES__
+		    );
+		
+		for my $input (@samples) {
+		    print '### Sample: "', $input, '"', "\n";
+		ENDCODE
+		$sampcode =~ s{__SAMPLES__}{ join ",\n", map {"        ".pp($_)} @samps }e;
+		$sampcode .= $precode=~s/^/    /mgr if length $precode;
+		if ($flags=~/g/) {
+			$sampcode .= <<~'ENDCODE';
+			    while ( $input =~ __REGEX__ ) {
+			        __BODY__
+			    }
+			ENDCODE
+		}
+		else {
+			$sampcode .= <<~'ENDCODE';
+			    if ( $input =~ __REGEX__ ) {
+			        __BODY__
+			    }
+			    else {
+			        print "No match!\n";
+			    }
+			ENDCODE
+		}
+		chomp( my $matchbody = <<~'ENDCODE' );
+		print 'Match! "', $&, '"', "\n";
+		        # (Note: $& has performance penalty on Perl <5.20)
+		        # You can use $1, $2, etc. here.
+		ENDCODE
+		$sampcode =~ s/__BODY__/$matchbody/;
+		my $re = $regex_str;
+		if ( $re=~/\n/ && $flags=~/x/ ) {
+			$re =~ s/^/            /mg;
+			$re = "\n".$re;
+		}
+		$sampcode =~ s/__REGEX__/$re/;
+		$sampcode .= "}\n";
+		$samplecode_ta->val($sampcode);
+	}
+	
+	my $i=1;
+	my $hash = '#' . $jq->param( { regex=>$regex, flags=>$flags,
+		( length $precode ? (pre=>$precode) : () ),
+		( $samplecode_ta->is(':visible') ? (showsampcode=>1) : () ),
+		map { "samp".$i++ => $_ } @samps } );
+	my $baseurl = js('window.location')->{href} =~ s/#.*\z//r;
+	$thisurl_ta->val( $baseurl . $hash );
+}
+sub run_code_callback {
+	my $rv = shift;
+	my $sample = $jq->('#'.$rv->{ctx});
+	if (!$sample->{length}) {
+		warn "got callback for nonexistent sample ".$rv->{context};
+		return }
+	my $samptxt  = $sample->children('.samptxt');
+	my $text = $samptxt->text;
+	my $errs = '';
+	if ( $rv->{out} && $rv->{out}->@* ) {
+		$samptxt->removeClass('nomatch');
+		my %hi;
+		for my $i (0..$#{$rv->{out}}) {
+			my ($s,$e) = $rv->{out}[$i]->@*;
+			for my $j (0..$#$e) { # Use @+ to count all capture groups instead of @-!
+				next if !defined($$s[$j]) && !defined($$e[$j]);
+				my $name = "Match ".($i+1).($j?" Capture Group $j":"");
+				if ($$s[$j]==$$e[$j]) {
+					push @{ $hi{$$s[$j]}{
+							$j==0 ? 'zlen_match' : 'zlen_cap' }
+						}, $name  }
+				else {
+					push @{ $hi{$$s[$j]}{ $j==0 ? 'match' : 'cap' } }, $name;
+					push @{ $hi{$$e[$j]}{ $j==0 ? 'match_end' : 'cap_end' } }, $name;
+				}
+			}
+		}
+		my $html='';
+		my $p=0;
+		my (%active_match,%active_caps);
+		for my $i (sort {$a<=>$b} keys %hi) {
+			
+			$html .= escape_html(substr($text,$p,$i-$p));
+			
+			$html .= "</span>" if keys %active_caps;
+			delete $active_caps{$_} for @{ $hi{$i}{cap_end}//[] };
+			
+			$html .= "</span>" if keys %active_match && $hi{$i}{match_end};
+			delete $active_match{$_} for @{ $hi{$i}{match_end}//[] };
+			
+			$html .= "<span class='zlen match' title='$_'></span>" for @{ $hi{$i}{zlen_match}//[] };
+			$html .= "<span class='zlen capture' title='$_'></span>" for @{ $hi{$i}{zlen_cap}//[] };
+			
+			$active_match{$_}++ for @{ $hi{$i}{match}//[] };
+			$html .= "<span class='match' title='"
+				.join(", ",sort keys %active_match)
+				."'>" if keys %active_match && $hi{$i}{match};
+			
+			$active_caps{$_}++ for @{ $hi{$i}{cap}//[] };
+			$html .= "<span class='capture' title='"
+				.join(", ",(sort keys %active_match),(sort keys %active_caps))
+				."'>" if keys %active_caps;
+			
+			# normally won't happen, unless the user does something pretty tricky
+			push @{ $rv->{warns} }, "Overlapping matches ("
+				.join(", ", sort keys %active_match)
+				.") will not be highlighted correctly"
+					if keys(%active_match)>1;
+			
+		} continue { $p=$i }
+		$html .= escape_html(substr($text,$p));
+		$samptxt->html($html);
+	}
+	else {
+		if ($rv->{out})
+			{ $samptxt->addClass('nomatch') }
+		else
+			{ $errs = $rv->{err} }
+		$samptxt->text($text);
+	}
+	my $stdoe = '';
+	for my $s (qw/stdout stderr/) {
+		next unless length $rv->{$s} && $rv->{$s}=~/\S/;
+		$rv->{$s} =~ s/\A\n+|\n+\z//g;
+		$stdoe .= "### ".uc($s)." ###\n".$rv->{$s}."\n";
+	}
+	$sample->children('.re_output')->text($stdoe);
+	unshift @{ $rv->{warns} }, "### Warnings ###" if $rv->{warns}->@*;
+	$sample->children('.re_warns')->text( join "\n", $rv->{warns}->@* );
+	$errs = "### Errors ###\n$errs" if $errs=~/\S/;
+	$sample->children('.re_errors')->text($errs);
+}
+
+sub escape_html { # apparently no built-in JS function for this (?), so do it manually
+	state $m = { '&'=>'&amp;', '<'=>'&lt;', '>'=>'&gt;', '"'=>'&quot;', "'"=>'&#039;' };
+	shift =~ s/([&<>"'])/$$m{$1}/gr;
+}
+
+sub hashchange {
+	my $hash = js('window.location')->{hash};
+	return unless $hash=~/^#.*\bregex=/;
+	my %res;
+	my $decode = js('decodeURIComponent');
+	for my $c (split /&/, substr $hash, 1) {
+		my ($k,$v) = split /=/, $c;
+		$res{ $decode->($k=~tr/+/ /r) } = $decode->($v=~tr/+/ /r);
+	}
+	if (exists $res{regex} && exists $res{flags}) {
+		$ta_regex->val($res{regex});
+		$ta_regex->height($ta_regex->[0]->{scrollHeight});
+		$ta_flags->val($res{flags});
+		sampcode_show() if $res{showsampcode};
+		precode_show($res{pre}) if exists $res{pre};
+		if (exists $res{samp1}) {
+			$jq->(".sample")->remove();
+			for (my $i=1;exists $res{"samp$i"};$i++) {
+				newsamp($res{"samp$i"});
+			}
+		}
+		update();
+	}
+	else { js('window.location')->{hash}='' }
+}
+
+</script>
+
+</head>
+<body>
+
+<div style="margin-bottom:1em;font-size:1.2em"><b>Perl Regex Tester</b>
+- powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
+
+<div style="margin-bottom:1em">
+<div><button id="precodebtn">Add Preamble Code</button></div>
+<textarea id="precode" rows="3" cols="80" style="display:none">
+my $x = "foo";  # example
+</textarea>
+</div>
+
+<div style="margin-bottom:1em">
+<div><tt style="vertical-align: top;">m{</tt
+	><textarea id="regex" rows="1" cols="50" style="height:1.2em"
+		title="Perl Regular Expression">wo(.)</textarea
+	><tt style="vertical-align: text-bottom;">}</tt
+	><textarea id="flags" rows="1" cols="5" style="height:1.2em"
+		title="Flags for Regular Expression">gi</textarea></div>
+<pre id="warnmsgs" class="re_warns"></pre>
+</div>
+
+<div class="sample">
+	<pre class="samptxt">Hello, World!</pre>
+</div>
+<div class="sample">
+	<pre class="samptxt">Oh, what a wonderful world!</pre>
+</div>
+<div style="text-align:right">
+	<button id="addsamp">Add Sample</button>
+</div>
+
+<div style="margin-top:0.5em">
+	<button id="sampcodebtn">Show Example Perl Code</button>
+	<span id="codecopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span><br/>
+	<textarea id="samplecode" rows="20" cols="80" style="font-size:0.8em;display:none" readonly="readonly"></textarea>
+</div>
+
+<div style="margin-top:0.5em">
+	<button id="re_debug"><tt>use re "debug";</tt></button>
+</div>
+
+<div style="margin-top:0.5em">
+	URL:
+	<textarea id="thisurl" rows="2" cols="80" style="height:2.4em;font-size:0.8em" readonly="readonly"></textarea>
+	<span id="urlcopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span>
+</div>
+
+<pre id="perlinfo" style="margin-top:0.5em">perl v?, WebPerl v?</pre>
+
+<div style="margin-top:1em;font-size:0.8em">
+Perl Regular Expression Documentation:
+<a href="http://perldoc.perl.org/perlretut.html" target="_blank">Tutorial</a>,
+<a href="http://perldoc.perl.org/perlrequick.html" target="_blank">Quick Start</a>,
+<a href="http://perldoc.perl.org/perlre.html" target="_blank">Main (perlre)</a>,
+<a href="http://perldoc.perl.org/perlop.html#Regexp-Quote-Like-Operators" target="_blank">Operators</a>,
+<a href="http://perldoc.perl.org/perlvar.html#Variables-related-to-regular-expressions" target="_blank">Special Variables</a>,
+<a href="http://perldoc.perl.org/perlrebackslash.html" target="_blank">Backslash Sequences and Escapes</a>,
+<a href="http://perldoc.perl.org/perlrecharclass.html" target="_blank">Character Classes</a>,
+<a href="http://perldoc.perl.org/perlfaq6.html" target="_blank">FAQs</a>,
+<a href="http://perldoc.perl.org/perlreref.html" target="_blank">Quick Reference</a>,
+<a href="http://perldoc.perl.org/re.html" target="_blank">re Pragma</a>,
+<a href="http://perldoc.perl.org/functions/split.html" target="_blank">split</a>,
+<a href="http://perldoc.perl.org/perlreguts.html" target="_blank">Guts</a>,
+<a href="http://perldoc.perl.org/perldebguts.html#Debugging-Regular-Expressions" target="_blank">Debugging</a>;
+I18N:
+<a href="http://perldoc.perl.org/perlunicode.html" target="_blank">Unicode</a>
+(<a href="http://perldoc.perl.org/perlunicook.html" target="_blank">Examples</a>),
+<a href="http://perldoc.perl.org/perllocale.html" target="_blank">Locales</a>.
+</div>
+
+<div style="margin-top:1em;font-size:0.8em;font-style:italic;">
+Copyright &copy; 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, <a href="http://www.igb-berlin.de" target="_blank">http://www.igb-berlin.de</a>.
+For details, please see
+<a href="https://github.com/haukex/webperl/blob/gh-pages/regex.html" target="_blank">the source code of this file</a>.
+</div>
+
+</body>
+</html>

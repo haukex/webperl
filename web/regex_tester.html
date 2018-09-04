@@ -397,30 +397,34 @@ sub actual_update {
 		__SAMPLES__
 		    );
 		
-		for my $sample (@samples) {
-		    print "### Sample: \"$sample\"\n";
+		for my $input (@samples) {
+		    print '### Sample: "', $input, '"', "\n";
 		ENDCODE
 		$sampcode =~ s{__SAMPLES__}{ join ",\n", map {"        ".pp($_)} @samps }e;
 		$sampcode .= $precode=~s/^/    /mgr if length $precode;
 		if ($flags=~/g/) {
 			$sampcode .= <<~'ENDCODE';
-			    while ( $sample =~ __REGEX__ ) {
-			        print "Match! \"$&\"\n";
-			        # can use $1, $2, etc. here
+			    while ( $input =~ __REGEX__ ) {
+			        __BODY__
 			    }
 			ENDCODE
 		}
 		else {
 			$sampcode .= <<~'ENDCODE';
-			    if ( $sample =~ __REGEX__ ) {
-			        print "Match! \"$&\"\n";
-			        # can use $1, $2, etc. here
+			    if ( $input =~ __REGEX__ ) {
+			        __BODY__
 			    }
 			    else {
 			        print "No match!\n";
 			    }
 			ENDCODE
 		}
+		chomp( my $matchbody = <<~'ENDCODE' );
+		print 'Match! "', $&, '"', "\n";
+		        # (Note: $& has performance penalty on Perl <5.20)
+		        # You can use $1, $2, etc. here.
+		ENDCODE
+		$sampcode =~ s/__BODY__/$matchbody/;
 		my $re = $regex_str;
 		if ( $re=~/\n/ && $flags=~/x/ ) {
 			$re =~ s/^/            /mg;

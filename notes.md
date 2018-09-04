@@ -30,8 +30,8 @@ TODOs
 	- Investigate Emscripten's main loop concept for handling nonblocking sockets?
 	- Turn some patches from emperl5 into patches for P5P
 	- Submit some patches to Emscripten
-		- https://github.com/kripken/emscripten/pull/7005
-		- https://github.com/kripken/emscripten/issues/7029
+		- <https://github.com/kripken/emscripten/pull/7005>
+		- <https://github.com/kripken/emscripten/issues/7029>
 		- Would we need to patch Perl's signal functions if Emscripten's stubs weren't noisy?
 	- Add Perl.Util functions for making file uploads and downloads easier
 		- Plus an example showing how to use it to run a "legacy" Perl script with inputs and output

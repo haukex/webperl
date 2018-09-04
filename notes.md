@@ -9,14 +9,40 @@ Notes -
 =========================
 
 
-To-Dos
-------
+TODOs
+-----
 
-- <https://github.com/haukex/webperl/blob/master/ToDo.md>
-- <https://github.com/haukex/webperl/issues>
-- <https://github.com/haukex/webperl/pulls>
-- See also To-Dos in the source tree by grepping for `TODO`
-  or using the included `findtodo.sh`.
+1. Testing
+	
+	- Continue work on `WebPerl.t`
+		- More tests for Unicode support (Perl/JS interface, Perl.eval(), plus Emscripten's virtual FS)
+	- Focus on getting the tests running in the browser instead of node.js
+	- How to best package tests?
+		- If possible, a separate bundle, so that it can be loaded optionally and we don't need to rebuild
+		- How does `make test` find and handle all the various modules' `t`s?
+	- How to best disable individual tests that we know won't work? (qx etc.)
+	- How to handle the many tests that call an external Perl?
+		- patching t/test.pl's runperl() seems easiest at the moment, and we can use the iframe method from the IDE
+
+2. Misc
+	
+	- Write up a full RPC example
+	- Investigate Emscripten's main loop concept for handling nonblocking sockets?
+	- Turn some patches from emperl5 into patches for P5P
+	- Submit some patches to Emscripten
+		- https://github.com/kripken/emscripten/pull/7005
+		- https://github.com/kripken/emscripten/issues/7029
+		- Would we need to patch Perl's signal functions if Emscripten's stubs weren't noisy?
+	- Add Perl.Util functions for making file uploads and downloads easier
+		- Plus an example showing how to use it to run a "legacy" Perl script with inputs and output
+	- Perhaps create a CPAN Bundle:: module or similar for `build.pl` deps?
+
+3. See Also
+	
+	- <https://github.com/haukex/webperl/issues>
+	- <https://github.com/haukex/webperl/pulls>
+	- See also `TODO`s in the source tree by grepping for `TODO`
+	  or using the included `findtodo.sh`.
 
 
 Possible Improvements

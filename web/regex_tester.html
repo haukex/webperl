@@ -381,7 +381,7 @@ sub actual_update {
 				.'print(STDERR Data::Dumper->new([$input],["input"])->Indent(0)->Dump,'
 				.'"\n-- Code --\n",' . pp($code) . ',"----\n")}' . "\n"
 				. $code . "\n"
-				. q{print STDERR "----\n",Data::Dumper->new([\@output],["*output"])->Indent(0)->Dump;};
+				. q{print STDERR "----\n",Data::Dumper->new([\@output],["*output"])->Indent(0)->Dump,"\n";};
 		run_code($sample->attr('id'), $code, $text, \&run_code_callback);
 	}
 	

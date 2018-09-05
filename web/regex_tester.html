@@ -521,6 +521,7 @@ sub run_code_callback {
 	$sample->children('.re_warns')->text( join "\n", $rv->{warns}->@* );
 	$errs = "### Errors ###\n$errs" if $errs=~/\S/;
 	$sample->children('.re_errors')->text($errs);
+	state $loading = 1; if ($loading) { $jq->('#loading')->remove; $loading=0 }
 }
 
 sub escape_html { # apparently no built-in JS function for this (?), so do it manually
@@ -561,6 +562,8 @@ sub hashchange {
 
 <div style="margin-bottom:1em;font-size:1.2em"><b>Perl Regex Tester</b>
 - powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
+
+<div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;"><tt>Loading...</tt></div>
 
 <div style="margin-bottom:1em">
 <div><button id="precodebtn">Add Preamble Code</button></div>

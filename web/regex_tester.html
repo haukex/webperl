@@ -49,6 +49,10 @@ pre {
 	min-height: 1em;
 	display: flow-root;
 }
+.samptxt_outer {
+	display: block;
+	overflow: auto;
+}
 pre.samptxt {
 	padding: 2px;
 	display: inline-block;
@@ -56,14 +60,16 @@ pre.samptxt {
 textarea.samp_ta {
 	min-width: 10em;
 	min-height: 1em;
-	max-width: calc(100% - 1.5em);
-	width: 100%;
+	width: calc(100% - 1.7em);
+	height: 1.1em;
 	border: 1px solid grey;
 	padding: 1px;
 	display: inline-block;
+	resize: vertical;
 }
 .closebtn {
 	float: right;
+	margin-left: 5px;
 	cursor: pointer;
 }
 .re_output {
@@ -215,33 +221,37 @@ sub sample_init {
 	my $samp = shift;
 	state $samp_id = 'a';
 	$samp->attr('id',"samp_".$samp_id++) unless $samp->attr('id');
-	my $samptxt = $samp->children(".samptxt");
+	my $samptxt = $samp->find(".samptxt");
+	my $samptxt_outer = $jq->('<div/>',{class=>"samptxt_outer"});
+	$samptxt->wrap($samptxt_outer);
 	my $samp_ta = $jq->('<textarea/>', {class=>"samp_ta"});
 	$samp_ta->hide();
 	$samp_ta->appendTo($samp);
 	my $closebtn = $jq->('<div/>', {html=>"&#x274E;",class=>"closebtn",
 		title=>"Delete Sample"});
-	$closebtn->appendTo($samp);
+	$closebtn->prependTo($samp);
 	$jq->('<pre/>', {class=>'re_output'})->appendTo($samp);
 	$jq->('<pre/>', {class=>'re_warns'})->appendTo($samp);
 	$jq->('<pre/>', {class=>'re_errors'})->appendTo($samp);
 	$samp->click(sub {
 		return if $samp_ta->is(':visible');
-		$samp_ta->height($samptxt->height);
 		$samp_ta->val($samptxt->text);
+		my $th = $samptxt->height;
 		$samptxt->hide;
 		$samp_ta->show;
+		my $sh = $samp_ta->[0]{scrollHeight}-2; # subtract padding
+		# I'm not quite sure of the rounding that's happening in the browser yet...
+		$samp_ta->height( int($sh) > int($th)+1 ? $sh : $th );
 		$samp_ta->focus;
 	});
 	$samp_ta->focusout(sub {
 		$samptxt->text($samp_ta->val);
-		$samptxt->height($samp_ta->height);
 		$samp_ta->hide;
 		$samptxt->show;
 		update();
 	});
-	$samp_ta->on('input', sub {
-		$samp_ta->height($samp_ta->[0]->{scrollHeight}-2); # subtract padding
+	$samp_ta->on('input', sub { # autoexpand for new lines
+		$samp_ta->height($samp_ta->[0]{scrollHeight}-2); # subtract padding
 	});
 	$closebtn->click(sub { $samp->remove; update() });
 }
@@ -325,8 +335,8 @@ $ta_flags->keyup( \&update);
 
 js('$(window)')->on('hashchange',\&hashchange);
 
-$ta_regex->on('input', sub {
-	$ta_regex->height($ta_regex->[0]->{scrollHeight});
+$ta_regex->on('input', sub { # autoexpand for new lines
+	$ta_regex->height($ta_regex->[0]{scrollHeight});
 });
 
 hashchange();
@@ -370,7 +380,7 @@ sub actual_update {
 	
 	my @samps;
 	for my $sample (map {$jq->($_)} $jq->('.sample')->@*) {
-		my $samptxt = $sample->children('.samptxt');
+		my $samptxt = $sample->find('.samptxt');
 		my $text = $samptxt->text;
 		push @samps, $text; # for use below
 		my $code = $precode . ( $re_debug ? "use re \"debug\";\n" : '' )
@@ -446,7 +456,7 @@ sub run_code_callback {
 	if (!$sample->{length}) {
 		warn "got callback for nonexistent sample ".$rv->{context};
 		return }
-	my $samptxt  = $sample->children('.samptxt');
+	my $samptxt  = $sample->find('.samptxt');
 	my $text = $samptxt->text;
 	my $errs = '';
 	if ( $rv->{out} && $rv->{out}->@* ) {
@@ -540,7 +550,7 @@ sub hashchange {
 	}
 	if (exists $res{regex} && exists $res{flags}) {
 		$ta_regex->val($res{regex});
-		$ta_regex->height($ta_regex->[0]->{scrollHeight});
+		$ta_regex->height($ta_regex->[0]{scrollHeight});
 		$ta_flags->val($res{flags});
 		sampcode_show() if $res{showsampcode};
 		precode_show($res{pre}) if exists $res{pre};
@@ -560,24 +570,26 @@ sub hashchange {
 </head>
 <body>
 
-<div style="margin-bottom:1em;font-size:1.2em"><b>Perl Regex Tester</b>
+<div style="margin-bottom:1em;font-size:1.2em;text-align:center;"><b>Perl Regex Tester</b>
 - powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
 
 <div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;"><tt>Loading...</tt></div>
 
-<div style="margin-bottom:1em">
-<div><button id="precodebtn">Add Preamble Code</button></div>
-<textarea id="precode" rows="3" cols="80" style="display:none">
-my $x = "foo";  # example
-</textarea>
+<div style="margin-bottom:1em;">
+<div>
+	<button id="precodebtn">Add Preamble Code</button>
+</div>
+<div>
+	<textarea id="precode" rows="3" cols="80" style="display:none;min-height:1.2em;min-width:10em;max-width:100%;">my $x = "foo";  # example</textarea>
+</div>
 </div>
 
-<div style="margin-bottom:1em">
-<div><tt style="vertical-align: top;">m{</tt
-	><textarea id="regex" rows="1" cols="50" style="height:1.2em"
+<div style="margin-bottom:1em;white-space:nowrap;">
+<div><tt style="vertical-align:top;">m{</tt
+	><textarea id="regex" rows="1" cols="60" style="height:1.2em;min-height:1.2em;min-width:10em;"
 		title="Perl Regular Expression">wo(.)</textarea
-	><tt style="vertical-align: text-bottom;">}</tt
-	><textarea id="flags" rows="1" cols="5" style="height:1.2em"
+	><tt style="vertical-align:text-bottom;">}</tt
+	><textarea id="flags" rows="1" cols="7"  style="height:1.2em;min-height:1.2em;min-width:3em;"
 		title="Flags for Regular Expression">gi</textarea></div>
 <pre id="warnmsgs" class="re_warns"></pre>
 </div>
@@ -588,29 +600,38 @@ my $x = "foo";  # example
 <div class="sample">
 	<pre class="samptxt">Oh, what a wonderful world!</pre>
 </div>
-<div style="text-align:right">
+<div style="text-align:right;">
+	<!-- note this is used as the insertion point for new samples, be careful when changing -->
 	<button id="addsamp">Add Sample</button>
 </div>
 
-<div style="margin-top:0.5em">
+<div style="margin-top:0.5em;">
+<div style="white-space:nowrap;">
 	<button id="sampcodebtn">Show Example Perl Code</button>
-	<span id="codecopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span><br/>
-	<textarea id="samplecode" rows="20" cols="80" style="font-size:0.8em;display:none" readonly="readonly"></textarea>
+	<span id="codecopy" style="cursor:pointer;" title="Copy to Clipboard">&#x1F4CB;</span><br/>
+</div>
+<div>
+	<textarea id="samplecode" rows="20" cols="80" style="display:none;font-size:0.8em;min-height:1.2em;min-width:10em;max-width:100%;" readonly="readonly"></textarea>
+</div>
 </div>
 
-<div style="margin-top:0.5em">
+<div style="margin-top:0.5em;">
 	<button id="re_debug"><tt>use re "debug";</tt></button>
 </div>
 
-<div style="margin-top:0.5em">
+<div style="margin-top:0.5em;">
+<div style="white-space:nowrap;">
 	URL:
-	<textarea id="thisurl" rows="2" cols="80" style="height:2.4em;font-size:0.8em" readonly="readonly"></textarea>
-	<span id="urlcopy" style="cursor:pointer" title="Copy to Clipboard">&#x1F4CB;</span>
+	<span id="urlcopy" style="cursor:pointer;" title="Copy to Clipboard">&#x1F4CB;</span>
+</div>
+<div>
+	<textarea id="thisurl" rows="2" cols="80" style="font-size:0.8em;height:2.4em;min-height:1.2em;min-width:10em;max-width:100%;" readonly="readonly"></textarea>
+</div>
 </div>
 
-<pre id="perlinfo" style="margin-top:0.5em">perl v?, WebPerl v?</pre>
+<pre id="perlinfo" style="margin-top:0.5em;">perl v?, WebPerl v?</pre>
 
-<div style="margin-top:1em;font-size:0.8em">
+<div style="margin-top:1em;font-size:0.8em;">
 Perl Regular Expression Documentation:
 <a href="http://perldoc.perl.org/perlretut.html" target="_blank">Tutorial</a>,
 <a href="http://perldoc.perl.org/perlrequick.html" target="_blank">Quick Start</a>,

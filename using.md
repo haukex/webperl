@@ -470,7 +470,8 @@ stored in a Perl scalar `$foo` pointing to a JavaScript object `foo`:
 - `jscode` returns a string of JavaScript code that represents a reference
   to the JavaScript object. You should treat the string as an opaque value,
   no guarantees are made about its format and whether it may change in future
-  releases. This is an advanced function that should not normally be needed,
+  releases. *Do not* call JavaScript's `delete` on this value.
+  This is an advanced function that should not normally be needed,
   unless you are building strings of JavaScript to run. In that case, you
   may need to wrap the value in parentheses for it to evaluate correctly in
   JavaScript. Example: `js( "console.log(".$jsobject->jscode.")" )`

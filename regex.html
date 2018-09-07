@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>WebPerl Regex Tester</title>
 
-<!-- ----- WebPerl - http://webperl.zero-g.net -----
+<!-- ##### WebPerl - http://webperl.zero-g.net #####
 
 Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
 at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
@@ -23,7 +23,7 @@ See the licenses for details.
 
 You should have received a copy of the licenses along with this program.
 If not, see http://perldoc.perl.org/index-licence.html
--->
+##### -->
 
 <!-- This is essentially a copy of
 https://github.com/haukex/webperl/blob/master/web/regex_tester.html
@@ -31,6 +31,7 @@ with the following differences:
 - webperl.js from CDN
 - $RUN_CODE_IN_IFRAME enabled
 - URL updated to https://github.com/haukex/webperl/blob/gh-pages/regex.html
+(see import_regex_tester.pl)
 -->
 
 <meta name="viewport" content="width=600" />
@@ -43,7 +44,7 @@ body {
 div {
 	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
 }
-pre,tt,textarea {
+pre,kbd,var,code,samp,textarea {
 	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
 }
 pre {
@@ -110,7 +111,7 @@ textarea.samp_ta {
 
 <!--script src="webperl.js"></script-->
 <script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
-	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc" crossorigin="anonymous"></script>
+	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
 	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
@@ -164,7 +165,7 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 		<html>
 		<head>
 		<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
-			integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc" crossorigin="anonymous"></scr__ipt>
+			integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></scr__ipt>
 		<script>
 		Perl.noMountIdbfs=true; // we're sandboxed
 		</scr__ipt>
@@ -581,7 +582,7 @@ sub hashchange {
 <div style="margin-bottom:1em;font-size:1.2em;text-align:center;"><b>Perl Regex Tester</b>
 - powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
 
-<div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;"><tt>Loading...</tt></div>
+<div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;">Loading...</div>
 
 <div style="margin-bottom:1em;">
 <div>
@@ -593,10 +594,10 @@ sub hashchange {
 </div>
 
 <div style="margin-bottom:1em;white-space:nowrap;">
-<div><tt style="vertical-align:top;">m{</tt
+<div><code style="vertical-align:top;">m{</code
 	><textarea id="regex" rows="1" cols="60" style="height:1.2em;min-height:1.2em;min-width:10em;"
 		title="Perl Regular Expression">wo(.)</textarea
-	><tt style="vertical-align:text-bottom;">}</tt
+	><code style="vertical-align:text-bottom;">}</code
 	><textarea id="flags" rows="1" cols="7"  style="height:1.2em;min-height:1.2em;min-width:3em;"
 		title="Flags for Regular Expression">gi</textarea></div>
 <pre id="warnmsgs" class="re_warns"></pre>
@@ -624,7 +625,7 @@ sub hashchange {
 </div>
 
 <div style="margin-top:0.5em;">
-	<button id="re_debug"><tt>use re "debug";</tt></button>
+	<button id="re_debug"><code>use re "debug";</code></button>
 </div>
 
 <div style="margin-top:0.5em;">

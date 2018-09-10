@@ -252,6 +252,9 @@ It is important to keep apart the different ways to access files:
   
 - A `<script type="text/perl" src="foo.pl"></script>` tag will cause `webperl.js`
   to fetch `foo.pl` from the *web server*, not the virtual filesystem!
+  - *However*, that Perl script will *also* only see the virtual filesystem,
+    not the web server, so it won't even be able to see "itself". You can still
+    fetch things from the webserver using e.g. AJAX requests.
 
 While a WebPerl instance is running, you can modify files in the virtual file system
 as you might be used to from regular Perl. But the virtual filesystem is reloaded every

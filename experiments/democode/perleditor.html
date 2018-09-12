@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Perl Editor</title>
+
+<!-- ----- WebPerl - http://webperl.zero-g.net -----
+
+Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, http://www.igb-berlin.de
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl 5 itself: either the GNU General Public
+License as published by the Free Software Foundation (either version 1,
+or, at your option, any later version), or the "Artistic License" which
+comes with Perl 5.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the licenses for details.
+
+You should have received a copy of the licenses along with this program.
+If not, see http://perldoc.perl.org/index-licence.html
+-->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css"
+	integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.css"
+	integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
+<style>
+body {
+	margin: 0.4em;
+}
+.text {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+pre,textarea,code,.code,.CodeMirror {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
+pre {
+	margin: 0;
+}
+.cm-resize-frame {
+	overflow: hidden;
+	resize: vertical;
+	border: 1px solid grey;
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.js"
+	integrity="sha256-uRIJ6Wfou5cTtmcCvQNA9lvsYl8sUbZXxnfG+P79ssY=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/mode/perl/perl.min.js"
+	integrity="sha256-Uu9QBfi8gU6J/MzQunal8ewmY+i/BbCkBrcAXA5bcCM=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+
+<script>
+"use strict";
+
+function makeCM (textarea,plain,ro) {
+	var resize_frame = $('<div/>').addClass("cm-resize-frame");
+	textarea.wrap(resize_frame);
+	var cm = CodeMirror.fromTextArea( textarea[0], {
+		viewportMargin: Infinity, // so browser's search works, not good for long documents though
+		lineNumbers:true, indentWithTabs:true,
+		tabSize:4, indentUnit:4,
+		mode: plain?"text/plain":"perl",
+		readOnly: ro?true:false,
+	} );
+	// Thanks to https://codepen.io/sakifargo/pen/KodNyR
+	//cm.setSize(null,'auto'); //TODO: this causes the auto-resize to no longer work
+	//TODO: but if we remove the above line, we don't get any more scroll bars...
+	var fr = resize_frame[0];
+	var cm_resize = function() { cm.setSize(fr.clientWidth + 2, fr.clientHeight - 10); };
+	//cm_resize(); //TODO: if I call this here, the CM's width shrinks to zero, why?
+	if (window.ResizeObserver)
+		new ResizeObserver(cm_resize).observe(fr);
+	else if (window.MutationObserver)
+		new MutationObserver(cm_resize).observe(fr, {attributes: true});
+	return cm;
+}
+
+var cm_std = { 1:null, 2:null }; // 1=stdout, 2=stderr
+function stdOutput (which, data) { // 1=stdout, 2=stderr
+	if (!cm_std[which]) {
+		var d = $(which==1?'#stdout':'#stderr');
+		d.show();
+		cm_std[which] = makeCM($('textarea',d),1,1);
+	}
+	if (data && data.length)
+		cm_std[which].setValue( cm_std[which].getValue() + data );
+}
+
+var perlRunner;
+
+window.addEventListener('message', function (event) {
+	var data = event.data;
+	//console.log("editor got message", data); //DB
+	if (data["perlRunnerState"]) {
+		var disableBtn = true;
+		if ( data.perlRunnerState=="Ready" ) {
+			perlRunner = event.source;
+			disableBtn = false;
+		}
+		else if ( data.perlRunnerState=="Ended" ) {
+			perlRunner = null;
+			findPerlRunner();
+		}
+		$('#runperl').prop("disabled",disableBtn);
+	}
+	else if (data["perlOutput"]) {
+		stdOutput(data.perlOutput.chan, data.perlOutput.data);
+	}
+	else console.warn("Perl Editor ignoring unknown message:",data);
+});
+
+function findPerlRunner () {
+	var pollId;
+	var pollUntil = Date.now() + 10*1000; // milliseconds
+	pollId = window.setInterval( function () {
+		if (perlRunner) {
+			window.clearInterval(pollId);
+		}
+		else if ( Date.now()>pollUntil ) {
+			window.clearInterval(pollId);
+			console.error("Perl Editor could not contact Perl Runner"); //TODO: report error to user via UI (same for other console.error calls in this script)
+		}
+		else
+			if (window.parent && window.parent.frames["perlrunner"])
+				window.parent.frames["perlrunner"].postMessage(
+					{perlRunnerRegisterClient:1}, '*');
+	}, 100);
+}
+
+function parseCmdLine(str) { //TODO: use this
+	var re = /"((?:\\"|\\\\|[^"])*)"|'((?:\\'|\\\\|[^'])*)'|(\S+)/g;
+	var argv = [];
+	var match;
+	while ((match = re.exec(str)) !== null) {
+		     if (typeof match[1] != 'undefined') argv.push(match[1].replace(/\\\\/g,"\\").replace(/\\"/g,"\""));
+		else if (typeof match[2] != 'undefined') argv.push(match[2].replace(/\\\\/g,'\\').replace(/\\'/g,'\''));
+		else if (typeof match[3] != 'undefined') argv.push(match[3]);
+	}
+	return argv;
+}
+
+function parseParams(str) { // Thanks to https://stackoverflow.com/a/26849194
+	if (!str || !str.length) return {};
+	return str.split('&').reduce(function (params, param) {
+		var paramSplit = param.split('=').map(function (value) {
+			return decodeURIComponent(value.replace(/\+/g, ' '));
+		});
+		params[paramSplit[0]] = paramSplit[1];
+		return params;
+	}, {});
+}
+
+function hashchange () { //TODO: implement
+	var hash = parseParams(window.location.hash);
+	//console.log("hash", hash);
+}
+//$(window).on('hashchange',hashchange); //TODO: should we support this? or just messages?
+hashchange();
+
+$(function () {
+	
+	var perl_cm = makeCM($('#perlcode'));
+	
+	var btn_runperl = $('#runperl');
+	btn_runperl.click( function () {
+		if (cm_std["1"]) cm_std["1"].setValue("");
+		if (cm_std["2"]) cm_std["2"].setValue("");
+		
+		var runperl = {
+			//TODO: input files
+			script: perl_cm.getValue(),
+		};
+		var argv = parseCmdLine($('#argv').val());
+		if (argv.length<1 || argv[0]!="perl") {
+			console.error("invalid command line");
+			return;
+		}
+		else {
+			argv.shift();
+			runperl.argv = argv;
+		}
+		
+		btn_runperl.prop("disabled",true);
+		perlRunner.postMessage({ runPerl: runperl },'*');
+	});
+	btn_runperl.prop("disabled",true);
+	
+	findPerlRunner();
+});
+
+</script>
+
+</head>
+<body>
+
+<div>
+	<input type="text" id="argv" class="code" size="60" value='perl script.pl'/>
+</div>
+
+<textarea id="perlcode">
+use warnings;
+use strict;
+
+print "Hello, World!\n";
+</textarea>
+
+<div class="text" style="text-align:right;">
+	<button id="runperl"><code>perl</code> &#x25BA;</button>
+</div>
+
+<div id="stdout" style="display:none;">
+	<code>STDOUT:</code><br/>
+	<textarea></textarea>
+</div>
+
+<div id="stderr" style="display:none;">
+	<code>STDERR:</code><br/>
+	<textarea></textarea>
+</div>
+
+
+</body>
+</html>

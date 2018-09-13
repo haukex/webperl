@@ -152,11 +152,18 @@ END_CODE
 my $runcode_iframe;
 my $runcode_message_callback; # assume a single callback for now
 if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/
+	my $webperlurl;
+	$jq->('script')->each(sub { $webperlurl=$_[1]->{src} if $_[1]->{src}=~/\bwebperl\.js\z/ });
+	if (!$webperlurl) {
+		warn "Warning: Could not determine URL of webperl.js\n";
+		$webperlurl = 'webperl.js';  # probably won't work due to same-origin
+	}
 	my $iframe_html = <<~'END_IFRAME_HTML';
 		<html>
 		<head>
-		<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
-			integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></scr__ipt>
+		<script src="__WEBPERLURL__"></scr__ipt>
+		<!--script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
+			integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></scr__ipt-->
 		<script>
 		Perl.noMountIdbfs=true; // we're sandboxed
 		</scr__ipt>
@@ -181,6 +188,7 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 		END_IFRAME_HTML
 	$iframe_html=~s#</\w+\K__(?=\w+>)##ig;
 	$iframe_html=~s/__RUNCODEBODY__/$run_code_body/;
+	$iframe_html=~s/__WEBPERLURL__/$webperlurl/g;
 	my $iframe_blob_url = js('URL')->createObjectURL(
 		WebPerl::js_new('Blob',[$iframe_html],{type=>"text/html;charset=utf-8"}) );
 	my $iframe = $jq->('<iframe/>', {id=>'PerlEval_IFrame', sandbox=>'allow-scripts',

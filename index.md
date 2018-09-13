@@ -45,6 +45,7 @@ Quick Start
 
 - Prerequisites: `perl` (a recent version is recommended, e.g. v5.26 and up),
   [`plackup` from Plack](https://metacpan.org/pod/distribution/Plack/script/plackup),
+  [Plack::Middleware::CrossOrigin](https://metacpan.org/pod/Plack::Middleware::CrossOrigin),
   and [Cpanel::JSON::XS](https://metacpan.org/pod/Cpanel::JSON::XS).
 
 - In a shell:

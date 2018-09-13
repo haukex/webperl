@@ -384,6 +384,13 @@ The states currently are:
 
 This function was added in WebPerl `v0.05-beta`.
 
+#### `Perl.exitStatus`
+
+This property should be **read only**! After Perl's state has changed
+to `Ended`, you can retrieve the exit code here.
+
+This property was added in WebPerl `v0.09-beta`.
+
 #### `Perl.stateChanged`
 
 **Deprecated** in WebPerl `v0.05-beta`. Use `Perl.addStateChangeListener` instead.

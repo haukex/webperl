@@ -28,11 +28,12 @@ var Perl = {
 	trace: false,         // user may enable this
 	endAfterMain: false,  // user may enable this (before Perl.init)
 	noMountIdbfs: false,  // user may enable this (before Perl.start)
-	WebPerlVersion: 'v0.07-beta',
+	WebPerlVersion: 'v0.07-beta',  // user may read (only!) this
+	state: "Uninitialized",  // user may read (only!) this
+	exitStatus: undefined,   // user may read (only!) this
 	Util: {},
 	// internal variables:
 	initStepsLeft: 2, // Must match number of Perl.initStepFinished() calls!
-	state: "Uninitialized",
 	readyCallback: null,
 	stdout_buf: "", stderr_buf: "", // for our default Perl.output implementation
 	dispatch: function (perl) {
@@ -124,7 +125,7 @@ Perl._saveAndRun = function (script) {
 			// run Perl async so that the window has a chance to refresh
 			window.setTimeout(function () { Perl.start( [ file ] ); }, 1);
 		}
-		catch (err) { console.error("Perl:",err); alert("Save to "+file+"Failed: "+err); }
+		catch (err) { console.error("Perl:",err); alert("Save to "+file+" failed: "+err); }
 	});
 };
 
@@ -209,18 +210,20 @@ Perl.init = function (readyCallback) {
 		stdin: function () { return null },
 		arguments: ['--version'],
 		onAbort: function () {
+			console.error("Perl: Aborted (state",Perl.state,")");
+			alert("Perl aborted in state "+Perl.state);
+			Perl.exitStatus = -1;
 			Perl.changeState("Ended");
-			console.error("Perl: Aborted (state "+Perl.state+")");
-			alert("Perl aborted");
 		},
 		onExit: function (status) { // note this may be called multiple times
-			Perl.changeState("Ended");
 			if (status==0)
-				console.info( "Perl: Exit status "+status+" (state "+Perl.state+")");
+				console.info( "Perl: Exit status",status,"(state",Perl.state,")");
 			else {
-				console.error("Perl: Exit status "+status+" (state "+Perl.state+")");
+				console.error("Perl: Exit status",status,"(state",Perl.state,")");
 				alert("Perl exited with exit status "+status+" in state "+Perl.state);
 			}
+			Perl.exitStatus = status;
+			Perl.changeState("Ended");
 		},
 		onRuntimeInitialized: function () {
 			console.debug("Perl: Module.onRuntimeInitialized");
@@ -258,13 +261,7 @@ Perl.init = function (readyCallback) {
 			Module._main = function() {
 				origMain.apply(this, arguments);
 				console.debug("Perl: main() has ended, ending perl...");
-				var status = ccall("emperl_end_perl","number",[],[]);
-				if (status==0) {
-					// we know that in this case, there is no event thrown to us (since exit() isn't called)
-					// so we have to transition states manually
-					Module.onExit(status);
-				}
-				return status;
+				return Perl.end();
 			};
 		});
 	}
@@ -339,21 +336,28 @@ Perl.eval = function (code) {
 Perl.end = function () {
 	if (Perl.state!="Running") {
 		if (Perl.state=="Ended") {
-			console.warn("Perl: end called when already Ended");
+			console.debug("Perl: end called when already Ended");
 			return;
 		}
 		else throw "Perl: can't call end in state "+Perl.state;
 	}
-	else Perl.changeState("Ended");
+	var status;
 	try {
-		ccall("emperl_end_perl","number",[],[]);
+		status = ccall("emperl_end_perl","number",[],[]);
+		// we know that emperl_end_perl only calls exit() on a nonzero exit code,
+		// which means no ExitStatus exception gets thrown on a zero exit code,
+		// so we *should* reach this point only with status==0
+		if (status!=0) console.warn("emperl_end_perl returned with status",status);
+		Module.onExit(status); // does Perl.changeState() for us
 	}
 	catch (e) {
 		if (e instanceof ExitStatus) {
 			console.debug("Perl: end: ",e);
-			Module.onExit(e.status);
+			status = e.status;
+			Module.onExit(e.status); // does Perl.changeState() for us
 		} else throw e;
 	}
+	return status;
 };
 
 Perl.next_glue_id = 0;

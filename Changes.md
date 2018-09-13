@@ -3,14 +3,23 @@ WebPerl Changelog
 =================
 
 
+not yet released: v0.09-beta
+----------------------
+
+- Added Perl.exitStatus
+- Updated regex_tester.html
+
+
 2018-09-04: v0.07-beta
 ----------------------
+
 - Updated regex_tester.html (improvements and bugfixes)
 - Added WebPerl::JSObject::jscode()
 
 
 2018-09-02: v0.05-beta
 ----------------------
+
 - Added Perl.addStateChangeListener and deprecated Perl.stateChanged
 - Added WebPerl::js_new()
 - Added regex_tester.html

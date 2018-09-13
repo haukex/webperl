@@ -6,6 +6,7 @@ use Plack::MIME;
 use Plack::Builder qw/builder enable mount/;
 use Plack::App::Directory ();
 use Cpanel::JSON::XS qw/decode_json encode_json/;
+require Plack::Middleware::CrossOrigin;
 
 # Demo Plack server for WebPerl
 # run me with "plackup webperl.psgi"
@@ -42,6 +43,7 @@ my $app_ajaxtest = sub {
 
 builder {
 	enable 'SimpleLogger';
+	enable 'CrossOrigin', origins => '*';
 	enable 'Static',
 		path => qr/\.(?:html?|js|css|data|mem|wasm|pl)\z/i,
 		root => $SERV_ROOT;

@@ -368,7 +368,7 @@ This option was added in `v0.05-beta`.
 Enable this option at any time to get additional trace-level output
 to `console.debug()`. Defaults to `false`.
 
-#### `Perl.addStateChangeListener`
+#### `Perl.addStateChangeListener(function)`
 
 Pass this function a `function (from,to) {...}` to register a new handler
 for state changes of the Perl interpreter.

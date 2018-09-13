@@ -20,11 +20,11 @@ with the following differences:
 (see import_regex_tester.pl)
 ENDMSG
 
-( $html =~ s{ <(?<x>script\s+src="webperl\.js"\s*></script)> }{<!--$+{x}-->}xms )==1 or die;
-( $html =~ s{ <!--(?<x>script\s+src="http.+?webperl\.js"[^>]+crossorigin[^>]+></script)--> }{<$+{x}>}xms )==1 or die;
-( $html =~ s{ ^ \s* our \s+ \$RUN_CODE_IN_IFRAME\s*=\s*\K0(?=\s*;\s*) }{1}xms )==1 or die;
-( $html =~ s{ https?://github.com/haukex/webperl/blob/\Kmaster/web/regex_tester.html }{gh-pages/regex.html}xms )==1 or die;
-( $html =~ s{ \#\#\#\#\#\s*-->\n\K }{\n<!-- $msg-->\n}xms )==1 or die;
+( $html =~ s{ <(?<x>script\s+src="(?:webperl\.js|__WEBPERLURL__)"\s*></scr_*ipt)> }{<!--$+{x}-->}xmsg )==2 or die;
+( $html =~ s{ <!--(?<x>script\s+src="http.+?webperl\.js"[^>]+crossorigin[^>]+></scr_*ipt)--> }{<$+{x}>}xmsg )==2 or die;
+( $html =~ s{ ^ \s* our \s+ \$RUN_CODE_IN_IFRAME\s*=\s*\K[01](?=\s*;\s*) }{1}xmsg )==1 or die;
+( $html =~ s{ https?://github.com/haukex/webperl/blob/\Kmaster/web/regex_tester.html }{gh-pages/regex.html}xmsg )==1 or die;
+( $html =~ s{ \#\#\#\#\#\s*-->\n\K }{\n<!-- $msg-->\n}xmsg )==1 or die;
 
 open my $ofh, '>:encoding(UTF-8)', $outfn or die "$outfn: $!";
 print $ofh $html;

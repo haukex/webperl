@@ -4,8 +4,6 @@
 /web/emperl.js
 /web/emperl.wasm
 /web/emperl.data
-/web/jquery*.js
-/web/codemirror*
-/web/normalize.css
+/web/cache/
 /pages/
 /wiki/

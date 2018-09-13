@@ -25,8 +25,9 @@ You should have received a copy of the licenses along with this program.
 If not, see http://perldoc.perl.org/index-licence.html
 -->
 
-<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
-	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc" crossorigin="anonymous"></script>
+<script src="../webperl.js"></script>
+<!--script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
+	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc" crossorigin="anonymous"></script-->
 <script>
 "use strict";
 
@@ -42,14 +43,13 @@ Perl.addStateChangeListener(function (from,to) {
 		knownClients[i].postMessage({ perlRunnerState: Perl.state },'*');
 	if (to=="Ended") {
 		if (currentClient) {
-			for (var c=1;c<=2;c++) {
+			for (var c=1;c<=2;c++) // flush buffers
 				if (stdbuf[c].length)
 					currentClient.postMessage({ perlOutput: { chan:c, data:stdbuf[c] } },'*');
-			}
+			//TODO: how to handle nonzero exit codes and communicate them back to the client
+			//TODO: post output files
 		}
 		else console.error("state change to Ended with no current client?");
-		//TODO: how to handle nonzero exit codes and communicate them back to the client
-		//TODO: post output files
 		window.location.reload(false);
 	}
 });

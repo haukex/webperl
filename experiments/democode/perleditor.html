@@ -36,16 +36,18 @@ body {
 .text {
 	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
 }
-pre,textarea,code,.code,.CodeMirror {
+pre,textarea,code,.code,.filename,.CodeMirror {
 	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
 }
 pre {
 	margin: 0;
 }
-.cm-resize-frame {
-	overflow: hidden;
-	resize: vertical;
+.CodeMirror {
 	border: 1px solid grey;
+	height: auto;
+}
+.CodeMirror-scroll {
+	max-height: 10em;
 }
 </style>
 
@@ -55,42 +57,36 @@ pre {
 	integrity="sha256-Uu9QBfi8gU6J/MzQunal8ewmY+i/BbCkBrcAXA5bcCM=" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
 	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-
 <script>
 "use strict";
 
 function makeCM (textarea,plain,ro) {
-	var resize_frame = $('<div/>').addClass("cm-resize-frame");
-	textarea.wrap(resize_frame);
-	var cm = CodeMirror.fromTextArea( textarea[0], {
+	return CodeMirror.fromTextArea( textarea[0], {
 		viewportMargin: Infinity, // so browser's search works, not good for long documents though
 		lineNumbers:true, indentWithTabs:true,
 		tabSize:4, indentUnit:4,
 		mode: plain?"text/plain":"perl",
 		readOnly: ro?true:false,
 	} );
-	// Thanks to https://codepen.io/sakifargo/pen/KodNyR
-	//cm.setSize(null,'auto'); //TODO: this causes the auto-resize to no longer work
-	//TODO: but if we remove the above line, we don't get any more scroll bars...
-	var fr = resize_frame[0];
-	var cm_resize = function() { cm.setSize(fr.clientWidth + 2, fr.clientHeight - 10); };
-	//cm_resize(); //TODO: if I call this here, the CM's width shrinks to zero, why?
-	if (window.ResizeObserver)
-		new ResizeObserver(cm_resize).observe(fr);
-	else if (window.MutationObserver)
-		new MutationObserver(cm_resize).observe(fr, {attributes: true});
-	return cm;
 }
 
-var cm_std = { 1:null, 2:null }; // 1=stdout, 2=stderr
+var mergeStdOutErr = 0;
+
+var cm_std = { 1:null, 2:null };   // 1=stdout, 2=stderr
 function stdOutput (which, data) { // 1=stdout, 2=stderr
+	if (mergeStdOutErr) which = 1;
 	if (!cm_std[which]) {
-		var d = $(which==1?'#stdout':'#stderr');
-		d.show();
-		cm_std[which] = makeCM($('textarea',d),1,1);
+		var div = $(which==1?'#stdout':'#stderr');
+		div.show();
+		cm_std[which] = makeCM($('textarea',div),1,1);
+		div.data('CodeMirrorInstance', cm_std[which]);
 	}
 	if (data && data.length)
 		cm_std[which].setValue( cm_std[which].getValue() + data );
+}
+function clearStdOutput () {
+	if (cm_std["1"]) cm_std["1"].setValue("");
+	if (cm_std["2"]) cm_std["2"].setValue("");
 }
 
 var perlRunner;
@@ -134,7 +130,7 @@ function findPerlRunner () {
 	}, 100);
 }
 
-function parseCmdLine(str) { //TODO: use this
+function parseCmdLine(str) {
 	var re = /"((?:\\"|\\\\|[^"])*)"|'((?:\\'|\\\\|[^'])*)'|(\S+)/g;
 	var argv = [];
 	var match;
@@ -157,35 +153,87 @@ function parseParams(str) { // Thanks to https://stackoverflow.com/a/26849194
 	}, {});
 }
 
-function hashchange () { //TODO: implement
-	var hash = parseParams(window.location.hash);
-	//console.log("hash", hash);
+function initialize (hash) {
+	console.log("hash", hash); //DB
+	// script
+	if (hash["script"] || hash["scripturl"]) {
+		var script = $('#script');
+		script.show();
+		var cm = makeCM($('#perlcode'));
+		script.data('CodeMirrorInstance', cm);
+		if (hash["script"])
+			cm.setValue(hash.script);
+		else if (hash["scripturl"]) {
+			//TODO: fetch URL
+		}
+		else throw "internal error: this shouldn't happen";
+		if (hash["scriptfn"])
+			$('.filename',script).text(hash.scriptfn);
+	}
+	if (hash["cmdline"]) {
+		$('#argv').val(hash.cmdline);
+	}
+	// input files
+	$('.inputs').remove();
+	for (var i=1;;i++) {
+		if (!( hash["i"+i+"f"] || hash["i"+i+"u"] )) break;
+		var fn = hash["i"+i+"n"] || "input"+i+".txt";
+		var div = $('<div/>',{class:"codewithfn inputs"});
+		div.append( $('<div/>',{class:"filename",text:fn}) );
+		var ta = $('<textarea/>').appendTo(div);
+		$('#inputhere').before(div);
+		var cm = makeCM(ta,1,0);
+		div.data('CodeMirrorInstance', cm);
+		if (hash["i"+i+"f"]) {
+			cm.setValue(hash["i"+i+"f"]);
+		}
+		else if (hash["i"+i+"u"]) {
+			//TODO: fetch URLs
+		}
+	}
+	// stdout/stderr
+	if (hash["mergestdouterr"]) {
+		mergeStdOutErr = 1;
+		$('#stdout>.filename').text("STDOUT+STDERR");
+	}
+	else {
+		mergeStdOutErr = 0;
+		$('#stdout>.filename').text("STDOUT");
+	}
+	clearStdOutput();
+	// output files
+	for (var i=1;;i++) {
+		if (hash["o"+i+"n"]) {
+			var div = $('<div/>',{class:"codewithfn outputs"});
+			div.append( $('<div/>',{class:"filename",text:hash["o"+i+"n"]}) );
+			var ta = $('<textarea/>').appendTo(div);
+			$('#outputhere').before(div);
+			var cm = makeCM(ta,1,1);
+			div.data('CodeMirrorInstance', cm);
+		}
+		else break;
+	}
 }
-//$(window).on('hashchange',hashchange); //TODO: should we support this? or just messages?
-hashchange();
 
 $(function () {
 	
-	var perl_cm = makeCM($('#perlcode'));
+	initialize(parseParams(window.location.hash.substr(1)));
 	
 	var btn_runperl = $('#runperl');
 	btn_runperl.click( function () {
-		if (cm_std["1"]) cm_std["1"].setValue("");
-		if (cm_std["2"]) cm_std["2"].setValue("");
+		clearStdOutput();
 		
-		var runperl = {
-			//TODO: input files
-			script: perl_cm.getValue(),
-		};
 		var argv = parseCmdLine($('#argv').val());
 		if (argv.length<1 || argv[0]!="perl") {
 			console.error("invalid command line");
-			return;
-		}
-		else {
-			argv.shift();
-			runperl.argv = argv;
-		}
+			return }
+		else argv.shift();
+		
+		var runperl = {
+			//TODO: input files
+			argv: argv,
+			//TODO: script: perl_cm.getValue(),
+		};
 		
 		btn_runperl.prop("disabled",true);
 		perlRunner.postMessage({ runPerl: runperl },'*');
@@ -200,31 +248,29 @@ $(function () {
 </head>
 <body>
 
+<div id="inputhere" style="display:none;"></div>
+
+<div id="script" class="codewithfn" style="display:none;">
+	<div class="filename">script.pl</div>
+	<textarea id="perlcode"></textarea>
+</div>
+
 <div>
-	<input type="text" id="argv" class="code" size="60" value='perl script.pl'/>
-</div>
-
-<textarea id="perlcode">
-use warnings;
-use strict;
-
-print "Hello, World!\n";
-</textarea>
-
-<div class="text" style="text-align:right;">
 	<button id="runperl"><code>perl</code> &#x25BA;</button>
+	<input type="text" id="argv" class="code" size="60" value='perl' />
 </div>
 
-<div id="stdout" style="display:none;">
-	<code>STDOUT:</code><br/>
+<div id="stdout" class="codewithfn" style="display:none;">
+	<div class="filename">STDOUT</div>
 	<textarea></textarea>
 </div>
 
-<div id="stderr" style="display:none;">
-	<code>STDERR:</code><br/>
+<div id="stderr" class="codewithfn" style="display:none;">
+	<div class="filename">STDERR</div>
 	<textarea></textarea>
 </div>
 
+<div id="outputhere" style="display:none;"></div>
 
 </body>
 </html>

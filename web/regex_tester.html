@@ -275,6 +275,7 @@ sub newsamp {
 	update();
 	return $samp;
 }
+#TODO: Adding samples causes the code table to grow, but not shrink when they are removed
 $addsamp->click(sub { newsamp('')->click });
 
 # $re_debug is actually a parameter to update()/actual_update(), but since

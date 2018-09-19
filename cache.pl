@@ -15,6 +15,9 @@ require File::Spec::Unix;
 my $USE_WGET; BEGIN { $USE_WGET=0 }
 use if !$USE_WGET, 'HTTP::Tiny';
 
+my $DEBUG; BEGIN { $DEBUG=0 }
+use if $DEBUG, 'Data::Dump';
+
 my $CACHEDIR = catdir($FindBin::Bin,'web','cache');
 make_path $CACHEDIR;
 
@@ -71,7 +74,7 @@ sub fetch_resource {
 	else { print STDERR "already fetched\n"; }
 	my (undef,$path) = fileparse($file);
 	my $newurl = File::Spec::Unix->catdir(splitdir( abs2rel($cachefn,$path) ));
-	use Data::Dump; dd $file, $url, $cachefn, $newurl;
+	$DEBUG and dd($file, $url, $cachefn, $newurl);
 	return $newurl;
 }
 

@@ -3,7 +3,6 @@ use warnings;
 use strict;
 use feature 'state';
 use FindBin;
-use HTTP::Tiny;
 use File::Find qw/find/;
 use File::Path qw/make_path/;
 use File::Spec::Functions qw/catdir catfile abs2rel rel2abs splitdir/;
@@ -12,6 +11,9 @@ use ExtUtils::MakeMaker qw/prompt/;
 require File::Spec::Unix;
 
 # A quick and dirty script for caching external resources locally
+
+my $USE_WGET; BEGIN { $USE_WGET=0 }
+use if !$USE_WGET, 'HTTP::Tiny';
 
 my $CACHEDIR = catdir($FindBin::Bin,'web','cache');
 make_path $CACHEDIR;
@@ -49,15 +51,21 @@ for my $fn (@htmlfiles) {
 
 sub fetch_resource {
 	my ($file,$url) = @_;
-	state $http = HTTP::Tiny->new;
+	state $http = $USE_WGET ? undef : HTTP::Tiny->new;
 	state %cached;
 	my ($cachefn) = $url =~ m{/([^/]+)\z} or die $url;
 	$cachefn = catfile($CACHEDIR, $cachefn);
 	print STDERR "$url: ";
 	if (not $cached{$url}) {
-		my $resp = $http->mirror($url, $cachefn);
-		die "$resp->{status} $resp->{reason}" unless $resp->{success};
-		warn "$resp->{status} $resp->{reason}\n";
+		if ($USE_WGET) {
+			# Note: wget's timestamping (-N) doesn't work with -O
+			system('wget','-nv','-O'.$cachefn,$url)==0 or die "wget failed\n";
+		}
+		else {
+			my $resp = $http->mirror($url, $cachefn);
+			die "$resp->{status} $resp->{reason}\n" unless $resp->{success};
+			warn "$resp->{status} $resp->{reason}\n";
+		}
 		$cached{$url} = $cachefn;
 	}
 	else { print STDERR "already fetched\n"; }
@@ -66,3 +74,4 @@ sub fetch_resource {
 	use Data::Dump; dd $file, $url, $cachefn, $newurl;
 	return $newurl;
 }
+

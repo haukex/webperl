@@ -471,9 +471,11 @@ stored in a Perl scalar `$foo` pointing to a JavaScript object `foo`:
   regular Perl data structure (deep copy). Note that JavaScript functions are
   kept wrapped inside anonymous Perl `sub`s.
 - `jscode` returns a string of JavaScript code that represents a reference
-  to the JavaScript object. You should treat the string as an opaque value,
-  no guarantees are made about its format and whether it may change in future
-  releases. *Do not* call JavaScript's `delete` on this value.
+  to the JavaScript object. **Warning:** Treat this value as read-only in
+  JavaScript! *Do not* assign to this value, call JavaScript's `delete` on
+  this value, etc. (calling methods that may mutate the object is ok, though).
+  You should treat the string as an opaque value, no guarantees are made about
+  its format and whether it may change in future releases.
   This is an advanced function that should not normally be needed,
   unless you are building strings of JavaScript to run. In that case, you
   may need to wrap the value in parentheses for it to evaluate correctly in

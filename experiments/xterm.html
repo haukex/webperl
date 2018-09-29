@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl XTerm.js Test</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@3.7.0/dist/xterm.css"
+	integrity="sha256-OSfRj4jMeYVFSwgcvVvKj4V0+mwqSP9YJjyEJe7dmK0=" crossorigin="anonymous" />
+<script src="https://cdn.jsdelivr.net/npm/xterm@3.7.0/dist/xterm.js"
+	integrity="sha256-gIILiZzLBFrmY1dzcKJC2Nmw4o9ISITTNsro2rf8svM=" crossorigin="anonymous"></script>
+
+<script src="webperl.js"></script>
+
+<script>
+"use strict";
+window.addEventListener('load', function () {
+	var term = new Terminal();
+	term.open(document.getElementById('terminal'));
+	Perl.output = function (str) { term.write(str) };
+	Module.preRun.push(function () { ENV.TERM = "xterm" });
+});
+</script>
+
+<script type="text/perl">
+use warnings;
+use strict;
+use Term::ANSIColor qw/colored/;
+
+print colored("Hello, Color World!\n", 'black on_yellow');
+#TODO: how to best accept input from XTerm?
+
+</script>
+
+</head>
+<body>
+
+<div id="terminal"></div>
+<p><a href="http://xtermjs.org/" target="_blank">xterm.js</a></p>
+
+</body>
+</html>

@@ -27,7 +27,10 @@ use strict;
 use Term::ANSIColor qw/colored/;
 
 print colored("Hello, Color World!\n", 'black on_yellow');
-#TODO: how to best accept input from XTerm?
+
+# Possible To-Do for Later: can we accept input from XTerm?
+# might not be so easy: https://github.com/xtermjs/xterm.js/issues/1546#issuecomment-402547923
+# (keypresses are events, but reading from STDIN is normally blocking...)
 
 </script>
 

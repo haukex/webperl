@@ -191,6 +191,7 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 	$iframe_html=~s/__WEBPERLURL__/$webperlurl/g;
 	my $iframe_blob_url = js('URL')->createObjectURL(
 		WebPerl::js_new('Blob',[$iframe_html],{type=>"text/html;charset=utf-8"}) );
+	#TODO Later: Why does the message passing not work when I remove the "sandbox" attr?
 	my $iframe = $jq->('<iframe/>', {id=>'PerlEval_IFrame', sandbox=>'allow-scripts',
 		src=>$iframe_blob_url} )->hide->appendTo('body');
 	$runcode_iframe = $iframe->[0]{contentWindow};
@@ -216,14 +217,20 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 	my $start_time = time;
 	my $intid; $intid = $window->setInterval(sub {
 		if (time-$start_time>10) {
-			$window->alert("Failed to get response from Perl in IFrame, loading failed?");
-			$window->clearInterval($intid);
+			if ($window->confirm("Perl does not appear to have loaded yet, keep waiting?\n"
+			    ."(If you are on a slow connection, click OK to keep waiting.)")) {
+				$start_time = time;
+			}
+			else {
+				$window->clearInterval($intid);
+			}
 		}
 		elsif ($got_response)
 			{ $window->clearInterval($intid) }
 		else { update() }
 	}, 500);
 }
+$jq->('#loading')->text('Loading (Stage 2/2)...');
 
 sub sample_init {
 	my $samp = shift;
@@ -344,6 +351,7 @@ $ta_flags->keyup( \&update);
 
 js('$(window)')->on('hashchange',\&hashchange);
 
+#TODO: The auto-sizing causes the textarea to grow on Chrome mobile
 $ta_regex->on('input', sub { # autoexpand for new lines
 	$ta_regex->height($ta_regex->[0]{scrollHeight});
 });
@@ -582,7 +590,7 @@ sub hashchange {
 <div style="margin-bottom:1em;font-size:1.2em;text-align:center;"><b>Perl Regex Tester</b>
 - powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
 
-<div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;">Loading...</div>
+<div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;">Loading (Stage 1/2)...</div>
 
 <div style="margin-bottom:1em;">
 <div>

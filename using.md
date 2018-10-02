@@ -377,7 +377,7 @@ The states currently are:
 
 - `"Uninitialized"` - `Perl.init` has not been called yet.
 - `"Initializing"` - `Perl.init` is currently operating.
-- `"Ready" - `Perl.init` is finished and `Perl.start` can be called.
+- `"Ready"` - `Perl.init` is finished and `Perl.start` can be called.
 - `"Running"` - The Perl interpreter is running, `Perl.eval` and `Perl.end` may be called
 - `"Ended"` - The Perl interpreter has ended. You might receive several
   state change notifications for this state.

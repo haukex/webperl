@@ -379,8 +379,9 @@ The states currently are:
 - `"Initializing"` - `Perl.init` is currently operating.
 - `"Ready" - `Perl.init` is finished and `Perl.start` can be called.
 - `"Running"` - The Perl interpreter is running, `Perl.eval` and `Perl.end` may be called
-- `"Ended"` - The Perl interpreter has ended. You might receive several
-  state change notifications for this state.
+- `"Ended"` - The Perl interpreter has ended.
+  ~~You might receive several state change notifications for this state.~~
+  This is no longer the case as of WebPerl `v0.09-beta`.
 
 This function was added in WebPerl `v0.05-beta`.
 

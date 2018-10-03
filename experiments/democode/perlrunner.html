@@ -38,7 +38,7 @@ var knownClients = [];
 var currentClient; // which client we're running Perl for, also keeps state
 
 Perl.addStateChangeListener(function (from,to) {
-	if (from==to) return;
+	if (from==to) return; // won't be needed as of v0.09-beta
 	for(var i=0; i<knownClients.length; i++)
 		knownClients[i].postMessage({ perlRunnerState: Perl.state },'*');
 	if (to=="Ended") {

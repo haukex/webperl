@@ -130,6 +130,7 @@ Perl._saveAndRun = function (script) {
 };
 
 Perl.changeState = function (newState) {
+	if (Perl.state==newState) return;
 	var oldState = Perl.state;
 	Perl.state = newState;
 	if (Perl.stateChanged) {

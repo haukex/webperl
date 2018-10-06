@@ -36,6 +36,12 @@ TODOs
 	- Add Perl.Util functions for making file uploads and downloads easier
 		- Plus an example showing how to use it to run a "legacy" Perl script with inputs and output
 	- Perhaps create a CPAN Bundle:: module or similar for `build.pl` deps?
+	- There is some potential for restructuring:
+		- `Perl.glue()` and `Perl.dispatch()` could go into `WebPerl.xs` (?)
+		- Parts of `webperl.js` could go into `common_preamble.js` or `WebPerl.xs`,
+		  so that `emperl.js` is runnable on its own in a Web Worker (?)
+		  (see notes in `perlrunner.html` / `e12f1aa25a000`)
+		- `nodeperl_dev_prerun.js` could probably be merged into that as well
 
 3. See Also
 	

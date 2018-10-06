@@ -1,0 +1,4 @@
+# See http://bitbucket.org/haukex/htools/src/HEAD/htmlrescache
+# Set up via: htmlrescache -cweb/_cache init
+/web/*.html	filter=htmlrescache
+/web/**/*.html	filter=htmlrescache

@@ -4,14 +4,58 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>WebPerl Code Demo</title>
 
+<!-- ##### WebPerl - http://webperl.zero-g.net #####
+
+Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, http://www.igb-berlin.de
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl 5 itself: either the GNU General Public
+License as published by the Free Software Foundation (either version 1,
+or, at your option, any later version), or the "Artistic License" which
+comes with Perl 5.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the licenses for details.
+
+You should have received a copy of the licenses along with this program.
+If not, see http://perldoc.perl.org/index-licence.html
+##### -->
+
+<!-- TODO: Document
+	Notes:
+	- "perl -CSD" is recommended because files are currently always UTF-8
+	- STDIN is currently not supported, workaround is to supply files on command line
+-->
+
 <iframe name="perlrunner" sandbox="allow-scripts"
-	src="perlrunner.html" style="display: none;"></iframe>
+	src="perlrunner.html" style="display:none;"></iframe>
 
-<iframe sandbox="allow-scripts" src="perleditor.html#i1f=Foo%0ABar%0AQuz&i1n=in1.txt&script=use warnings;%0Ause strict;%0A%0Awhile (<>) {%0A    s/[aeiou]/_/gi;%0A}&cmdline=perl script.pl in1.txt"
-	style="border:1px solid black;width:100%;height:20em;"></iframe>
-
-<iframe sandbox="allow-scripts" src="perleditor.html"
-	style="border:1px solid black;width:100%;height:20em;"></iframe>
+<iframe id="perl1" sandbox="allow-scripts"
+	style="border:1px solid black;width:100%;height:8em;"></iframe>
+<iframe id="perl2" sandbox="allow-scripts"
+	style="border:1px solid black;width:100%;height:40em;"></iframe>
+<script>
+document.getElementById('perl1').src =
+	"perleditor.html#" + encodeURIComponent(JSON.stringify( {
+		cmdline: "perl -e 'print \"Hello, World!\"'",
+	} ));
+document.getElementById('perl2').src =
+	"perleditor.html#" + encodeURIComponent(JSON.stringify( {
+		cmdline: "perl devoweler.pl mytext.txt other.txt",
+		script: "use warnings;\nuse strict;\n\nopen my $vfh, '>', 'vowels.txt' or die $!;\n"
+			+"while (<>) {\n\tprint $vfh $1 while s/([aeiou])/_/i;\n\tprint;\n}\nclose $vfh;",
+		script_fn: "devoweler.pl",
+		inputs: [
+			{ fn: "mytext.txt", text: "Foo\nBar\nQuz\n" },
+			{ fn: "other.txt", text: "Hello, World!" },
+		],
+		outputs : [ "vowels.txt" ],
+	} ));
+</script>
 
 </head>
 <body>

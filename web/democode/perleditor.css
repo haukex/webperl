@@ -1,0 +1,33 @@
+
+body {
+	margin: 0.4em;
+}
+.text {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+pre,textarea,code,.code,.filename,.CodeMirror {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
+pre {
+	margin: 0;
+}
+
+.CodeMirror {
+	border: 1px solid lightgrey;
+	height: auto;
+}
+.CodeMirror-scroll {
+	max-height: 12em;
+}
+
+#runnerstate {
+	margin-top: 0.1em;
+	margin-bottom: 0.3em;
+	font-size: 0.8em;
+}
+#runnererrors {
+	background-color: rgba(255,200,200,255);
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	padding: 0.1em 0.2em;
+}

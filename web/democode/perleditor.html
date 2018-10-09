@@ -23,37 +23,22 @@ See the licenses for details.
 
 You should have received a copy of the licenses along with this program.
 If not, see http://perldoc.perl.org/index-licence.html
--->
+##### -->
 
 <!--cacheable--><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
 <!--cacheable--><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
-<style>
-body {
-	margin: 0.4em;
-}
-.text {
-	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
-}
-pre,textarea,code,.code,.filename,.CodeMirror {
-	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
-}
-pre {
-	margin: 0;
-}
-.CodeMirror {
-	border: 1px solid grey;
-	height: auto;
-}
-.CodeMirror-scroll {
-	max-height: 10em;
-}
-</style>
+<link rel="stylesheet" href="perleditor.css" />
 
 <!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.js" integrity="sha256-uRIJ6Wfou5cTtmcCvQNA9lvsYl8sUbZXxnfG+P79ssY=" crossorigin="anonymous"></script>
 <!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/mode/perl/perl.min.js" integrity="sha256-Uu9QBfi8gU6J/MzQunal8ewmY+i/BbCkBrcAXA5bcCM=" crossorigin="anonymous"></script>
 <!--cacheable--><script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <script>
 "use strict";
+
+var mergeStdOutErr = 0; //TODO Later: make an options hash instead of individual variable(s)?
+var perlRunner; // the Perl runner iframe found by findPerlRunner()
+var buttonBlockers = {}; // for updateButtonState()
+var lastExitStatus; // for runnerState()
 
 function makeCM (textarea,plain,ro) {
 	return CodeMirror.fromTextArea( textarea[0], {
@@ -65,67 +50,94 @@ function makeCM (textarea,plain,ro) {
 	} );
 }
 
-var mergeStdOutErr = 0;
+function runnerState (text) {
+	$('#runnerstate').text( text
+		+ (lastExitStatus ? ' (last exit status was '+lastExitStatus+')'
+			: '') );
+}
 
-var cm_std = { 1:null, 2:null };   // 1=stdout, 2=stderr
-function stdOutput (which, data) { // 1=stdout, 2=stderr
+function updateButtonState () {
+	$('#runperl').prop("disabled",
+		Object.keys(buttonBlockers).length>0 );
+}
+
+function stdOutput (which, data) { // which: 1=stdout, 2=stderr
 	if (mergeStdOutErr) which = 1;
-	if (!cm_std[which]) {
-		var div = $(which==1?'#stdout':'#stderr');
-		div.show();
-		cm_std[which] = makeCM($('textarea',div),1,1);
-		div.data('CodeMirrorInstance', cm_std[which]);
+	var div = $(which==1?'#stdout':'#stderr');
+	div.show();
+	var cm = div.data('CodeMirrorInstance');
+	if (!cm) {
+		cm = makeCM($('textarea',div),1,1);
+		div.data('CodeMirrorInstance', cm);
 	}
 	if (data && data.length)
-		cm_std[which].setValue( cm_std[which].getValue() + data );
+		cm.setValue( cm.getValue() + data );
 }
 function clearStdOutput () {
-	if (cm_std["1"]) cm_std["1"].setValue("");
-	if (cm_std["2"]) cm_std["2"].setValue("");
+	$('#stdout,#stderr').each(function (i) {
+		var div = $(this);
+		var cm = div.data('CodeMirrorInstance');
+		if (cm) cm.setValue('');
+		div.hide();
+	});
 }
 
-var perlRunner;
-
-window.addEventListener('message', function (event) {
-	var data = event.data;
-	//console.log("editor got message", data); //DB
-	if (data["perlRunnerState"]) {
-		var disableBtn = true;
-		if ( data.perlRunnerState=="Ready" ) {
-			perlRunner = event.source;
-			disableBtn = false;
-		}
-		else if ( data.perlRunnerState=="Ended" ) {
-			perlRunner = null;
-			findPerlRunner();
-		}
-		$('#runperl').prop("disabled",disableBtn);
-	}
-	else if (data["perlOutput"]) {
-		stdOutput(data.perlOutput.chan, data.perlOutput.data);
-	}
-	else console.warn("Perl Editor ignoring unknown message:",data);
-});
-
 function findPerlRunner () {
-	var pollId;
+	// assume calling this function means the runner isn't available
+	buttonBlockers.runnerState = 1;
+	updateButtonState();
+	// poll for perlRunner, which gets set by the message listener
 	var pollUntil = Date.now() + 10*1000; // milliseconds
+	var pollId;
 	pollId = window.setInterval( function () {
-		if (perlRunner) {
+		if (perlRunner)
 			window.clearInterval(pollId);
-		}
 		else if ( Date.now()>pollUntil ) {
-			window.clearInterval(pollId);
-			console.error("Perl Editor could not contact Perl Runner"); //TODO: report error to user via UI (same for other console.error calls in this script)
+			if (window.confirm("Perl does not appear to have loaded yet, keep waiting?\n"
+			    +"(If you are on a slow connection, click OK to keep waiting.)"))
+				pollUntil = Date.now() + 10*1000;
+			else
+				window.clearInterval(pollId);
 		}
 		else
 			if (window.parent && window.parent.frames["perlrunner"])
 				window.parent.frames["perlrunner"].postMessage(
-					{perlRunnerRegisterClient:1}, '*');
+					{perlRunnerDiscovery:1}, '*');
 	}, 100);
 }
 
-function parseCmdLine(str) {
+window.addEventListener('message', function (event) {
+	var data = event.data;
+	if (data["perlRunnerState"]) {
+		if ( data.perlRunnerState=="Ready" ) {
+			perlRunner = event.source;
+			delete buttonBlockers.runnerState;
+			updateButtonState();
+		}
+		else if ( data.perlRunnerState=="Ended" ) {
+			if ('exitStatus' in data)
+				lastExitStatus =  ''+data.exitStatus;
+			// we know the runner will reload itself now
+			perlRunner = null;
+			findPerlRunner();
+		}
+		runnerState("Perl is "+data.perlRunnerState);
+	}
+	else if (data["perlOutput"])
+		stdOutput(data.perlOutput.chan, data.perlOutput.data);
+	else if (data["perlOutputFiles"]) {
+		data.perlOutputFiles.forEach(function (outp) {
+			setupOutputFile(outp.fn, outp.text);
+		});
+	}
+	else if (data["perlRunnerError"]) {
+		$('#runnererrors').show();
+		$('#runnererrors>pre').append(data.perlRunnerError+"\n");
+	}
+	else console.warn("Perl Editor ignoring unknown message:",data);
+});
+
+function parseCmdLine(str) { //TODO: there's a better way to do this
 	var re = /"((?:\\"|\\\\|[^"])*)"|'((?:\\'|\\\\|[^'])*)'|(\S+)/g;
 	var argv = [];
 	var match;
@@ -137,57 +149,83 @@ function parseCmdLine(str) {
 	return argv;
 }
 
-function parseParams(str) { // Thanks to https://stackoverflow.com/a/26849194
-	if (!str || !str.length) return {};
-	return str.split('&').reduce(function (params, param) {
-		var paramSplit = param.split('=').map(function (value) {
-			return decodeURIComponent(value.replace(/\+/g, ' '));
+function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror instance
+	cm.setValue("Fetching URL\n"+url+"\nPlease wait...");
+	buttonBlockers["fetchUrls"]++;
+	updateButtonState();
+	$.get(url, function (data) {
+			cm.setValue(data);
+		},'text').fail(function (jqXHR,textStatus,errorThrown) {
+			cm.setValue("Fetching URL\n"+url+"\nFailed!\n"+textStatus+"\n"+errorThrown);
+		}).always(function () {
+			buttonBlockers.fetchUrls--;
+			if (!buttonBlockers.fetchUrls)
+				delete buttonBlockers.fetchUrls;
+			updateButtonState();
 		});
-		params[paramSplit[0]] = paramSplit[1];
-		return params;
-	}, {});
 }
 
-function initialize (hash) {
-	console.log("hash", hash); //DB
+function setupOutputFile (fn, text) {
+	var found = $('div.outputs>.filename')
+		.filter(function(){ return $(this).text() == fn });
+	var cm;
+	if (found.length) {
+		var div = found.parent();
+		cm = div.data('CodeMirrorInstance');
+	}
+	else {
+		var div = $('<div/>',{class:"codewithfn outputs"});
+		div.append( $('<div/>',{class:"filename",text:fn}) );
+		var ta = $('<textarea/>').appendTo(div);
+		$('#outputhere').before(div);
+		cm = makeCM(ta,1,1);
+		div.data('CodeMirrorInstance', cm);
+	}
+	cm.setValue( text ? text : '' );
+}
+
+$(function () {
+	
+	var hashdata = window.location.hash.substr(1);
+	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
+	
 	// script
-	if (hash["script"] || hash["scripturl"]) {
-		var script = $('#script');
-		script.show();
-		var cm = makeCM($('#perlcode'));
-		script.data('CodeMirrorInstance', cm);
+	var scriptdiv = $('#script');
+	if ( hash["script"] || hash["script_url"] ) {
+		scriptdiv.show();
+		var cm = makeCM($('#perlcode'),0,0);
+		scriptdiv.data('CodeMirrorInstance', cm);
 		if (hash["script"])
 			cm.setValue(hash.script);
-		else if (hash["scripturl"]) {
-			//TODO: fetch URL
-		}
+		else if (hash["script_url"])
+			fetchUrl(hash.script_url,cm);
 		else throw "internal error: this shouldn't happen";
-		if (hash["scriptfn"])
-			$('.filename',script).text(hash.scriptfn);
+		if (hash["script_fn"])
+			$('>.filename',scriptdiv).text(hash.script_fn);
 	}
-	if (hash["cmdline"]) {
+	
+	// command line
+	if (hash["cmdline"])
 		$('#argv').val(hash.cmdline);
-	}
+	
 	// input files
 	$('.inputs').remove();
-	for (var i=1;;i++) {
-		if (!( hash["i"+i+"f"] || hash["i"+i+"u"] )) break;
-		var fn = hash["i"+i+"n"] || "input"+i+".txt";
+	if ( hash["inputs"] ) hash.inputs.forEach(function(inp,i) {
+		var fn = inp["fn"] || "input"+(i+1)+".txt";
 		var div = $('<div/>',{class:"codewithfn inputs"});
 		div.append( $('<div/>',{class:"filename",text:fn}) );
 		var ta = $('<textarea/>').appendTo(div);
 		$('#inputhere').before(div);
 		var cm = makeCM(ta,1,0);
 		div.data('CodeMirrorInstance', cm);
-		if (hash["i"+i+"f"]) {
-			cm.setValue(hash["i"+i+"f"]);
-		}
-		else if (hash["i"+i+"u"]) {
-			//TODO: fetch URLs
-		}
-	}
+		if (inp["text"])
+			cm.setValue(inp.text);
+		else if (inp["url"])
+			fetchUrl(inp.url,cm);
+	});
+	
 	// stdout/stderr
-	if (hash["mergestdouterr"]) {
+	if (hash["mergeStdOutErr"]) {
 		mergeStdOutErr = 1;
 		$('#stdout>.filename').text("STDOUT+STDERR");
 	}
@@ -196,44 +234,53 @@ function initialize (hash) {
 		$('#stdout>.filename').text("STDOUT");
 	}
 	clearStdOutput();
+	
 	// output files
-	for (var i=1;;i++) {
-		if (hash["o"+i+"n"]) {
-			var div = $('<div/>',{class:"codewithfn outputs"});
-			div.append( $('<div/>',{class:"filename",text:hash["o"+i+"n"]}) );
-			var ta = $('<textarea/>').appendTo(div);
-			$('#outputhere').before(div);
-			var cm = makeCM(ta,1,1);
-			div.data('CodeMirrorInstance', cm);
-		}
-		else break;
-	}
-}
-
-$(function () {
+	$('.outputs').remove();
+	if ( hash["outputs"] ) hash.outputs.forEach(function(outp) {
+		setupOutputFile(outp);
+	});
 	
-	initialize(parseParams(window.location.hash.substr(1)));
-	
-	var btn_runperl = $('#runperl');
-	btn_runperl.click( function () {
+	$('#runperl').click( function () {
 		clearStdOutput();
-		
+		var rp_data = {};
+		// command-line args
 		var argv = parseCmdLine($('#argv').val());
 		if (argv.length<1 || argv[0]!="perl") {
-			console.error("invalid command line");
-			return }
-		else argv.shift();
-		
-		var runperl = {
-			//TODO: input files
-			argv: argv,
-			//TODO: script: perl_cm.getValue(),
-		};
-		
-		btn_runperl.prop("disabled",true);
-		perlRunner.postMessage({ runPerl: runperl },'*');
+			$('#runnererrors>pre').text('Invalid command line, command must be "perl"');
+			$('#runnererrors').show();
+			return;
+		} // else
+		argv.shift();
+		rp_data.argv = argv;
+		$('#runnererrors>pre').text('');
+		$('#runnererrors').hide();
+		// script
+		if (scriptdiv.is(':visible')) {
+			rp_data.script = scriptdiv.data('CodeMirrorInstance').getValue();
+			rp_data.script_fn = scriptdiv.find('>.filename').text();
+		}
+		// inputs
+		$('.inputs').each(function () {
+			var div = $(this);
+			var fn = $('>.filename',div).text();
+			var text = div.data('CodeMirrorInstance').getValue();
+			if (!rp_data["inputs"]) rp_data.inputs = [];
+			rp_data.inputs.push([fn, text]);
+		});
+		// outputs
+		$('.outputs').each(function () {
+			var fn = $(this).find('>.filename').text();
+			if (!rp_data["outputs"]) rp_data.outputs = [];
+			rp_data.outputs.push(fn);
+		});
+		// send message to runner
+		buttonBlockers.runnerState = 1;
+		updateButtonState();
+		lastExitStatus = null;
+		runnerState("Requesting Perl Run...");
+		perlRunner.postMessage({ runPerl: rp_data }, '*');
 	});
-	btn_runperl.prop("disabled",true);
 	
 	findPerlRunner();
 });
@@ -253,6 +300,14 @@ $(function () {
 <div>
 	<button id="runperl"><code>perl</code> &#x25BA;</button>
 	<input type="text" id="argv" class="code" size="60" value='perl' />
+</div>
+
+<div id="runnerstate" class="text">
+	Loading...
+</div>
+
+<div id="runnererrors" style="display:none;">
+	<pre></pre>
 </div>
 
 <div id="stdout" class="codewithfn" style="display:none;">

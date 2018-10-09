@@ -23,7 +23,7 @@ See the licenses for details.
 
 You should have received a copy of the licenses along with this program.
 If not, see http://perldoc.perl.org/index-licence.html
--->
+##### -->
 
 <!-- Possible To-Do for Later: This whole thing could probably also be
 	accomplished with a Web Worker, but that would probably require a
@@ -44,83 +44,124 @@ Perl.endAfterMain=true; // act like command-line perl
 
 var knownClients = [];
 var currentClient; // which client we're running Perl for, also keeps state
+var curOutputFiles;
+var stdbuf = [null,'',''];
+
+function reportErr (err) {
+	if (currentClient)
+		currentClient.postMessage({ perlRunnerError: err },'*');
+	else
+		console.error(err);
+}
 
 Perl.addStateChangeListener(function (from,to) {
 	if (from==to) return; // won't be needed as of v0.09-beta
-	for(var i=0; i<knownClients.length; i++)
-		knownClients[i].postMessage({ perlRunnerState: Perl.state },'*');
-	if (to=="Ended") {
-		if (currentClient) {
-			for (var c=1;c<=2;c++) // flush buffers
-				if (stdbuf[c].length)
-					currentClient.postMessage({ perlOutput: { chan:c, data:stdbuf[c] } },'*');
-			//TODO: how to handle nonzero exit codes and communicate them back to the client
-			//TODO: post output files
+	if (to=="Ended" && currentClient) {
+		for (var chan=1;chan<=2;chan++) // flush buffers
+			if (stdbuf[chan].length) {
+				currentClient.postMessage({ perlOutput: { chan:chan, data:stdbuf[chan] } },'*');
+				stdbuf[chan] = '';
+			}
+		currentClient.postMessage({ perlRunnerState: Perl.state,
+			exitStatus: Perl.exitStatus },'*');
+		for(var i=0; i<knownClients.length; i++)
+			if (knownClients[i]!=currentClient)
+				knownClients[i].postMessage({ perlRunnerState: Perl.state },'*');
+		if (curOutputFiles) {
+			var ofs = curOutputFiles.map(function (file) {
+				//TODO Later: Support binary files as well?
+				// {encoding:"binary"} => readFile returns Uint8Array
+				// Should then also provide the same support on FS.writeFile() as well
+				var of = { fn: file };
+				try {
+					of.text = FS.readFile(file, {encoding:"utf8"});
+				}
+				catch (e) {
+					reportErr("couldn't read "+file+" because "+e);
+				}
+				return of;
+			});
+			currentClient.postMessage({ perlOutputFiles: ofs },'*');
 		}
-		else console.error("state change to Ended with no current client?");
+	}
+	else {
+		for(var i=0; i<knownClients.length; i++)
+			knownClients[i].postMessage({ perlRunnerState: Perl.state },'*');
+	}
+	if (to=="Ended") {
+		if (!currentClient)
+			console.error("Internal Error: Perl state change to Ended with no client");
 		window.location.reload(false);
 	}
 });
 
-var stdbuf = [null,'',''];
 Perl.output = function (str,chan) {
 	stdbuf[chan] += str;
 	var pos = stdbuf[chan].lastIndexOf("\n");
-	if (pos>-1) {
-		var line = stdbuf[chan].slice(0,pos);
-		if (currentClient)
-			currentClient.postMessage({ perlOutput: { chan:chan, data:line+"\n" } },'*');
-		else
-			console.warn("output on",chan==1?"STDOUT":"STDERR",
-				"with no client?",line);
-		stdbuf[chan] = stdbuf[chan].slice(pos+1);
-	}
+	if (pos<0) return;
+	var lines = stdbuf[chan].slice(0,pos+1);
+	if (currentClient)
+		currentClient.postMessage({ perlOutput: { chan:chan, data:lines } },'*');
+	else
+		console.error("Internal Error: Output on",chan==1?"STDOUT":"STDERR","with no client:",lines);
+	stdbuf[chan] = stdbuf[chan].slice(pos+1);
 };
 
+function saveFile (fn, data) {
+	if (fn.substring(0,1)!='/') // if relative, make absolute
+		fn = FS.joinPath([FS.cwd(), fn]);
+	try {
+		FS.writeFile(fn, data);
+	}
+	catch (e) {
+		reportErr("couldn't write "+file+" because "+e);
+	}
+}
+
+window.addEventListener('message', function (event) {
+	if (event.data["perlRunnerDiscovery"]) {
+		if (!knownClients.includes(event.source))
+			knownClients.push(event.source);
+		event.source.postMessage({ perlRunnerState: Perl.state },'*');
+	}
+	else if (event.data["runPerl"]) {
+		if (!knownClients.includes(event.source))
+			knownClients.push(event.source);
+		// check state
+		if (currentClient && currentClient !== event.source) {
+			console.error("Attempt to run Perl from",event.source,
+				"but am already running Perl for",currentClient);
+			reportErr("Attempt to run Perl (from "+event.origin
+				+") but am already running Perl for someone else (see JavaScript console)");
+			return;
+		} // else
+		currentClient = event.source;
+		if (Perl.state!="Ready") {
+			reportErr("Attempt to run Perl in state "+Perl.state);
+			return;
+		} // else
+		// set up files and run perl
+		var rp = event.data.runPerl;
+		if (rp["script"]) {
+			var script_fn = 'script.pl';
+			if (rp["script_fn"])
+				script_fn = rp.script_fn;
+			saveFile(script_fn, rp.script);
+		}
+		//TODO Later: can we support STDIN? (probably need to look at webperl.js)
+		if (rp["inputs"])
+			rp.inputs.forEach(function (inp) {
+				saveFile(inp[0], inp[1]);
+			});
+		curOutputFiles = rp["outputs"];
+		Perl.start( rp["argv"] ? rp.argv : [] );
+	}
+	else console.warn("Perl Runner ignoring unknown message:", event.data);
+});
+
 Perl.init(function () {
+	Module['thisProgram'] = 'perl';
 	FS.currentPath = ENV.HOME; // NOTE: https://github.com/kripken/emscripten/issues/5873
-	window.addEventListener('message', function (event) {
-		var data = event.data;
-		var result;
-		if (data["perlRunnerRegisterClient"]) {
-			result = { perlRunnerState: Perl.state };
-			if (!knownClients.includes(event.source))
-				knownClients.push(event.source);
-		}
-		else if (data["runPerl"]) {
-			if (!knownClients.includes(event.source))
-				knownClients.push(event.source);
-			if (currentClient) {
-				//TODO Later: a way to communicate these errors back to client?
-				console.error("Attempt to run Perl from",event.source,
-					"but am already running Perl for",currentClient);
-				return;
-			}
-			if (Perl.state!="Ready") {
-				console.error("Attempt to run Perl in state",Perl.state,
-					"from",event.source);
-				return;
-			}
-			
-			currentClient = event.source;
-			
-			var scriptFn = data.runPerl["scriptName"]
-				? data.runPerl.scriptName : 'script.pl';
-			Module['thisProgram'] = './'+scriptFn;
-			FS.writeFile( FS.joinPath([FS.cwd(), scriptFn]),
-				data.runPerl.script );
-			
-			//TODO: input files
-			
-			var argv = data.runPerl["argv"] ? data.runPerl.argv : [scriptFn];
-			Perl.start(argv);
-		}
-		else console.warn("Perl Runner ignoring unknown message:", data);
-		//console.log("runner got message", data, "result", result); //DB
-		if (result)
-			event.source.postMessage(result,
-				event.origin==null || event.origin=="null" ? '*' : event.origin);
-	});
 });
 
 </script>

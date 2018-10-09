@@ -214,6 +214,7 @@ function setupInputFile (inp) {
 		fetchUrl(inp.url,cm);
 }
 
+//TODO: implement a "get URL" feature
 function getFileData () {
 	var filedata = {};
 	// script
@@ -228,7 +229,7 @@ function getFileData () {
 		var fn = $('>.filename',div).text();
 		var text = div.data('CodeMirrorInstance').getValue();
 		if (!filedata["inputs"]) filedata.inputs = [];
-		filedata.inputs.push([fn, text]);
+		filedata.inputs.push( { fn:fn, text:text } );
 	});
 	// outputs
 	$('.outputs').each(function () {

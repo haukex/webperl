@@ -155,7 +155,7 @@ window.addEventListener('message', function (event) {
 		//TODO Later: can we support STDIN? (probably need to look at webperl.js)
 		if (rp["inputs"])
 			rp.inputs.forEach(function (inp) {
-				saveFile(inp[0], inp[1]);
+				saveFile(inp.fn, inp.text);
 			});
 		curOutputFiles = rp["outputs"];
 		Perl.start( rp["argv"] ? rp.argv : [] );

@@ -142,6 +142,10 @@ window.addEventListener('message', function (event) {
 		} // else
 		// set up files and run perl
 		var rp = event.data.runPerl;
+		//TODO: we don't check for overlaps in filenames between script+input files (maybe the editor should do that)
+		// one solution would be to just have the script be an input file (code mirror syntax highlighting based on filename?)
+		// note overlaps of output filenames with input files is ok
+		// we also don't check for duplicate filenames
 		if (rp["script"]) {
 			var script_fn = 'script.pl';
 			if (rp["script_fn"])

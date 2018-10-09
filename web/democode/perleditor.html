@@ -184,6 +184,36 @@ function setupOutputFile (fn, text) {
 	cm.setValue( text ? text : '' );
 }
 
+function setupInputFile (inp) {
+	var fn;
+	if (inp["fn"]) fn = inp.fn;
+	else { // autogenerate a filename
+		for (var i=1; i<1000; i++) {
+			var testfn = "input"+i+".txt";
+			var found = $('div.inputs>.filename')
+				.filter(function(){ return $(this).text() == testfn });
+			if (!found.length) {
+				fn = testfn;
+				break }
+		}
+		if (!fn) {
+			$('#runnererrors>pre').text('Too many input files');
+			$('#runnererrors').show();
+			throw 'Too many input files';
+		}
+	}
+	var div = $('<div/>',{class:"codewithfn inputs"});
+	div.append( $('<div/>',{class:"filename",text:fn}) );
+	var ta = $('<textarea/>').appendTo(div);
+	$('#inputhere').before(div);
+	var cm = makeCM(ta,1,0);
+	div.data('CodeMirrorInstance', cm);
+	if (inp["text"])
+		cm.setValue(inp.text);
+	else if (inp["url"])
+		fetchUrl(inp.url,cm);
+}
+
 $(function () {
 	
 	var hashdata = window.location.hash.substr(1);
@@ -210,18 +240,8 @@ $(function () {
 	
 	// input files
 	$('.inputs').remove();
-	if ( hash["inputs"] ) hash.inputs.forEach(function(inp,i) {
-		var fn = inp["fn"] || "input"+(i+1)+".txt";
-		var div = $('<div/>',{class:"codewithfn inputs"});
-		div.append( $('<div/>',{class:"filename",text:fn}) );
-		var ta = $('<textarea/>').appendTo(div);
-		$('#inputhere').before(div);
-		var cm = makeCM(ta,1,0);
-		div.data('CodeMirrorInstance', cm);
-		if (inp["text"])
-			cm.setValue(inp.text);
-		else if (inp["url"])
-			fetchUrl(inp.url,cm);
+	if ( hash["inputs"] ) hash.inputs.forEach(function(inp) {
+		setupInputFile(inp);
 	});
 	
 	// stdout/stderr

@@ -214,14 +214,39 @@ function setupInputFile (inp) {
 		fetchUrl(inp.url,cm);
 }
 
+function getFileData () {
+	var filedata = {};
+	// script
+	var scriptdiv = $('#script');
+	if (scriptdiv.is(':visible')) {
+		filedata.script = scriptdiv.data('CodeMirrorInstance').getValue();
+		filedata.script_fn = scriptdiv.find('>.filename').text();
+	}
+	// inputs
+	$('.inputs').each(function () {
+		var div = $(this);
+		var fn = $('>.filename',div).text();
+		var text = div.data('CodeMirrorInstance').getValue();
+		if (!filedata["inputs"]) filedata.inputs = [];
+		filedata.inputs.push([fn, text]);
+	});
+	// outputs
+	$('.outputs').each(function () {
+		var fn = $(this).find('>.filename').text();
+		if (!filedata["outputs"]) filedata.outputs = [];
+		filedata.outputs.push(fn);
+	});
+	return filedata;
+}
+
 $(function () {
 	
 	var hashdata = window.location.hash.substr(1);
 	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
 	
 	// script
-	var scriptdiv = $('#script');
 	if ( hash["script"] || hash["script_url"] ) {
+		var scriptdiv = $('#script');
 		scriptdiv.show();
 		var cm = makeCM($('#perlcode'),0,0);
 		scriptdiv.data('CodeMirrorInstance', cm);
@@ -230,7 +255,7 @@ $(function () {
 		else if (hash["script_url"])
 			fetchUrl(hash.script_url,cm);
 		else throw "internal error: this shouldn't happen";
-		if (hash["script_fn"])
+		if (hash["script_fn"]) // default value is in HTML below
 			$('>.filename',scriptdiv).text(hash.script_fn);
 	}
 	
@@ -263,7 +288,6 @@ $(function () {
 	
 	$('#runperl').click( function () {
 		clearStdOutput();
-		var rp_data = {};
 		// command-line args
 		var argv = parseCmdLine($('#argv').val());
 		if (argv.length<1 || argv[0]!="perl") {
@@ -272,28 +296,10 @@ $(function () {
 			return;
 		} // else
 		argv.shift();
-		rp_data.argv = argv;
 		$('#runnererrors>pre').text('');
 		$('#runnererrors').hide();
-		// script
-		if (scriptdiv.is(':visible')) {
-			rp_data.script = scriptdiv.data('CodeMirrorInstance').getValue();
-			rp_data.script_fn = scriptdiv.find('>.filename').text();
-		}
-		// inputs
-		$('.inputs').each(function () {
-			var div = $(this);
-			var fn = $('>.filename',div).text();
-			var text = div.data('CodeMirrorInstance').getValue();
-			if (!rp_data["inputs"]) rp_data.inputs = [];
-			rp_data.inputs.push([fn, text]);
-		});
-		// outputs
-		$('.outputs').each(function () {
-			var fn = $(this).find('>.filename').text();
-			if (!rp_data["outputs"]) rp_data.outputs = [];
-			rp_data.outputs.push(fn);
-		});
+		var rp_data = getFileData();
+		rp_data.argv = argv;
 		// send message to runner
 		buttonBlockers.runnerState = 1;
 		updateButtonState();

@@ -165,6 +165,12 @@ function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror ins
 		});
 }
 
+function fileRename () {
+	var div = $(this);
+	var newname = prompt("Please choose a new filename:",div.text());
+	if (newname) div.text(newname);
+}
+
 function setupOutputFile (fn, text) {
 	var found = $('div.outputs>.filename')
 		.filter(function(){ return $(this).text() == fn });
@@ -175,7 +181,13 @@ function setupOutputFile (fn, text) {
 	}
 	else {
 		var div = $('<div/>',{class:"codewithfn outputs"});
-		div.append( $('<div/>',{class:"filename",text:fn}) );
+		//TODO: the "delete" and "rename" functions should probably be styled better
+		$('<div/>',{class:"fakelink",style:"float:right;",text:"delete"})
+			.appendTo(div).click(function () {
+				if (confirm("Are you sure you want to remove this file?"))
+					div.remove() });
+		div.append( $('<div/>',{class:"filename",text:fn}).click(fileRename) );
+		div.append( $('<div/>',{style:"clear:both;"}) );
 		var ta = $('<textarea/>').appendTo(div);
 		$('#outputhere').before(div);
 		cm = makeCM(ta,1,1);
@@ -203,7 +215,12 @@ function setupInputFile (inp) {
 		}
 	}
 	var div = $('<div/>',{class:"codewithfn inputs"});
-	div.append( $('<div/>',{class:"filename",text:fn}) );
+	$('<div/>',{class:"fakelink",style:"float:right;",text:"delete"})
+		.appendTo(div).click(function () {
+			if (confirm("Are you sure you want to remove this file?"))
+				div.remove() });
+	div.append( $('<div/>',{class:"filename",text:fn}).click(fileRename) );
+	div.append( $('<div/>',{style:"clear:both;"}) );
 	var ta = $('<textarea/>').appendTo(div);
 	$('#inputhere').before(div);
 	var cm = makeCM(ta,1,0);
@@ -244,6 +261,16 @@ $(function () {
 	
 	var hashdata = window.location.hash.substr(1);
 	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
+	
+	$('#addinput').click(function () {
+		var fn = prompt("Please choose a filename for the new input file:");
+		if (fn) setupInputFile( {fn:fn} );
+	});
+	$('#addoutput').click(function () {
+		var fn = prompt("Please choose a filename for the new output file:");
+		if (fn) setupOutputFile( fn );
+	});
+	$('#script>.filename').click(fileRename);
 	
 	// script
 	if ( hash["script"] || hash["script_url"] ) {
@@ -317,7 +344,9 @@ $(function () {
 </head>
 <body>
 
-<div id="inputhere" style="display:none;"></div>
+<div id="inputhere" style="text-align:right;">
+	<span id="addinput" class="fakelink">Add Input File</span>
+</div>
 
 <div id="script" class="codewithfn" style="display:none;">
 	<div class="filename">script.pl</div>
@@ -347,7 +376,9 @@ $(function () {
 	<textarea></textarea>
 </div>
 
-<div id="outputhere" style="display:none;"></div>
+<div id="outputhere" style="text-align:right;">
+	<span id="addoutput" class="fakelink">Add Output File</span>
+</div>
 
 </body>
 </html>

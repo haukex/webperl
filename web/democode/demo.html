@@ -34,10 +34,10 @@ If not, see http://perldoc.perl.org/index-licence.html
 <iframe name="perlrunner" sandbox="allow-scripts"
 	src="perlrunner.html" style="display:none;"></iframe>
 
-<iframe id="perl1" sandbox="allow-scripts"
-	style="border:1px solid black;width:100%;height:8em;"></iframe>
-<iframe id="perl2" sandbox="allow-scripts"
-	style="border:1px solid black;width:100%;height:40em;"></iframe>
+<iframe id="perl1" sandbox="allow-scripts allow-modals"
+	style="border:1px solid black;width:100%;max-width:50em;height:8em;"></iframe>
+<iframe id="perl2" sandbox="allow-scripts allow-modals"
+	style="border:1px solid black;width:100%;max-width:50em;height:40em;"></iframe>
 <script>
 document.getElementById('perl1').src =
 	"perleditor.html#" + encodeURIComponent(JSON.stringify( {

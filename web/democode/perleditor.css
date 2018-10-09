@@ -2,7 +2,7 @@
 body {
 	margin: 0.4em;
 }
-.text {
+.text,.fakelink {
 	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
 }
 pre,textarea,code,.code,.filename,.CodeMirror {
@@ -18,6 +18,12 @@ pre {
 }
 .CodeMirror-scroll {
 	max-height: 12em;
+}
+
+.fakelink {
+	color: darkblue;
+	cursor: pointer;
+	font-size: 0.9em;
 }
 
 #runnerstate {

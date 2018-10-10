@@ -35,7 +35,7 @@ If not, see http://perldoc.perl.org/index-licence.html
 <script>
 "use strict";
 
-var mergeStdOutErr = 0; //TODO Later: make an options hash instead of individual variable(s)?
+var mergeStdOutErr = 0; // Possible To-Do for Later: could make an options hash
 var perlRunner; // the Perl runner iframe found by findPerlRunner()
 var buttonBlockers = {}; // for updateButtonState()
 var lastExitStatus; // for runnerState()
@@ -135,7 +135,8 @@ window.addEventListener('message', function (event) {
 	else console.warn("Perl Editor ignoring unknown message:",data);
 });
 
-function parseCmdLine(str) { //TODO: there's a better way to do this
+function parseCmdLine(str) {
+	// not the prettiest code but it works
 	var re = /"((?:\\"|\\\\|[^"])*)"|'((?:\\'|\\\\|[^'])*)'|(\S+)/g;
 	var argv = [];
 	var match;

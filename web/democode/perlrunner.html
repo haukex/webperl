@@ -73,6 +73,7 @@ Perl.addStateChangeListener(function (from,to) {
 				// {encoding:"binary"} => readFile returns Uint8Array
 				// Should then also provide the same support on FS.writeFile() as well
 				var of = { fn: file };
+				if (!file) return of;
 				try {
 					of.text = FS.readFile(file, {encoding:"utf8"});
 				}
@@ -114,7 +115,7 @@ function saveFile (fn, data) {
 		FS.writeFile(fn, data);
 	}
 	catch (e) {
-		reportErr("couldn't write "+file+" because "+e);
+		reportErr("couldn't write "+fn+" because "+e);
 	}
 }
 
@@ -146,15 +147,12 @@ window.addEventListener('message', function (event) {
 		// one solution would be to just have the script be an input file (code mirror syntax highlighting based on filename?)
 		// note overlaps of output filenames with input files is ok
 		// we also don't check for duplicate filenames
-		if (rp["script"]) {
-			var script_fn = 'script.pl';
-			if (rp["script_fn"])
-				script_fn = rp.script_fn;
-			saveFile(script_fn, rp.script);
-		}
+		if (rp["script"])
+			saveFile(rp["script_fn"] ? rp.script_fn : 'script.pl', rp.script);
 		//TODO Later: can we support STDIN? (probably need to look at webperl.js)
 		if (rp["inputs"])
 			rp.inputs.forEach(function (inp) {
+				if (!inp.fn) return;
 				saveFile(inp.fn, inp.text);
 			});
 		curOutputFiles = rp["outputs"];

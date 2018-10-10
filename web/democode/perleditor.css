@@ -5,6 +5,9 @@ body {
 .text,.fakelink {
 	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
 }
+.small {
+	font-size: 0.8em;
+}
 pre,textarea,code,.code,.filename,.CodeMirror {
 	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
 }
@@ -20,12 +23,36 @@ pre {
 	max-height: 12em;
 }
 
+.codewithfn {
+	margin-top: 0.1em;
+}
+.fnfuncs {
+	cursor: default;
+}
+.filename {
+	display: inline-block;
+	border: 0;
+	padding: 1px;
+	min-width: 1em;
+	cursor: auto;
+}
+.filefuncs {
+	display: none;
+	margin-left: 1em;
+}
+.fnfuncs:hover .filefuncs {
+	display: inline-block;
+}
 .fakelink {
 	color: darkblue;
 	cursor: pointer;
 	font-size: 0.9em;
 }
-
+.badfilename {
+	background-color: rgba(255,200,200,255);
+	/* also has a placeholder text */
+	min-width: 10em;
+}
 #runnerstate {
 	margin-top: 0.1em;
 	margin-bottom: 0.3em;
@@ -37,3 +64,8 @@ pre {
 	margin-bottom: 0.3em;
 	padding: 0.1em 0.2em;
 }
+
+#inputhere, #outputhere {
+	text-align: right;
+}
+

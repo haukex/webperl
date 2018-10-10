@@ -93,6 +93,7 @@ function findPerlRunner () {
 		if (perlRunner)
 			window.clearInterval(pollId);
 		else if ( Date.now()>pollUntil ) {
+			//TODO: alternative to confirm() if modals are not allowed
 			if (window.confirm("Perl does not appear to have loaded yet, keep waiting?\n"
 			    +"(If you are on a slow connection, click OK to keep waiting.)"))
 				pollUntil = Date.now() + 10*1000;
@@ -167,36 +168,84 @@ function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror ins
 
 function makeCodeWithFn (fn,targ,ro,nodel) {
 	var div = $('<div/>',{class:"codewithfn"});
-	//TODO: the "delete" and "rename" functions should probably be styled better
+	
+	var fnfuncs = $('<div/>',{class:"fnfuncs"}).appendTo(div);
+	
+	var filename = $('<input/>',{class:"filename code",type:"text",
+		placeholder:"Enter a filename!"})
+			.appendTo(fnfuncs);
+	filename.val(fn);
+	// autosize the filename text box via a hidden span
+	var fn_width = $('<span/>',
+			{class:"code",style:"display:none;white-space:pre;"}
+		).insertAfter(filename);
+	filename.on('input', function () {
+		var newfn = filename.val();
+		fn_width.text( newfn );
+		filename.width( fn_width.width()+10 );
+		if (newfn.length)
+			filename.removeClass("badfilename");
+		else
+			filename.addClass("badfilename");
+	});
+	/* we need to trigger this handler once when the input
+	 * field is added to the document, we do this below */
+	
+	var filefuncs = $('<div/>',{class:"filefuncs"}).appendTo(fnfuncs);
+	
 	if (!nodel) {
-		$('<div/>',{class:"fakelink",style:"float:right;",text:"delete"})
-			.appendTo(div).click(function () {
-				if (confirm("Are you sure you want to remove this file?"))
-					div.remove() });
+		var conf = $('<span/>', {class:"text small"})
+			.append(
+				"&ensp;",
+				"Are you sure?",
+				"&ensp;",
+				$('<span/>',{class:"fakelink",text:"Yes"})
+					.click(function () { div.remove(); }),
+				"&ensp;",
+				$('<span/>',{class:"fakelink",text:"Cancel"})
+					.click(function () { conf.hide(); }),
+			);
+		$('<span/>',{class:"fakelink",text:"delete"})
+			.appendTo(filefuncs).click(function () {
+				conf.show();
+			});
+		conf.hide();
+		conf.appendTo(filefuncs);
 	}
-	$('<div/>',{class:"filename",text:fn})
-		.appendTo(div).click(function () {
-			var filename = $(this);
-			var newname = prompt("Please choose a new filename:", filename.text());
-			if (newname) filename.text(newname);
-		});
-	div.append( $('<div/>',{style:"clear:both;"}) );
+	
 	var ta = $('<textarea/>').appendTo(div);
 	targ.before(div);
+	filename.trigger('input'); // see above
 	var cm = makeCM(ta, !fn.match(/\.pl$/i), ro);
 	div.data('CodeMirrorInstance', cm);
 	return {div:div,ta:ta,cm:cm};
 }
 
-function setupOutputFile (fn, text) {
-	var found = $('div.outputs>.filename')
-		.filter(function(){ return $(this).text() == fn });
-	var cm;
-	if (found.length) {
-		var div = found.parent();
-		cm = div.data('CodeMirrorInstance');
+function pickNewFilename (inNotOut) {
+	var x = inNotOut ? 'input' : 'output';
+	for (var i=1; i<1000; i++) {
+		var fn = x+i+".txt";
+		var found = $('div.'+x+'s .filename')
+			.filter(function(){ return $(this).val() == fn });
+		if (!found.length)
+			return fn;
 	}
-	else {
+	$('#runnererrors>pre').text('Too many '+x+' files');
+	$('#runnererrors').show();
+	throw 'Too many '+x+' files';
+}
+
+function setupOutputFile (fn, text) {
+	var cm;
+	if (fn) {
+		var founddiv = $('div.outputs')
+			.filter(function(){ return $('.filename',this).val() == fn });
+		if (founddiv.length)
+			cm = founddiv.data('CodeMirrorInstance');
+	}
+	else
+		fn = pickNewFilename(false);
+	if (!cm) {
 		var cfn = makeCodeWithFn(fn, $('#outputhere'), 1);
 		cfn.div.addClass("outputs");
 		cm = cfn.cm;
@@ -205,23 +254,7 @@ function setupOutputFile (fn, text) {
 }
 
 function setupInputFile (inp) {
-	var fn;
-	if (inp["fn"]) fn = inp.fn;
-	else { // autogenerate a filename
-		for (var i=1; i<1000; i++) {
-			var testfn = "input"+i+".txt";
-			var found = $('div.inputs>.filename')
-				.filter(function(){ return $(this).text() == testfn });
-			if (!found.length) {
-				fn = testfn;
-				break }
-		}
-		if (!fn) {
-			$('#runnererrors>pre').text('Too many input files');
-			$('#runnererrors').show();
-			throw 'Too many input files';
-		}
-	}
+	var fn = inp["fn"] ? inp.fn : pickNewFilename(true);
 	var cfn = makeCodeWithFn(fn, $('#inputhere'), 0);
 	cfn.div.addClass("inputs");
 	if (inp["text"])
@@ -237,19 +270,19 @@ function getFileData () {
 	var scriptdiv = $('#script');
 	if (scriptdiv.is(':visible')) {
 		filedata.script = scriptdiv.data('CodeMirrorInstance').getValue();
-		filedata.script_fn = scriptdiv.find('>.filename').text();
+		filedata.script_fn = scriptdiv.find('.filename').val();
 	}
 	// inputs
 	$('.inputs').each(function () {
 		var div = $(this);
-		var fn = $('>.filename',div).text();
+		var fn = $('.filename',div).val();
 		var text = div.data('CodeMirrorInstance').getValue();
 		if (!filedata["inputs"]) filedata.inputs = [];
 		filedata.inputs.push( { fn:fn, text:text } );
 	});
 	// outputs
 	$('.outputs').each(function () {
-		var fn = $(this).find('>.filename').text();
+		var fn = $(this).find('.filename').val();
 		if (!filedata["outputs"]) filedata.outputs = [];
 		filedata.outputs.push(fn);
 	});
@@ -262,12 +295,19 @@ $(function () {
 	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
 	
 	$('#addinput').click(function () {
-		var fn = prompt("Please choose a filename for the new input file:");
-		if (fn) setupInputFile( {fn:fn} );
+		setupInputFile( {} );
 	});
 	$('#addoutput').click(function () {
-		var fn = prompt("Please choose a filename for the new output file:");
-		if (fn) setupOutputFile( fn );
+		setupOutputFile();
+	});
+	
+	var argv_inp = $('#argv');
+	var argv_autosize = $('<span/>',
+			{class:"code",style:"display:none;white-space:pre;"}
+		).insertAfter(argv_inp);
+	argv_inp.on('input', function () {
+		argv_autosize.text( argv_inp.val() );
+		argv_inp.width( argv_autosize.width()+10 );
 	});
 	
 	// script
@@ -283,7 +323,8 @@ $(function () {
 	
 	// command line
 	if (hash["cmdline"])
-		$('#argv').val(hash.cmdline);
+		argv_inp.val(hash.cmdline);
+	argv_inp.trigger('input');
 	
 	// input files
 	$('.inputs').remove();
@@ -294,11 +335,11 @@ $(function () {
 	// stdout/stderr
 	if (hash["mergeStdOutErr"]) {
 		mergeStdOutErr = 1;
-		$('#stdout>.filename').text("STDOUT+STDERR");
+		$('#stdout .filename').val("STDOUT+STDERR");
 	}
 	else {
 		mergeStdOutErr = 0;
-		$('#stdout>.filename').text("STDOUT");
+		$('#stdout .filename').val("STDOUT");
 	}
 	clearStdOutput();
 	
@@ -311,7 +352,7 @@ $(function () {
 	$('#runperl').click( function () {
 		clearStdOutput();
 		// command-line args
-		var argv = parseCmdLine($('#argv').val());
+		var argv = parseCmdLine(argv_inp.val());
 		if (argv.length<1 || argv[0]!="perl") {
 			$('#runnererrors>pre').text('Invalid command line, command must be "perl"');
 			$('#runnererrors').show();
@@ -338,13 +379,13 @@ $(function () {
 </head>
 <body>
 
-<div id="inputhere" style="text-align:right;">
+<div id="inputhere">
 	<span id="addinput" class="fakelink">Add Input File</span>
 </div>
 
 <div id="perlctrl">
 	<button id="runperl"><code>perl</code> &#x25BA;</button>
-	<input type="text" id="argv" class="code" size="60" value='perl' />
+	<input type="text" id="argv" class="code" value='perl' />
 </div>
 
 <div id="runnerstate" class="text">
@@ -356,16 +397,16 @@ $(function () {
 </div>
 
 <div id="stdout" class="codewithfn" style="display:none;">
-	<div class="filename">STDOUT</div>
+	<input type="text" class="filename code" readonly="readonly" value="STDOUT" size="7" />
 	<textarea></textarea>
 </div>
 
 <div id="stderr" class="codewithfn" style="display:none;">
-	<div class="filename">STDERR</div>
+	<input type="text" class="filename code" readonly="readonly" value="STDERR" size="7" />
 	<textarea></textarea>
 </div>
 
-<div id="outputhere" style="text-align:right;">
+<div id="outputhere">
 	<span id="addoutput" class="fakelink">Add Output File</span>
 </div>
 

@@ -218,7 +218,7 @@ Perl.init = function (readyCallback) {
 		},
 		onExit: function (status) { // note this may be called multiple times
 			if (status==0)
-				console.info( "Perl: Exit status",status,"(state",Perl.state,")");
+				console.debug( "Perl: Exit status",status,"(state",Perl.state,")");
 			else {
 				console.error("Perl: Exit status",status,"(state",Perl.state,")");
 				alert("Perl exited with exit status "+status+" in state "+Perl.state);

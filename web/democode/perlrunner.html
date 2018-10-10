@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Perl Runner</title>
+
+<!-- ##### WebPerl - http://webperl.zero-g.net #####
+
+Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, http://www.igb-berlin.de
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl 5 itself: either the GNU General Public
+License as published by the Free Software Foundation (either version 1,
+or, at your option, any later version), or the "Artistic License" which
+comes with Perl 5.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the licenses for details.
+
+You should have received a copy of the licenses along with this program.
+If not, see http://perldoc.perl.org/index-licence.html
+##### -->
+
+<!-- Possible To-Do for Later: This whole thing could probably also be
+	accomplished with a Web Worker, but that would probably require a
+	stripped-down version of webperl.js (that loads things without
+	using window.* and especially document.*
+	https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker
+	https://developer.mozilla.org/en-US/docs/Web/API/WorkerGlobalScope/importScripts
+	
+	Of course, at some point I should investigate how difficult it really
+	is to re-start an Emscripten program...
+	-->
+
+<script src="../webperl.js"></script>
+<!--script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
+	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></script-->
+<script>
+"use strict";
+
+Perl.noMountIdbfs=true; // we're sandboxed
+Perl.endAfterMain=true; // act like command-line perl
+
+var knownClients = [];
+var currentClient; // which client we're running Perl for, also keeps state
+var curOutputFiles;
+var stdbuf = [null,'',''];
+
+function reportErr (err) {
+	if (currentClient)
+		currentClient.postMessage({ perlRunnerError: err },'*');
+	else
+		console.error(err);
+}
+
+Perl.addStateChangeListener(function (from,to) {
+	if (from==to) return; // won't be needed as of v0.09-beta
+	if (to=="Ended" && currentClient) {
+		for (var chan=1;chan<=2;chan++) // flush buffers
+			if (stdbuf[chan].length) {
+				currentClient.postMessage({ perlOutput: { chan:chan, data:stdbuf[chan] } },'*');
+				stdbuf[chan] = '';
+			}
+		currentClient.postMessage({ perlRunnerState: Perl.state,
+			exitStatus: Perl.exitStatus },'*');
+		for(var i=0; i<knownClients.length; i++)
+			if (knownClients[i]!=currentClient)
+				knownClients[i].postMessage({ perlRunnerState: Perl.state },'*');
+		if (curOutputFiles) {
+			var ofs = curOutputFiles.map(function (file) {
+				//TODO Later: Support binary files as well?
+				// {encoding:"binary"} => readFile returns Uint8Array
+				// Should then also provide the same support on FS.writeFile() as well
+				var of = { fn: file };
+				if (!file) return of;
+				try {
+					of.text = FS.readFile(file, {encoding:"utf8"});
+				}
+				catch (e) {
+					reportErr("couldn't read "+file+" because "+e);
+				}
+				return of;
+			});
+			currentClient.postMessage({ perlOutputFiles: ofs },'*');
+		}
+	}
+	else {
+		for(var i=0; i<knownClients.length; i++)
+			knownClients[i].postMessage({ perlRunnerState: Perl.state },'*');
+	}
+	if (to=="Ended") {
+		if (!currentClient)
+			console.error("Internal Error: Perl state change to Ended with no client");
+		window.location.reload(false);
+	}
+});
+
+Perl.output = function (str,chan) {
+	stdbuf[chan] += str;
+	var pos = stdbuf[chan].lastIndexOf("\n");
+	if (pos<0) return;
+	var lines = stdbuf[chan].slice(0,pos+1);
+	if (currentClient)
+		currentClient.postMessage({ perlOutput: { chan:chan, data:lines } },'*');
+	else
+		console.error("Internal Error: Output on",chan==1?"STDOUT":"STDERR","with no client:",lines);
+	stdbuf[chan] = stdbuf[chan].slice(pos+1);
+};
+
+function saveFile (fn, data) {
+	if (fn.substring(0,1)!='/') // if relative, make absolute
+		fn = FS.joinPath([FS.cwd(), fn]);
+	try {
+		FS.writeFile(fn, data);
+	}
+	catch (e) {
+		reportErr("couldn't write "+fn+" because "+e);
+	}
+}
+
+window.addEventListener('message', function (event) {
+	if (event.data["perlRunnerDiscovery"]) {
+		if (!knownClients.includes(event.source))
+			knownClients.push(event.source);
+		event.source.postMessage({ perlRunnerState: Perl.state },'*');
+	}
+	else if (event.data["runPerl"]) {
+		if (!knownClients.includes(event.source))
+			knownClients.push(event.source);
+		// check state
+		if (currentClient && currentClient !== event.source) {
+			console.error("Attempt to run Perl from",event.source,
+				"but am already running Perl for",currentClient);
+			reportErr("Attempt to run Perl (from "+event.origin
+				+") but am already running Perl for someone else (see JavaScript console)");
+			return;
+		} // else
+		currentClient = event.source;
+		if (Perl.state!="Ready") {
+			reportErr("Attempt to run Perl in state "+Perl.state);
+			return;
+		} // else
+		// set up files and run perl
+		var rp = event.data.runPerl;
+		//TODO: we don't check for overlaps in filenames between script+input files (maybe the editor should do that)
+		// one solution would be to just have the script be an input file (code mirror syntax highlighting based on filename?)
+		// note overlaps of output filenames with input files is ok
+		// we also don't check for duplicate filenames
+		if (rp["script"])
+			saveFile(rp["script_fn"] ? rp.script_fn : 'script.pl', rp.script);
+		//TODO Later: can we support STDIN? (probably need to look at webperl.js)
+		if (rp["inputs"])
+			rp.inputs.forEach(function (inp) {
+				if (!inp.fn) return;
+				saveFile(inp.fn, inp.text);
+			});
+		curOutputFiles = rp["outputs"];
+		Perl.start( rp["argv"] ? rp.argv : [] );
+	}
+	else console.warn("Perl Runner ignoring unknown message:", event.data);
+});
+
+Perl.init(function () {
+	Module['thisProgram'] = 'perl';
+	FS.currentPath = ENV.HOME; // NOTE: https://github.com/kripken/emscripten/issues/5873
+});
+
+</script>
+
+</head>
+<body>
+</body>
+</html>

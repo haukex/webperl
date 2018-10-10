@@ -1,0 +1,83 @@
+
+body {
+	margin: 0.4em;
+}
+.text {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+	font-size: 0.9em;
+}
+pre,textarea,code,.code,.filename,.CodeMirror {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
+pre {
+	margin: 0;
+}
+a {
+	text-decoration: none;
+}
+
+.CodeMirror {
+	border: 1px solid lightgrey;
+	height: auto;
+}
+.CodeMirror-scroll {
+	max-height: 12em;
+}
+
+.codewithfn {
+	margin-top: 0.4em;
+}
+.fnfuncs {
+	cursor: default;
+}
+.filename {
+	display: inline-block;
+	border: 0;
+	padding: 1px;
+	min-width: 1em;
+	cursor: auto;
+}
+.filefuncs {
+	display: inline-block;
+	padding-top: 2px;
+	position: absolute;
+	right: 0.2em;
+}
+.fakelink {
+	color: darkblue;
+	cursor: pointer;
+}
+.badfilename {
+	background-color: rgba(255,200,200,255);
+	/* also has a placeholder text */
+	min-width: 10em;
+}
+
+#perlctrl {
+	margin-top: 0.3em;
+}
+
+#misctools {
+	display: inline-block;
+	border: 1px solid grey;
+	padding: 1px 0.8em 1px 0.5em;
+	margin-top: 0.5em;
+}
+#runnerstate {
+	margin-top: 0.2em;
+	margin-bottom: 0.3em;
+}
+#runnererrors {
+	background-color: rgba(255,200,200,255);
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	padding: 0.1em 0.2em;
+}
+
+#inputhere, #outputhere {
+	text-align: right;
+}
+
+#footer {
+	margin-top: 0.5em;
+}

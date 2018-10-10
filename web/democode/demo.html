@@ -31,18 +31,30 @@ If not, see http://perldoc.perl.org/index-licence.html
 	- STDIN is currently not supported, workaround is to supply files on command line
 -->
 
-<iframe name="perlrunner" sandbox="allow-scripts"
-	src="perlrunner.html" style="display:none;"></iframe>
+<style>
+iframe.perleditor {
+	display: block;
+	border: 1px solid black;
+	width: 100%;
+	max-width: 50em;
+}
+</style>
 
-<iframe id="perl1" sandbox="allow-scripts allow-modals"
-	style="border:1px solid black;width:100%;max-width:50em;height:8em;"></iframe>
-<iframe id="perl2" sandbox="allow-scripts allow-modals"
-	style="border:1px solid black;width:100%;max-width:50em;height:40em;"></iframe>
+</head>
+<body>
+
+<iframe name="perlrunner" sandbox="allow-scripts" src="perlrunner.html" style="display:none;"></iframe>
+
+<iframe id="perl1" sandbox="allow-scripts allow-modals" class="perleditor" style="height:10em;"></iframe>
 <script>
 document.getElementById('perl1').src =
 	"perleditor.html#" + encodeURIComponent(JSON.stringify( {
 		cmdline: "perl -e 'print \"Hello, World!\"'",
 	} ));
+</script>
+
+<iframe id="perl2" sandbox="allow-scripts allow-modals" class="perleditor" style="height:40em;"></iframe>
+<script>
 document.getElementById('perl2').src =
 	"perleditor.html#" + encodeURIComponent(JSON.stringify( {
 		cmdline: "perl devoweler.pl mytext.txt other.txt",
@@ -57,7 +69,5 @@ document.getElementById('perl2').src =
 	} ));
 </script>
 
-</head>
-<body>
 </body>
 </html>

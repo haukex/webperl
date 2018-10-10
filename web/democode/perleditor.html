@@ -206,7 +206,7 @@ function makeCodeWithFn (fn,targ,ro,isscript) {
 			$('<span/>',{class:"fakelink",text:"Cancel"})
 				.click(function () { conf.hide(); }),
 		);
-	$('<span/>',{class:"fakelink",text:"delete"})
+	$('<span/>',{class:"fakelink",text:"Delete"})
 		.appendTo(filefuncs).click(function () {
 			conf.show();
 		});
@@ -410,22 +410,8 @@ $(function () {
 	<input type="text" id="argv" class="code" value='perl' />
 </div>
 
-<div class="text">
-	<textarea id="pageurl" style="display:none;"></textarea>
-	<div id="misctools">
-		Tools
-		<div id="misctools_reveal">
-			&nbsp;
-			<span id="addscript" class="fakelink" style="display:none;">Add Script</span>
-			&nbsp;
-			<span id="addinput" class="fakelink">Add Input File</span>
-			&nbsp;
-			<span id="addoutput" class="fakelink">Add Output File</span>
-			&nbsp;
-			<span id="copyurl" class="fakelink">Copy Frame URL</span>
-		</div>
-	</div>
-	<span id="runnerstate">Loading...</span>
+<div id="runnerstate" class="text">
+	Loading...
 </div>
 
 <div id="runnererrors" style="display:none;">
@@ -443,6 +429,22 @@ $(function () {
 </div>
 
 <div id="outputhere" style="display:none;"></div>
+
+<div class="text">
+	<textarea id="pageurl" style="display:none;"></textarea>
+	<div id="misctools">
+		Tools
+		&nbsp;
+		<span id="addscript" class="fakelink" style="display:none;">Add Script</span>
+		&nbsp;
+		<span id="addinput" class="fakelink">Add Input File</span>
+		&nbsp;
+		<span id="addoutput" class="fakelink">Add Output File</span>
+		&nbsp;
+		<span id="copyurl" class="fakelink">Copy Frame URL</span>
+		</div>
+	</div>
+</div>
 
 </body>
 </html>

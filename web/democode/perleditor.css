@@ -22,7 +22,7 @@ pre {
 }
 
 .codewithfn {
-	margin-top: 0.1em;
+	margin-top: 0.4em;
 }
 .fnfuncs {
 	cursor: default;
@@ -35,11 +35,10 @@ pre {
 	cursor: auto;
 }
 .filefuncs {
-	display: none;
-	margin-left: 1em;
-}
-.fnfuncs:hover .filefuncs {
 	display: inline-block;
+	padding-top: 2px;
+	position: absolute;
+	right: 0.2em;
 }
 .fakelink {
 	color: darkblue;
@@ -54,22 +53,11 @@ pre {
 #misctools {
 	display: inline-block;
 	border: 1px solid grey;
-	padding: 1px 0.5em;
-	margin-top: 1px;
-	margin-right: 3px;
-	color: grey;
-}
-#misctools_reveal {
-	display: none;
-}
-#misctools:hover {
-	color: inherit;
-}
-#misctools:hover #misctools_reveal {
-	display: inline-block;
+	padding: 1px 0.8em 1px 0.5em;
+	margin-top: 0.5em;
 }
 #runnerstate {
-	margin-top: 0.1em;
+	margin-top: 0.2em;
 	margin-bottom: 0.3em;
 }
 #runnererrors {

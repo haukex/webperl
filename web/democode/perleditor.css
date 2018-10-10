@@ -2,11 +2,9 @@
 body {
 	margin: 0.4em;
 }
-.text,.fakelink {
+.text {
 	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
-}
-.small {
-	font-size: 0.8em;
+	font-size: 0.9em;
 }
 pre,textarea,code,.code,.filename,.CodeMirror {
 	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
@@ -46,7 +44,6 @@ pre {
 .fakelink {
 	color: darkblue;
 	cursor: pointer;
-	font-size: 0.9em;
 }
 .badfilename {
 	background-color: rgba(255,200,200,255);

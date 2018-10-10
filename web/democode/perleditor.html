@@ -189,9 +189,10 @@ function makeCodeWithFn (fn,targ,ro,isscript) {
 	/* we need to trigger this handler once when the input
 	 * field is added to the document, we do this below */
 	
-	var filefuncs = $('<div/>',{class:"filefuncs"}).appendTo(fnfuncs);
+	var filefuncs = $('<div/>',{class:"filefuncs text"})
+		.appendTo(fnfuncs);
 	
-	var conf = $('<span/>', {class:"text small"})
+	var conf = $('<span/>', {})
 		.append(
 			"&ensp;",
 			"Are you sure?",
@@ -409,7 +410,7 @@ $(function () {
 	<input type="text" id="argv" class="code" value='perl' />
 </div>
 
-<div class="text small">
+<div class="text">
 	<textarea id="pageurl" style="display:none;"></textarea>
 	<div id="misctools">
 		Tools

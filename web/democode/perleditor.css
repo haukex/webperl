@@ -53,6 +53,10 @@ a {
 	min-width: 10em;
 }
 
+#perlctrl {
+	margin-top: 0.3em;
+}
+
 #misctools {
 	display: inline-block;
 	border: 1px solid grey;

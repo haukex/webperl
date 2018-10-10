@@ -419,12 +419,12 @@ $(function () {
 </div>
 
 <div id="stdout" class="codewithfn" style="display:none;">
-	<input type="text" class="filename code" readonly="readonly" value="STDOUT" size="7" />
+	<input type="text" class="filename code" readonly="readonly" value="STDOUT" size="14" />
 	<textarea></textarea>
 </div>
 
 <div id="stderr" class="codewithfn" style="display:none;">
-	<input type="text" class="filename code" readonly="readonly" value="STDERR" size="7" />
+	<input type="text" class="filename code" readonly="readonly" value="STDERR" size="14" />
 	<textarea></textarea>
 </div>
 
@@ -444,6 +444,12 @@ $(function () {
 		<span id="copyurl" class="fakelink">Copy Frame URL</span>
 		</div>
 	</div>
+</div>
+
+<div class="text" id="footer">
+	Powered by <a href="http://webperl.zero-g.net/" target="_blank">&#x1F578;&#xFE0F;&#x1F42A; WebPerl</a> (beta)
+	<!-- Link with target="_blank" may not work in a sandboxed iframe, so provide URL: -->
+	&nbsp; <code>http://webperl.zero-g.net/</code>
 </div>
 
 </body>

@@ -12,6 +12,9 @@ pre,textarea,code,.code,.filename,.CodeMirror {
 pre {
 	margin: 0;
 }
+a {
+	text-decoration: none;
+}
 
 .CodeMirror {
 	border: 1px solid lightgrey;
@@ -71,3 +74,6 @@ pre {
 	text-align: right;
 }
 
+#footer {
+	margin-top: 0.5em;
+}

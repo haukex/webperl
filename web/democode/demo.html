@@ -25,13 +25,13 @@ You should have received a copy of the licenses along with this program.
 If not, see http://perldoc.perl.org/index-licence.html
 ##### -->
 
-<!-- TODO: Document
-	Notes:
-	- "perl -CSD" is recommended because files are currently always UTF-8
-	- STDIN is currently not supported, workaround is to supply files on command line
--->
-
 <style>
+p {
+	font-family: Calibri, Ubuntu, "Droid Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+pre,textarea,code {
+	font-family: Consolas, "Ubuntu Mono", "Droid Sans Mono", "Lucida Console", "Courier New", Courier, monospace;
+}
 iframe.perleditor {
 	display: block;
 	border: 1px solid black;
@@ -44,17 +44,104 @@ iframe.perleditor {
 </head>
 <body>
 
+<p>
+This page demonstrates the embeddable
+<strong><a href="http://webperl.zero-g.net" target="_blank">&#x1F578;&#xFE0F;&#x1F42A; WebPerl</a>
+Code Demo Editor</strong>, which can be embedded using <code>&lt;iframe&gt;</code> elements, including
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox" target="_blank">sandboxing</a>.
+The documentation is contained in the source of this page, please use
+the "View Source" function of your browser to view it, or have a look at
+<a href="https://github.com/haukex/webperl/tree/master/web/democode"
+	target="_blank">the project sources on GitHub</a>.
+</p>
+
+<!-- First, you have to include the following hidden IFrame, which
+loads the "Perl runner". This is (currently) necessary because this
+IFrame needs to re-load itself in order to re-run Perl. This IFrame
+*must* have the "name='perlrunner'" attribute and must be embedded at
+the same level as the Perl editor IFrame(s). The frames communicate
+via the "window.postMessage()" mechanism, which is safe for
+cross-origin communications and sandboxing. Currently, in order to
+conserve memory, a single runner serves multiple "clients", that is,
+the "editor" IFrames below. -->
+
 <iframe name="perlrunner" sandbox="allow-scripts" src="perlrunner.html" style="display:none;"></iframe>
 
-<iframe id="perl1" sandbox="allow-scripts" class="perleditor" style="height:10em;"></iframe>
+<p>This is a simple example of running a oneliner:</p>
+
+<!-- The following is a basic example showing a single input file and
+Perl oneliner.
+
+All files are currently always encoded as UTF-8, which is why the
+"-CSD" switch is used below. This is not strictly necessary when the
+input files are pure ASCII, but it is important to remember that Perl
+does *not* default to UTF-8. Reading/writing binary data via the
+editor and runner is currently *not* supported.
+
+Standard input/output redirection is currently not supported. It is
+also currently not supported to supply STDIN directly to the script,
+the workaround is to use input files, supply the filenames on the
+command line, and use Perl's magic ARGV operator "<>". Support for
+redirections may be added in a future version.
+
+The JavaScript shown below is not strictly necessary, it is also
+possible to specify a "src='...'" attribute directly in the IFrame
+tag, for example using the "Copy Frame URL" link shown in the editor.
+
+Note that implementing an automatic resize of the IFrame to fit its
+contents is nontrivial when sandboxing is enabled, which is why a
+fixed height is used below.
+-->
+
+<iframe id="perl1" sandbox="allow-scripts" class="perleditor" style="height:20em;"></iframe>
 <script>
 document.getElementById('perl1').src =
 	"perleditor.html#" + encodeURIComponent(JSON.stringify( {
-		cmdline: "perl -e 'print \"Hello, World!\"'",
+		inputs: [ { fn:"in.txt", text:"Foo\nBar\nQuz" } ],
+		cmdline: "perl -CSD -pe 's/[aeiou]/_/g' in.txt",
 	} ));
 </script>
 
-<iframe id="perl2" sandbox="allow-scripts" class="perleditor" style="height:40em;"></iframe>
+<p>This example includes several files:</p>
+
+<!-- The following example demonstrates (almost) all of the possible
+options that can be passed to the editor.
+
+The "cmdline" supports only very basic quoting constructs.
+
+You may specify the text of a script via "script", or, alternatively,
+a "script_url" from which the script is to be fetched - however, be
+aware that cross-origin restrictions may limit your ability to fetch
+URLs from other origins. You can specify the script's filename with
+"script_fn".
+
+Input files ("inputs") are specified as an array of objects; the
+properties of the object are similar to the script: filenames are
+specified with "fn", and the text of the file via "text", or
+alternatively, you may specify a "url" from which the content is to
+be fetched.
+
+The output files ("outputs") are an array of filenames. After the
+script finishes, the "Perl runner" will attempt to read these files
+and display them to the user. It is also possible to specify output
+files with the same name as an input file, for example if Perl's "-i"
+option was used.
+
+The current working directory of Perl defaults to the "home"
+directory in Emscripten's virtual file system, currently
+"/home/web_user", and all filenames are relative to this directory.
+You may also specify absolute filenames such as "/tmp/foo.txt".
+However, note that intermediate directories are currently not
+automatically created, so if you specify files with nonexistent
+directories like "/tmp/foo/bar.txt" or the relative "foo/bar.txt",
+this will not work.
+
+Additional options: Setting "mergeStdOutErr" to a true value causes
+STDOUT and STDERR output to be output together, similar to the way
+they would be on the console.
+-->
+
+<iframe id="perl2" sandbox="allow-scripts" class="perleditor" style="height:42em;"></iframe>
 <script>
 document.getElementById('perl2').src =
 	"perleditor.html#" + encodeURIComponent(JSON.stringify( {
@@ -66,7 +153,7 @@ document.getElementById('perl2').src =
 			{ fn: "mytext.txt", text: "Foo\nBar\nQuz\n" },
 			{ fn: "other.txt", text: "Hello, World!" },
 		],
-		outputs : [ "vowels.txt" ],
+		outputs: [ "vowels.txt" ],
 	} ));
 </script>
 

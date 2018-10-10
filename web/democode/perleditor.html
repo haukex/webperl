@@ -164,7 +164,7 @@ function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror ins
 		});
 }
 
-function makeCodeWithFn (fn,targ,ro,nodel) {
+function makeCodeWithFn (fn,targ,ro,isscript) {
 	var div = $('<div/>',{class:"codewithfn"});
 	
 	var fnfuncs = $('<div/>',{class:"fnfuncs"}).appendTo(div);
@@ -191,30 +191,31 @@ function makeCodeWithFn (fn,targ,ro,nodel) {
 	
 	var filefuncs = $('<div/>',{class:"filefuncs"}).appendTo(fnfuncs);
 	
-	if (!nodel) {
-		var conf = $('<span/>', {class:"text small"})
-			.append(
-				"&ensp;",
-				"Are you sure?",
-				"&ensp;",
-				$('<span/>',{class:"fakelink",text:"Yes"})
-					.click(function () { div.remove(); }),
-				"&ensp;",
-				$('<span/>',{class:"fakelink",text:"Cancel"})
-					.click(function () { conf.hide(); }),
-			);
-		$('<span/>',{class:"fakelink",text:"delete"})
-			.appendTo(filefuncs).click(function () {
-				conf.show();
-			});
-		conf.hide();
-		conf.appendTo(filefuncs);
-	}
+	var conf = $('<span/>', {class:"text small"})
+		.append(
+			"&ensp;",
+			"Are you sure?",
+			"&ensp;",
+			$('<span/>',{class:"fakelink",text:"Yes"})
+				.click(function () {
+					div.remove();
+					if (isscript) $('#addscript').show();
+				}),
+			"&ensp;",
+			$('<span/>',{class:"fakelink",text:"Cancel"})
+				.click(function () { conf.hide(); }),
+		);
+	$('<span/>',{class:"fakelink",text:"delete"})
+		.appendTo(filefuncs).click(function () {
+			conf.show();
+		});
+	conf.hide();
+	conf.appendTo(filefuncs);
 	
 	var ta = $('<textarea/>').appendTo(div);
 	targ.before(div);
 	filename.trigger('input'); // see above
-	var cm = makeCM(ta, !fn.match(/\.pl$/i), ro);
+	var cm = makeCM(ta, !(isscript||fn.match(/\.pl$/i)), ro);
 	div.data('CodeMirrorInstance', cm);
 	return {div:div,ta:ta,cm:cm};
 }
@@ -292,6 +293,7 @@ $(function () {
 	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
 	
 	// script
+	var addscript = $('#addscript');
 	if ( hash["script"] || hash["script_url"] ) {
 		var fn = hash["script_fn"] ? hash.script_fn : 'script.pl';
 		var cfn = makeCodeWithFn(fn, $('#perlctrl'), 0, 1);
@@ -300,7 +302,17 @@ $(function () {
 			cfn.cm.setValue(hash.script);
 		else if (hash["script_url"])
 			fetchUrl(hash.script_url, cfn.cm);
+		addscript.hide();
 	}
+	else
+		addscript.show();
+	addscript.click(function () {
+		addscript.hide();
+		if ($('#script').length) return;
+		var cfn = makeCodeWithFn('script.pl', $('#perlctrl'), 0, 1);
+		cfn.div.attr("id", "script");
+		cfn.cm.setValue("use warnings;\nuse strict;\n\n");
+	});
 	
 	// command line
 	var argv_inp = $('#argv');
@@ -404,6 +416,8 @@ $(function () {
 	<div id="misctools">
 		Tools
 		<div id="misctools_reveal">
+			&nbsp;
+			<span id="addscript" class="fakelink" style="display:none;">Add Script</span>
 			&nbsp;
 			<span id="copyurl" class="fakelink">Copy Frame URL</span>
 		</div>

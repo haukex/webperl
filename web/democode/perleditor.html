@@ -165,10 +165,27 @@ function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror ins
 		});
 }
 
-function fileRename () {
-	var div = $(this);
-	var newname = prompt("Please choose a new filename:",div.text());
-	if (newname) div.text(newname);
+function makeCodeWithFn (fn,targ,ro,nodel) {
+	var div = $('<div/>',{class:"codewithfn"});
+	//TODO: the "delete" and "rename" functions should probably be styled better
+	if (!nodel) {
+		$('<div/>',{class:"fakelink",style:"float:right;",text:"delete"})
+			.appendTo(div).click(function () {
+				if (confirm("Are you sure you want to remove this file?"))
+					div.remove() });
+	}
+	$('<div/>',{class:"filename",text:fn})
+		.appendTo(div).click(function () {
+			var filename = $(this);
+			var newname = prompt("Please choose a new filename:", filename.text());
+			if (newname) filename.text(newname);
+		});
+	div.append( $('<div/>',{style:"clear:both;"}) );
+	var ta = $('<textarea/>').appendTo(div);
+	targ.before(div);
+	var cm = makeCM(ta, !fn.match(/\.pl$/i), ro);
+	div.data('CodeMirrorInstance', cm);
+	return {div:div,ta:ta,cm:cm};
 }
 
 function setupOutputFile (fn, text) {
@@ -180,18 +197,9 @@ function setupOutputFile (fn, text) {
 		cm = div.data('CodeMirrorInstance');
 	}
 	else {
-		var div = $('<div/>',{class:"codewithfn outputs"});
-		//TODO: the "delete" and "rename" functions should probably be styled better
-		$('<div/>',{class:"fakelink",style:"float:right;",text:"delete"})
-			.appendTo(div).click(function () {
-				if (confirm("Are you sure you want to remove this file?"))
-					div.remove() });
-		div.append( $('<div/>',{class:"filename",text:fn}).click(fileRename) );
-		div.append( $('<div/>',{style:"clear:both;"}) );
-		var ta = $('<textarea/>').appendTo(div);
-		$('#outputhere').before(div);
-		cm = makeCM(ta,1,1);
-		div.data('CodeMirrorInstance', cm);
+		var cfn = makeCodeWithFn(fn, $('#outputhere'), 1);
+		cfn.div.addClass("outputs");
+		cm = cfn.cm;
 	}
 	cm.setValue( text ? text : '' );
 }
@@ -214,21 +222,12 @@ function setupInputFile (inp) {
 			throw 'Too many input files';
 		}
 	}
-	var div = $('<div/>',{class:"codewithfn inputs"});
-	$('<div/>',{class:"fakelink",style:"float:right;",text:"delete"})
-		.appendTo(div).click(function () {
-			if (confirm("Are you sure you want to remove this file?"))
-				div.remove() });
-	div.append( $('<div/>',{class:"filename",text:fn}).click(fileRename) );
-	div.append( $('<div/>',{style:"clear:both;"}) );
-	var ta = $('<textarea/>').appendTo(div);
-	$('#inputhere').before(div);
-	var cm = makeCM(ta,1,0);
-	div.data('CodeMirrorInstance', cm);
+	var cfn = makeCodeWithFn(fn, $('#inputhere'), 0);
+	cfn.div.addClass("inputs");
 	if (inp["text"])
-		cm.setValue(inp.text);
+		cfn.cm.setValue(inp.text);
 	else if (inp["url"])
-		fetchUrl(inp.url,cm);
+		fetchUrl(inp.url, cfn.cm);
 }
 
 //TODO: implement a "get URL" feature
@@ -270,21 +269,16 @@ $(function () {
 		var fn = prompt("Please choose a filename for the new output file:");
 		if (fn) setupOutputFile( fn );
 	});
-	$('#script>.filename').click(fileRename);
 	
 	// script
 	if ( hash["script"] || hash["script_url"] ) {
-		var scriptdiv = $('#script');
-		scriptdiv.show();
-		var cm = makeCM($('#perlcode'),0,0);
-		scriptdiv.data('CodeMirrorInstance', cm);
+		var fn = hash["script_fn"] ? hash.script_fn : 'script.pl';
+		var cfn = makeCodeWithFn(fn, $('#perlctrl'), 0, 1);
+		cfn.div.attr("id", "script");
 		if (hash["script"])
-			cm.setValue(hash.script);
+			cfn.cm.setValue(hash.script);
 		else if (hash["script_url"])
-			fetchUrl(hash.script_url,cm);
-		else throw "internal error: this shouldn't happen";
-		if (hash["script_fn"]) // default value is in HTML below
-			$('>.filename',scriptdiv).text(hash.script_fn);
+			fetchUrl(hash.script_url, cfn.cm);
 	}
 	
 	// command line
@@ -348,12 +342,7 @@ $(function () {
 	<span id="addinput" class="fakelink">Add Input File</span>
 </div>
 
-<div id="script" class="codewithfn" style="display:none;">
-	<div class="filename">script.pl</div>
-	<textarea id="perlcode"></textarea>
-</div>
-
-<div>
+<div id="perlctrl">
 	<button id="runperl"><code>perl</code> &#x25BA;</button>
 	<input type="text" id="argv" class="code" size="60" value='perl' />
 </div>

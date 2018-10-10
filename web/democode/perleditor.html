@@ -402,9 +402,7 @@ $(function () {
 </head>
 <body>
 
-<div id="inputhere">
-	<span id="addinput" class="fakelink">Add Input File</span>
-</div>
+<div id="inputhere" style="display:none;"></div>
 
 <div id="perlctrl">
 	<button id="runperl"><code>perl</code> &#x25BA;</button>
@@ -418,6 +416,10 @@ $(function () {
 		<div id="misctools_reveal">
 			&nbsp;
 			<span id="addscript" class="fakelink" style="display:none;">Add Script</span>
+			&nbsp;
+			<span id="addinput" class="fakelink">Add Input File</span>
+			&nbsp;
+			<span id="addoutput" class="fakelink">Add Output File</span>
 			&nbsp;
 			<span id="copyurl" class="fakelink">Copy Frame URL</span>
 		</div>
@@ -439,9 +441,7 @@ $(function () {
 	<textarea></textarea>
 </div>
 
-<div id="outputhere">
-	<span id="addoutput" class="fakelink">Add Output File</span>
-</div>
+<div id="outputhere" style="display:none;"></div>
 
 </body>
 </html>

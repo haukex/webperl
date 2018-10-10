@@ -63,7 +63,12 @@ the same level as the Perl editor IFrame(s). The frames communicate
 via the "window.postMessage()" mechanism, which is safe for
 cross-origin communications and sandboxing. Currently, in order to
 conserve memory, a single runner serves multiple "clients", that is,
-the "editor" IFrames below. -->
+the "editor" IFrames below.
+
+It is also possible to link to perleditor.html directly: if it
+detects that it is not running in an IFrame, it will load the runner
+on its own (after a very brief delay).
+-->
 
 <iframe name="perlrunner" sandbox="allow-scripts" src="perlrunner.html" style="display:none;"></iframe>
 

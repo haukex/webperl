@@ -39,6 +39,7 @@ var mergeStdOutErr = 0; // Possible To-Do for Later: could make an options hash
 var perlRunner; // the Perl runner iframe found by findPerlRunner()
 var buttonBlockers = {}; // for updateButtonState()
 var lastExitStatus; // for runnerState()
+var loadedRunnerIframe = false; // for findPerlRunner()
 
 function makeCM (textarea,plain,ro) {
 	return CodeMirror.fromTextArea( textarea[0], {
@@ -87,18 +88,31 @@ function findPerlRunner () {
 	buttonBlockers.runnerState = 1;
 	updateButtonState();
 	// poll for perlRunner, which gets set by the message listener
-	var pollUntil = Date.now() + 10*1000; // milliseconds
+	var warnAt = Date.now() + 15*1000; // milliseconds
+	var loadIframe = Date.now() + 3*1000; // milliseconds
 	var pollId;
 	pollId = window.setInterval( function () {
 		if (perlRunner)
 			window.clearInterval(pollId);
+		else if (!loadedRunnerIframe && self===top && Date.now()>loadIframe) {
+			console.debug("Perl Editor is attempting to load Perl Runner...");
+			/* This is a special case: We appear to be the toplevel window,
+			 * and are unable to contact the runner within a fixed amount of time.
+			 * So we assume that someone has linked directly to this page instead
+			 * of loading it in an IFrame, so we'll load the runner ourselves. */
+			$('<iframe/>',{name:"perlrunner",sandbox:"allow-scripts",
+				src:"perlrunner.html",style:"display:none;"})
+					.appendTo('body');
+			loadedRunnerIframe = true;
+		}
 		else {
 			if (window.parent && window.parent.frames["perlrunner"])
 				window.parent.frames["perlrunner"].postMessage(
 					{perlRunnerDiscovery:1}, '*');
-			if ( Date.now()>pollUntil ) {
+			if ( Date.now()>warnAt ) {
 				$('#runnererrors>pre').text("Perl does not appear to have loaded yet, still waiting...");
 				$('#runnererrors').show();
+				warnAt = Date.now() + 5*1000; // milliseconds
 			}
 		}
 	}, 100);

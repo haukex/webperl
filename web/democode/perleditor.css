@@ -53,10 +53,27 @@ pre {
 	/* also has a placeholder text */
 	min-width: 10em;
 }
+
+#misctools {
+	display: inline-block;
+	border: 1px solid grey;
+	padding: 1px 0.5em;
+	margin-top: 1px;
+	margin-right: 3px;
+	color: grey;
+}
+#misctools_reveal {
+	display: none;
+}
+#misctools:hover {
+	color: inherit;
+}
+#misctools:hover #misctools_reveal {
+	display: inline-block;
+}
 #runnerstate {
 	margin-top: 0.1em;
 	margin-bottom: 0.3em;
-	font-size: 0.8em;
 }
 #runnererrors {
 	background-color: rgba(255,200,200,255);

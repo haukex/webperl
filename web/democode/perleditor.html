@@ -260,7 +260,6 @@ function setupInputFile (inp) {
 		fetchUrl(inp.url, cfn.cm);
 }
 
-//TODO: implement a "get URL" feature
 function getFileData () {
 	var filedata = {};
 	// script
@@ -290,6 +289,19 @@ $(function () {
 	
 	var hashdata = window.location.hash.substr(1);
 	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
+	
+	$('#copyurl').click(function () {
+		var pageurl = $('#pageurl');
+		var data = getFileData();
+		data.cmdline = $('#argv').val();
+		var loc = new URL(window.location);
+		loc.hash = encodeURIComponent(JSON.stringify(data));
+		pageurl.val(loc);
+		pageurl.show();
+		pageurl[0].select();
+		document.execCommand("copy");
+		pageurl.hide();
+	});
 	
 	$('#addinput').click(function () {
 		setupInputFile( {} );
@@ -385,8 +397,16 @@ $(function () {
 	<input type="text" id="argv" class="code" value='perl' />
 </div>
 
-<div id="runnerstate" class="text">
-	Loading...
+<div class="text small">
+	<textarea id="pageurl" style="display:none;"></textarea>
+	<div id="misctools">
+		Tools
+		<div id="misctools_reveal">
+			&nbsp;
+			<span id="copyurl" class="fakelink">Copy Frame URL</span>
+		</div>
+	</div>
+	<span id="runnerstate">Loading...</span>
 </div>
 
 <div id="runnererrors" style="display:none;">

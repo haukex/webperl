@@ -291,35 +291,6 @@ $(function () {
 	var hashdata = window.location.hash.substr(1);
 	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
 	
-	$('#copyurl').click(function () {
-		var pageurl = $('#pageurl');
-		var data = getFileData();
-		data.cmdline = $('#argv').val();
-		var loc = new URL(window.location);
-		loc.hash = encodeURIComponent(JSON.stringify(data));
-		pageurl.val(loc);
-		pageurl.show();
-		pageurl[0].select();
-		document.execCommand("copy");
-		pageurl.hide();
-	});
-	
-	$('#addinput').click(function () {
-		setupInputFile( {} );
-	});
-	$('#addoutput').click(function () {
-		setupOutputFile();
-	});
-	
-	var argv_inp = $('#argv');
-	var argv_autosize = $('<span/>',
-			{class:"code",style:"display:none;white-space:pre;"}
-		).insertAfter(argv_inp);
-	argv_inp.on('input', function () {
-		argv_autosize.text( argv_inp.val() );
-		argv_inp.width( argv_autosize.width()+10 );
-	});
-	
 	// script
 	if ( hash["script"] || hash["script_url"] ) {
 		var fn = hash["script_fn"] ? hash.script_fn : 'script.pl';
@@ -332,6 +303,14 @@ $(function () {
 	}
 	
 	// command line
+	var argv_inp = $('#argv');
+	var argv_autosize = $('<span/>',
+			{class:"code",style:"display:none;white-space:pre;"}
+		).insertAfter(argv_inp);
+	argv_inp.on('input', function () {
+		argv_autosize.text( argv_inp.val() );
+		argv_inp.width( argv_autosize.width()+10 );
+	});
 	if (hash["cmdline"])
 		argv_inp.val(hash.cmdline);
 	argv_inp.trigger('input');
@@ -340,6 +319,9 @@ $(function () {
 	$('.inputs').remove();
 	if ( hash["inputs"] ) hash.inputs.forEach(function(inp) {
 		setupInputFile(inp);
+	});
+	$('#addinput').click(function () {
+		setupInputFile( {} );
 	});
 	
 	// stdout/stderr
@@ -358,7 +340,11 @@ $(function () {
 	if ( hash["outputs"] ) hash.outputs.forEach(function(outp) {
 		setupOutputFile(outp);
 	});
+	$('#addoutput').click(function () {
+		setupOutputFile();
+	});
 	
+	// "run perl" button
 	$('#runperl').click( function () {
 		clearStdOutput();
 		// command-line args
@@ -381,6 +367,21 @@ $(function () {
 		perlRunner.postMessage({ runPerl: rp_data }, '*');
 	});
 	
+	// "copy frame url" function
+	$('#copyurl').click(function () {
+		var pageurl = $('#pageurl');
+		var data = getFileData();
+		data.cmdline = $('#argv').val();
+		var loc = new URL(window.location);
+		loc.hash = encodeURIComponent(JSON.stringify(data));
+		pageurl.val(loc);
+		pageurl.show();
+		pageurl[0].select();
+		document.execCommand("copy");
+		pageurl.hide();
+	});
+	
+	// start looking for the Perl runner
 	findPerlRunner();
 });
 

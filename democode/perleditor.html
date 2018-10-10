@@ -53,8 +53,10 @@ function makeCM (textarea,plain,ro) {
 
 function runnerState (text) {
 	$('#runnerstate').text( text
+		/* not available until WebPerl v0.09-beta:
 		+ (lastExitStatus ? ' (last exit status was '+lastExitStatus+')'
 			: '') );
+		*/ );
 }
 
 function updateButtonState () {

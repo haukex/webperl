@@ -92,18 +92,15 @@ function findPerlRunner () {
 	pollId = window.setInterval( function () {
 		if (perlRunner)
 			window.clearInterval(pollId);
-		else if ( Date.now()>pollUntil ) {
-			//TODO: alternative to confirm() if modals are not allowed
-			if (window.confirm("Perl does not appear to have loaded yet, keep waiting?\n"
-			    +"(If you are on a slow connection, click OK to keep waiting.)"))
-				pollUntil = Date.now() + 10*1000;
-			else
-				window.clearInterval(pollId);
-		}
-		else
+		else {
 			if (window.parent && window.parent.frames["perlrunner"])
 				window.parent.frames["perlrunner"].postMessage(
 					{perlRunnerDiscovery:1}, '*');
+			if ( Date.now()>pollUntil ) {
+				$('#runnererrors>pre').text("Perl does not appear to have loaded yet, still waiting...");
+				$('#runnererrors').show();
+			}
+		}
 	}, 100);
 }
 

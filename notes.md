@@ -18,6 +18,9 @@ Other places I've written about WebPerl:
 - [WebPerl Regex Tester (beta)](https://www.perlmonks.org/?node_id=1221705)
 - [Embedding WebPerl Code Demos into Other Pages](https://www.perlmonks.org/?node_id=1223812)
 
+I also gave a [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475)
+at YAPC::EU 2018 in Glasgow: [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
+
 
 TODOs
 -----

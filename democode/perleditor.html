@@ -29,6 +29,8 @@ If not, see http://perldoc.perl.org/index-licence.html
 <!--cacheable--><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
 <link rel="stylesheet" href="perleditor.css" />
 
+<!-- Optional "IFrame Resizer": -->
+<!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.6.2/iframeResizer.contentWindow.min.js" integrity="sha256-dEPtZVO6cj6PAmBeDzFskohUob+woyzF6TaNcYpAk84=" crossorigin="anonymous"></script>
 <!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.js" integrity="sha256-uRIJ6Wfou5cTtmcCvQNA9lvsYl8sUbZXxnfG+P79ssY=" crossorigin="anonymous"></script>
 <!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/mode/perl/perl.min.js" integrity="sha256-Uu9QBfi8gU6J/MzQunal8ewmY+i/BbCkBrcAXA5bcCM=" crossorigin="anonymous"></script>
 <!--cacheable--><script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -148,6 +150,7 @@ window.addEventListener('message', function (event) {
 		$('#runnererrors').show();
 		$('#runnererrors>pre').append(data.perlRunnerError+"\n");
 	}
+	else if (data.substring(0,13)=="[iFrameSizer]") {} // ignore quietly
 	else console.warn("Perl Editor ignoring unknown message:",data);
 });
 

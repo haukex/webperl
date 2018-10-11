@@ -40,7 +40,8 @@ iframe.perleditor {
 	margin: 0.2em 0;
 }
 </style>
-<!--cacheable--><!-- Optional "IFrame Resizer": <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.6.2/iframeResizer.min.js" integrity="sha256-aYf0FZGWqOuKNPJ4HkmnMZeODgj3DVslnYf+8dCN9/k=" crossorigin="anonymous"></script-->
+<!-- Optional "IFrame Resizer": -->
+<!--cacheable--><!--script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.6.2/iframeResizer.min.js" integrity="sha256-aYf0FZGWqOuKNPJ4HkmnMZeODgj3DVslnYf+8dCN9/k=" crossorigin="anonymous"></script-->
 
 </head>
 <body>
@@ -165,6 +166,7 @@ document.getElementById('perl2').src =
 		],
 		outputs: [ "vowels.txt" ],
 	} ));
+//iFrameResize({checkOrigin:false}, document.getElementById('perl2'));
 </script>
 
 </body>

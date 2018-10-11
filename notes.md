@@ -9,6 +9,16 @@ Notes -
 =========================
 
 
+Links
+-----
+
+Other places I've written about WebPerl:
+
+- [Run Perl 5 in the Browser!](https://www.perlmonks.org/?node_id=1220426)
+- [WebPerl Regex Tester (beta)](https://www.perlmonks.org/?node_id=1221705)
+- [Embedding WebPerl Code Demos into Other Pages](https://www.perlmonks.org/?node_id=1223812)
+
+
 TODOs
 -----
 

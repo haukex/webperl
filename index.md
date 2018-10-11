@@ -57,15 +57,15 @@ Quick Start
       $ plackup webperl.psgi
       HTTP::Server::PSGI: Accepting connections at http://0:5000/
 
-- Then point your browser at
-  <http://localhost:5000/webperl_demo.html> or
-  <http://localhost:5000/mini_ide/webperl_mini_ide.html>,
-  and have a look at the HTML source of `webperl_demo.html`.
+- Then point your browser at <http://localhost:5000/webperl_demo.html>
+  and have a look at its source. The ZIP archive also contains several
+  other examples, which you can access at <http://localhost:5000/>.
 
-You may also host the contents of the above ZIP archive on a webserver of your choice,
-as described in [Using WebPerl](using.html). (Note: In `webperl_demo.html`, you'll
-likely see "AJAX Failed!", which is to be expected since your webserver won't
-know how to handle the example AJAX request.)
+You may also host the contents of the above ZIP archive on a webserver of your
+choice, or some browsers will support opening the files locally; both are
+described in [Serving WebPerl](using.html#serving-webperl).
+(Note: In `webperl_demo.html`, you'll likely see "AJAX Failed!", which is to be
+expected since your webserver won't know how to handle the example AJAX request.)
 
 Have fun! ️🐪
 

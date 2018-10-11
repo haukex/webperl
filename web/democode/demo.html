@@ -40,6 +40,7 @@ iframe.perleditor {
 	margin: 0.2em 0;
 }
 </style>
+<!--cacheable--><!-- Optional "IFrame Resizer": <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.6.2/iframeResizer.min.js" integrity="sha256-aYf0FZGWqOuKNPJ4HkmnMZeODgj3DVslnYf+8dCN9/k=" crossorigin="anonymous"></script-->
 
 </head>
 <body>
@@ -95,7 +96,9 @@ tag, for example using the "Copy Frame URL" link shown in the editor.
 
 Note that implementing an automatic resize of the IFrame to fit its
 contents is nontrivial when sandboxing is enabled, which is why a
-fixed height is used below.
+fixed height is used below. However, see for example
+http://davidjbradshaw.github.io/iframe-resizer/ - examples of how
+to use this are included in the source files here.
 -->
 
 <iframe id="perl1" sandbox="allow-scripts" class="perleditor" style="height:20em;"></iframe>
@@ -105,6 +108,8 @@ document.getElementById('perl1').src =
 		inputs: [ { fn:"in.txt", text:"Foo\nBar\nQuz" } ],
 		cmdline: "perl -CSD -pe 's/[aeiou]/_/g' in.txt",
 	} ));
+// Example of how to use the Optional "IFrame Resizer":
+//iFrameResize({checkOrigin:false}, document.getElementById('perl1'));
 </script>
 
 <p>This example includes several files:</p>

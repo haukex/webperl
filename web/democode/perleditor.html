@@ -312,6 +312,12 @@ $(function () {
 	var hashdata = window.location.hash.substr(1);
 	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
 	
+	$('#showtools').click(function () {
+		$('#thetools,#footer').toggle();
+		$('#showtools').text( $('#thetools').is(':visible')
+			? 'Hide Tools' : 'Show Tools' );
+	});
+	
 	// script
 	var addscript = $('#addscript');
 	if ( hash["script"] || hash["script_url"] ) {
@@ -452,8 +458,9 @@ $(function () {
 <div class="text">
 	<textarea id="pageurl" style="display:none;"></textarea>
 	<div id="misctools">
-		Tools
-		&nbsp;
+		<span id="showtools" class="fakelink">Show Tools</span>
+		<span id="thetools" style="display:none;">
+		&ensp;
 		<span id="addscript" class="fakelink" style="display:none;">Add Script</span>
 		&nbsp;
 		<span id="addinput" class="fakelink">Add Input File</span>
@@ -461,11 +468,12 @@ $(function () {
 		<span id="addoutput" class="fakelink">Add Output File</span>
 		&nbsp;
 		<span id="copyurl" class="fakelink">Copy Frame URL</span>
+		</span>
 		</div>
 	</div>
 </div>
 
-<div class="text" id="footer">
+<div class="text" id="footer" style="display:none;">
 	Powered by <a href="http://webperl.zero-g.net/" target="_blank">&#x1F578;&#xFE0F;&#x1F42A; WebPerl</a> (beta)
 	<!-- Link with target="_blank" may not work in a sandboxed iframe, so provide URL: -->
 	&nbsp; <code>http://webperl.zero-g.net/</code>

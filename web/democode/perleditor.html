@@ -307,6 +307,15 @@ function getFileData () {
 	return filedata;
 }
 
+function copyit (what) {
+	var pageurl = $('#pageurl');
+	pageurl.val(what);
+	pageurl.show();
+	pageurl[0].select();
+	document.execCommand("copy");
+	pageurl.hide();
+}
+
 $(function () {
 	
 	var hashdata = window.location.hash.substr(1);
@@ -405,18 +414,18 @@ $(function () {
 		perlRunner.postMessage({ runPerl: rp_data }, '*');
 	});
 	
-	// "copy frame url" function
+	// "copy url / json" function
 	$('#copyurl').click(function () {
-		var pageurl = $('#pageurl');
 		var data = getFileData();
 		data.cmdline = $('#argv').val();
 		var loc = new URL(window.location);
 		loc.hash = encodeURIComponent(JSON.stringify(data));
-		pageurl.val(loc);
-		pageurl.show();
-		pageurl[0].select();
-		document.execCommand("copy");
-		pageurl.hide();
+		copyit(loc);
+	});
+	$('#copyjson').click(function () {
+		var data = getFileData();
+		data.cmdline = $('#argv').val();
+		copyit(JSON.stringify(data, null, "\t"));
 	});
 	
 	// start looking for the Perl runner
@@ -467,7 +476,8 @@ $(function () {
 		&nbsp;
 		<span id="addoutput" class="fakelink">Add Output File</span>
 		&nbsp;
-		<span id="copyurl" class="fakelink">Copy Frame URL</span>
+		<span id="copyurl" class="fakelink">Copy URL</span>
+		/ <span id="copyjson" class="fakelink">JSON</span>
 		</span>
 		</div>
 	</div>

@@ -157,6 +157,9 @@ so for example `Cpanel/JSON/XS` instead of `Cpanel::JSON::XS`
 Note that the build script does **not** automatically fetch modules'
 dependencies, for now you will need to resolve them and add them to
 `EMPERL_EXTENSIONS` yourself. (This may be improved upon in the future.)
+You can try out the script
+[`experiments/depend.pl`](https://github.com/haukex/webperl/blob/master/experiments/depend.pl),
+which uses the MetaCPAN API to resolve dependencies.
 
 
 ***

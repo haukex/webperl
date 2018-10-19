@@ -163,8 +163,21 @@ function parseCmdLine(str) {
 		     if (typeof match[1] != 'undefined') argv.push(match[1].replace(/\\\\/g,"\\").replace(/\\"/g,"\""));
 		else if (typeof match[2] != 'undefined') argv.push(match[2].replace(/\\\\/g,'\\').replace(/\\'/g,'\''));
 		else if (typeof match[3] != 'undefined') argv.push(match[3]);
+		else throw "Unexpected match "+match;
 	}
 	return argv;
+}
+function encodeCmdLine(arr) {
+	var out = [];
+	for (var i=0; i<arr.length; i++) {
+		/* Note: we only *need* to encode strings if they contain /[\s'"\\]/,
+		 * but since we want to show the users a command line similar to a shell,
+		 * I've added $ */
+		out.push( arr[i].match(/[\s'"\\\$]/)
+			? "'"+arr[i].replace(/\\/g, "\\\\").replace(/'/g, "\\'")+"'"
+			: arr[i] );
+	}
+	return out.join(' ');
 }
 
 function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror instance
@@ -284,6 +297,18 @@ function setupInputFile (inp) {
 
 function getFileData () {
 	var filedata = {};
+	// command-line args
+	filedata.cmdline = $('#argv').val();
+	var argv = parseCmdLine( filedata.cmdline );
+	if ( argv.length<1 || argv[0]!="perl" ) {
+		$('#runnererrors>pre').text('Invalid command line, command must be "perl"');
+		$('#runnererrors').show();
+		return;
+	} // else
+	argv.shift();
+	$('#runnererrors>pre').text('');
+	$('#runnererrors').hide();
+	filedata.argv = argv;
 	// script
 	var scriptdiv = $('#script');
 	if (scriptdiv.is(':visible')) {
@@ -360,6 +385,8 @@ $(function () {
 	});
 	if (hash["cmdline"])
 		argv_inp.val(hash.cmdline);
+	else if (hash["argv"])
+		argv_inp.val("perl "+encodeCmdLine(hash.argv));
 	argv_inp.trigger('input');
 	
 	// input files
@@ -394,18 +421,9 @@ $(function () {
 	// "run perl" button
 	$('#runperl').click( function () {
 		clearStdOutput();
-		// command-line args
-		var argv = parseCmdLine(argv_inp.val());
-		if (argv.length<1 || argv[0]!="perl") {
-			$('#runnererrors>pre').text('Invalid command line, command must be "perl"');
-			$('#runnererrors').show();
-			return;
-		} // else
-		argv.shift();
-		$('#runnererrors>pre').text('');
-		$('#runnererrors').hide();
 		var rp_data = getFileData();
-		rp_data.argv = argv;
+		if (!rp_data) return;
+		delete rp_data.cmdline;
 		// send message to runner
 		buttonBlockers.runnerState = 1;
 		updateButtonState();
@@ -417,14 +435,15 @@ $(function () {
 	// "copy url / json" function
 	$('#copyurl').click(function () {
 		var data = getFileData();
-		data.cmdline = $('#argv').val();
+		if (!data) return;
+		delete data.argv;
 		var loc = new URL(window.location);
 		loc.hash = encodeURIComponent(JSON.stringify(data));
 		copyit(loc);
 	});
 	$('#copyjson').click(function () {
 		var data = getFileData();
-		data.cmdline = $('#argv').val();
+		if (!data) return;
 		copyit(JSON.stringify(data, null, "\t"));
 	});
 	

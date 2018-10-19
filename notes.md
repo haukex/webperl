@@ -55,6 +55,7 @@ TODOs
 		  so that `emperl.js` is runnable on its own in a Web Worker (?)
 		  (see notes in `perlrunner.html` / `e12f1aa25a000`)
 		- `nodeperl_dev_prerun.js` could probably be merged into that as well
+	- Regarding the funky syntax highlighting on GitHub: <https://github.com/atom/language-html/issues/88#issuecomment-431361414>
 
 3. See Also
 	

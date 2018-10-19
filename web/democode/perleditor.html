@@ -356,6 +356,9 @@ $(function () {
 		$('#showtools').text( $('#thetools').is(':visible')
 			? 'Hide Tools' : 'Show Tools' );
 	});
+	$('#webperllink').click(function () {
+		$('#webperlurl').show();
+	});
 	
 	// script
 	var addscript = $('#addscript');
@@ -536,9 +539,9 @@ $(function () {
 </div>
 
 <div class="text" id="footer" style="display:none;">
-	Powered by <a href="http://webperl.zero-g.net/" target="_blank">&#x1F578;&#xFE0F;&#x1F42A; WebPerl</a> (beta)
+	Powered by <a href="http://webperl.zero-g.net/" target="_blank" id="webperllink">&#x1F578;&#xFE0F;&#x1F42A; WebPerl</a> (beta)
 	<!-- Link with target="_blank" may not work in a sandboxed iframe, so provide URL: -->
-	&nbsp; <code>http://webperl.zero-g.net/</code>
+	<span id="webperlurl" style="display:none;">&nbsp; <code>http://webperl.zero-g.net/</code></span>
 </div>
 
 </body>

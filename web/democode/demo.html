@@ -170,7 +170,11 @@ this will not work.
 
 Additional options: Setting "mergeStdOutErr" to a true value causes
 STDOUT and STDERR output to be output together, similar to the way
-they would be on the console.
+they would be on the console. *However,* note that WebPerl
+currently doesn't think it's connected to a terminal, which means
+that perl defaults to block instead of line buffering STDOUT, so
+it may seem like you always see STDERR output before STDOUT. If you
+want to truly intermix the two, turn on autoflush ("$|=1;").
 
 If you set the "autorun" option, the editor will attempt to run the
 script as soon as the runner is ready. *WARNING:* If you have

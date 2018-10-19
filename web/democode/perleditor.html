@@ -39,7 +39,7 @@ If not, see http://perldoc.perl.org/index-licence.html
 <script>
 "use strict";
 
-var mergeStdOutErr = 0; // Possible To-Do for Later: could make an options hash
+var mergeStdOutErr = false; // Possible To-Do for Later: could make an options hash
 var perlRunner; // the Perl runner iframe found by findPerlRunner()
 var buttonBlockers = {}; // for updateButtonState()
 var lastExitStatus; // for runnerState()
@@ -404,15 +404,24 @@ $(function () {
 	});
 	
 	// stdout/stderr
+	var mergestdoe = $('#mergestdoe');
+	var stdout_fn = $('#stdout .filename');
 	if (hash["mergeStdOutErr"]) {
-		mergeStdOutErr = 1;
-		$('#stdout .filename').val("STDOUT+STDERR");
+		mergeStdOutErr = true;
+		stdout_fn.val("STDOUT+STDERR");
+		mergestdoe.text("Split STDOUT+ERR");
 	}
 	else {
-		mergeStdOutErr = 0;
-		$('#stdout .filename').val("STDOUT");
+		mergeStdOutErr = false;
+		stdout_fn.val("STDOUT");
 	}
 	clearStdOutput();
+	mergestdoe.click(function () {
+		clearStdOutput();
+		mergeStdOutErr = !mergeStdOutErr;
+		stdout_fn.val( mergeStdOutErr ? "STDOUT+STDERR" : "STDOUT" );
+		mergestdoe.text( mergeStdOutErr ? "Split STDOUT+ERR" : "Merge STDOUT+ERR" );
+	});
 	
 	// output files
 	$('.outputs').remove();
@@ -454,6 +463,7 @@ $(function () {
 		if (!data) return;
 		delete data.argv;
 		if (!autorunstate.text().match(/without/i)) data.autorun=true;
+		if (mergeStdOutErr) data.mergeStdOutErr=true;
 		var loc = new URL(window.location);
 		loc.hash = encodeURIComponent(JSON.stringify(data));
 		copyit(loc);
@@ -462,6 +472,7 @@ $(function () {
 		var data = getFileData();
 		if (!data) return;
 		if (!autorunstate.text().match(/without/i)) data.autorun=true;
+		if (mergeStdOutErr) data.mergeStdOutErr=true;
 		copyit(JSON.stringify(data, null, "\t"));
 	});
 	
@@ -512,6 +523,8 @@ $(function () {
 		<span id="addinput" class="fakelink">Add Input File</span>
 		&nbsp;
 		<span id="addoutput" class="fakelink">Add Output File</span>
+		&nbsp;
+		<span id="mergestdoe" class="fakelink">Merge STDOUT+ERR</span>
 		&nbsp;
 		<span id="copyurl" class="fakelink">Copy URL</span>
 		/ <span id="copyjson" class="fakelink">JSON</span>

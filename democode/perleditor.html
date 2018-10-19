@@ -358,6 +358,9 @@ $(function () {
 		$('#showtools').text( $('#thetools').is(':visible')
 			? 'Hide Tools' : 'Show Tools' );
 	});
+	$('#webperllink').click(function () {
+		$('#webperlurl').show();
+	});
 	
 	// script
 	var addscript = $('#addscript');
@@ -373,7 +376,7 @@ $(function () {
 	}
 	else
 		addscript.show();
-	addscript.click(function () {
+	$('#addscript .fakelink').click(function () {
 		addscript.hide();
 		if ($('#script').length) return;
 		var cfn = makeCodeWithFn('script.pl', $('#perlctrl'), 0, 1);
@@ -519,15 +522,17 @@ $(function () {
 	<div id="misctools">
 		<span id="showtools" class="fakelink">Show Tools</span>
 		<span id="thetools" style="display:none;">
-		&ensp;
-		<span id="addscript" class="fakelink" style="display:none;">Add Script</span>
 		&nbsp;
+		<span id="addscript" style="display:none;">&bull;
+		<span class="fakelink">Add Script</span>
+		</span>
+		&bull;
 		<span id="addinput" class="fakelink">Add Input File</span>
-		&nbsp;
+		&bull;
 		<span id="addoutput" class="fakelink">Add Output File</span>
-		&nbsp;
+		&bull;
 		<span id="mergestdoe" class="fakelink">Merge STDOUT+ERR</span>
-		&nbsp;
+		&bull;
 		<span id="copyurl" class="fakelink">Copy URL</span>
 		/ <span id="copyjson" class="fakelink">JSON</span>
 		(<span id="autorunstate">with</span>
@@ -538,9 +543,9 @@ $(function () {
 </div>
 
 <div class="text" id="footer" style="display:none;">
-	Powered by <a href="http://webperl.zero-g.net/" target="_blank">&#x1F578;&#xFE0F;&#x1F42A; WebPerl</a> (beta)
+	Powered by <a href="http://webperl.zero-g.net/" target="_blank" id="webperllink">&#x1F578;&#xFE0F;&#x1F42A; WebPerl</a> (beta)
 	<!-- Link with target="_blank" may not work in a sandboxed iframe, so provide URL: -->
-	&nbsp; <code>http://webperl.zero-g.net/</code>
+	<span id="webperlurl" style="display:none;">&nbsp; <code>http://webperl.zero-g.net/</code></span>
 </div>
 
 </body>

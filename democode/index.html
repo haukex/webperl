@@ -118,7 +118,28 @@ iFrameResize({checkOrigin:false}, document.getElementById('perl1'));
 <!-- The following example demonstrates (almost) all of the possible
 options that can be passed to the editor.
 
-The "cmdline" supports only very basic quoting constructs.
+The "cmdline" option and the corresponding input box in the editor
+only support very basic quoting constructs:
+- Strings in double quotes may contain whitespace, \\, and/or \",
+  the latter two will be changed to \ and " respectively;
+- strings in single quotes may contain whitespace, \\, and/or \',
+  the latter two will be changed to \ and ' respectively;
+- other strings (without whitespace) will not be modified.
+Note: As a consequence of these rules, inside of single or double
+quotes, both \\n and \n resolve to \n (for any character "n" that
+is not a backslash or single resp. double quote).
+
+Instead of "cmdline", you may specify "argv" as an array ("cmdline"
+overrides "argv"). This array should *not* include "perl" as the
+first element; this is added automatically.
+
+So that it can be displayed in the input box, the "argv" array
+will be encoded into a single string - this means that if you want
+full control over the formatting of the command line as it is
+displayed to the user in the editor, use "cmdline" instead. The
+"Copy JSON" data will include both "cmdline" and "argv" (so you
+can choose to delete whichever one you don't need), while "Copy
+URL" will include only "cmdline" (for brevity).
 
 You may specify the text of a script via "script", or, alternatively,
 a "script_url" from which the script is to be fetched - however, be
@@ -149,14 +170,24 @@ this will not work.
 
 Additional options: Setting "mergeStdOutErr" to a true value causes
 STDOUT and STDERR output to be output together, similar to the way
-they would be on the console.
+they would be on the console. *However,* note that WebPerl
+currently doesn't think it's connected to a terminal, which means
+that perl defaults to block instead of line buffering STDOUT, so
+it may seem like you always see STDERR output before STDOUT. If you
+want to truly intermix the two, turn on autoflush ("$|=1;").
+
+If you set the "autorun" option, the editor will attempt to run the
+script as soon as the runner is ready. *WARNING:* If you have
+multiple editors embedded in the page, *do not* enable "autorun"
+for more than one editor, as otherwise you will likely trigger a
+race condition, resulting in an error being shown to the user.
 -->
 
 <iframe id="perl2" sandbox="allow-scripts" class="perleditor" style="height:42em;"></iframe>
 <script>
 document.getElementById('perl2').src =
 	"perleditor.html#" + encodeURIComponent(JSON.stringify( {
-		cmdline: "perl devoweler.pl mytext.txt other.txt",
+		argv: ["devoweler.pl","mytext.txt","other.txt"],
 		script: "use warnings;\nuse strict;\n\nopen my $vfh, '>', 'vowels.txt' or die $!;\n"
 			+"while (<>) {\n\tprint $vfh $1 while s/([aeiou])/_/i;\n\tprint;\n}\nclose $vfh;",
 		script_fn: "devoweler.pl",
@@ -165,6 +196,7 @@ document.getElementById('perl2').src =
 			{ fn: "other.txt", text: "Hello, World!" },
 		],
 		outputs: [ "vowels.txt" ],
+		autorun: true,
 	} ));
 iFrameResize({checkOrigin:false}, document.getElementById('perl2'));
 </script>

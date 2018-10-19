@@ -39,11 +39,12 @@ If not, see http://perldoc.perl.org/index-licence.html
 <script>
 "use strict";
 
-var mergeStdOutErr = 0; // Possible To-Do for Later: could make an options hash
+var mergeStdOutErr = false; // Possible To-Do for Later: could make an options hash
 var perlRunner; // the Perl runner iframe found by findPerlRunner()
 var buttonBlockers = {}; // for updateButtonState()
 var lastExitStatus; // for runnerState()
 var loadedRunnerIframe = false; // for findPerlRunner()
+var autoRunPerl = false; // for the message listener
 
 function makeCM (textarea,plain,ro) {
 	return CodeMirror.fromTextArea( textarea[0], {
@@ -131,6 +132,10 @@ window.addEventListener('message', function (event) {
 			perlRunner = event.source;
 			delete buttonBlockers.runnerState;
 			updateButtonState();
+			if (autoRunPerl) {
+				autoRunPerl = false;
+				$('#runperl').click();
+			}
 		}
 		else if ( data.perlRunnerState=="Ended" ) {
 			if ('exitStatus' in data)
@@ -165,8 +170,21 @@ function parseCmdLine(str) {
 		     if (typeof match[1] != 'undefined') argv.push(match[1].replace(/\\\\/g,"\\").replace(/\\"/g,"\""));
 		else if (typeof match[2] != 'undefined') argv.push(match[2].replace(/\\\\/g,'\\').replace(/\\'/g,'\''));
 		else if (typeof match[3] != 'undefined') argv.push(match[3]);
+		else throw "Unexpected match "+match;
 	}
 	return argv;
+}
+function encodeCmdLine(arr) {
+	var out = [];
+	for (var i=0; i<arr.length; i++) {
+		/* Note: we only *need* to encode strings if they contain /[\s'"\\]/,
+		 * but since we want to show the users a command line similar to a shell,
+		 * I've added $ */
+		out.push( arr[i].match(/[\s'"\\\$]/)
+			? "'"+arr[i].replace(/\\/g, "\\\\").replace(/'/g, "\\'")+"'"
+			: arr[i] );
+	}
+	return out.join(' ');
 }
 
 function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror instance
@@ -286,6 +304,18 @@ function setupInputFile (inp) {
 
 function getFileData () {
 	var filedata = {};
+	// command-line args
+	filedata.cmdline = $('#argv').val();
+	var argv = parseCmdLine( filedata.cmdline );
+	if ( argv.length<1 || argv[0]!="perl" ) {
+		$('#runnererrors>pre').text('Invalid command line, command must be "perl"');
+		$('#runnererrors').show();
+		return;
+	} // else
+	argv.shift();
+	$('#runnererrors>pre').text('');
+	$('#runnererrors').hide();
+	filedata.argv = argv;
 	// script
 	var scriptdiv = $('#script');
 	if (scriptdiv.is(':visible')) {
@@ -362,6 +392,8 @@ $(function () {
 	});
 	if (hash["cmdline"])
 		argv_inp.val(hash.cmdline);
+	else if (hash["argv"])
+		argv_inp.val("perl "+encodeCmdLine(hash.argv));
 	argv_inp.trigger('input');
 	
 	// input files
@@ -374,15 +406,24 @@ $(function () {
 	});
 	
 	// stdout/stderr
+	var mergestdoe = $('#mergestdoe');
+	var stdout_fn = $('#stdout .filename');
 	if (hash["mergeStdOutErr"]) {
-		mergeStdOutErr = 1;
-		$('#stdout .filename').val("STDOUT+STDERR");
+		mergeStdOutErr = true;
+		stdout_fn.val("STDOUT+STDERR");
+		mergestdoe.text("Split STDOUT+ERR");
 	}
 	else {
-		mergeStdOutErr = 0;
-		$('#stdout .filename').val("STDOUT");
+		mergeStdOutErr = false;
+		stdout_fn.val("STDOUT");
 	}
 	clearStdOutput();
+	mergestdoe.click(function () {
+		clearStdOutput();
+		mergeStdOutErr = !mergeStdOutErr;
+		stdout_fn.val( mergeStdOutErr ? "STDOUT+STDERR" : "STDOUT" );
+		mergestdoe.text( mergeStdOutErr ? "Split STDOUT+ERR" : "Merge STDOUT+ERR" );
+	});
 	
 	// output files
 	$('.outputs').remove();
@@ -393,21 +434,23 @@ $(function () {
 		setupOutputFile();
 	});
 	
+	// autorun option
+	if (hash["autorun"])
+		autoRunPerl = true;
+	var autorunstate = $('#autorunstate');
+	$('#autoruntoggle').click(function () {
+		// the text keeps state (bit of a hack, I know)
+		autorunstate.text(
+			  autorunstate.text().match(/without/i)
+			? "with" : "without" );
+	});
+	
 	// "run perl" button
 	$('#runperl').click( function () {
 		clearStdOutput();
-		// command-line args
-		var argv = parseCmdLine(argv_inp.val());
-		if (argv.length<1 || argv[0]!="perl") {
-			$('#runnererrors>pre').text('Invalid command line, command must be "perl"');
-			$('#runnererrors').show();
-			return;
-		} // else
-		argv.shift();
-		$('#runnererrors>pre').text('');
-		$('#runnererrors').hide();
 		var rp_data = getFileData();
-		rp_data.argv = argv;
+		if (!rp_data) return;
+		delete rp_data.cmdline;
 		// send message to runner
 		buttonBlockers.runnerState = 1;
 		updateButtonState();
@@ -419,14 +462,19 @@ $(function () {
 	// "copy url / json" function
 	$('#copyurl').click(function () {
 		var data = getFileData();
-		data.cmdline = $('#argv').val();
+		if (!data) return;
+		delete data.argv;
+		if (!autorunstate.text().match(/without/i)) data.autorun=true;
+		if (mergeStdOutErr) data.mergeStdOutErr=true;
 		var loc = new URL(window.location);
 		loc.hash = encodeURIComponent(JSON.stringify(data));
 		copyit(loc);
 	});
 	$('#copyjson').click(function () {
 		var data = getFileData();
-		data.cmdline = $('#argv').val();
+		if (!data) return;
+		if (!autorunstate.text().match(/without/i)) data.autorun=true;
+		if (mergeStdOutErr) data.mergeStdOutErr=true;
 		copyit(JSON.stringify(data, null, "\t"));
 	});
 	
@@ -478,8 +526,12 @@ $(function () {
 		&nbsp;
 		<span id="addoutput" class="fakelink">Add Output File</span>
 		&nbsp;
+		<span id="mergestdoe" class="fakelink">Merge STDOUT+ERR</span>
+		&nbsp;
 		<span id="copyurl" class="fakelink">Copy URL</span>
 		/ <span id="copyjson" class="fakelink">JSON</span>
+		(<span id="autorunstate">with</span>
+		<span id="autoruntoggle" class="fakelink">autorun</span>)
 		</span>
 		</div>
 	</div>

@@ -219,6 +219,8 @@ after having passed them to JavaScript, as that will probably cause mysterious b
 
 Emscripten provides a virtual file system that also provides a few "fake" files such
 as `/home/web_user`, `/dev`, and others, so that it resembles a normal *NIX file system.
+This filesystem resides entirely in memory in the browser.
+
 Perl's libraries (`*.pm`) are installed into this virtual file system at `/opt/perl`.
 Note that because the `perl` binary is compiled to WebAssembly and XS libraries are
 statically linked into it, you won't find any `perl` binary or shared library files in the

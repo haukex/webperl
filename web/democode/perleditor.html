@@ -44,6 +44,7 @@ var perlRunner; // the Perl runner iframe found by findPerlRunner()
 var buttonBlockers = {}; // for updateButtonState()
 var lastExitStatus; // for runnerState()
 var loadedRunnerIframe = false; // for findPerlRunner()
+var autoRunPerl = false; // for the message listener
 
 function makeCM (textarea,plain,ro) {
 	return CodeMirror.fromTextArea( textarea[0], {
@@ -129,6 +130,10 @@ window.addEventListener('message', function (event) {
 			perlRunner = event.source;
 			delete buttonBlockers.runnerState;
 			updateButtonState();
+			if (autoRunPerl) {
+				autoRunPerl = false;
+				$('#runperl').click();
+			}
 		}
 		else if ( data.perlRunnerState=="Ended" ) {
 			if ('exitStatus' in data)
@@ -418,6 +423,17 @@ $(function () {
 		setupOutputFile();
 	});
 	
+	// autorun option
+	if (hash["autorun"])
+		autoRunPerl = true;
+	var autorunstate = $('#autorunstate');
+	$('#autoruntoggle').click(function () {
+		// the text keeps state (bit of a hack, I know)
+		autorunstate.text(
+			  autorunstate.text().match(/without/i)
+			? "with" : "without" );
+	});
+	
 	// "run perl" button
 	$('#runperl').click( function () {
 		clearStdOutput();
@@ -437,6 +453,7 @@ $(function () {
 		var data = getFileData();
 		if (!data) return;
 		delete data.argv;
+		if (!autorunstate.text().match(/without/i)) data.autorun=true;
 		var loc = new URL(window.location);
 		loc.hash = encodeURIComponent(JSON.stringify(data));
 		copyit(loc);
@@ -444,6 +461,7 @@ $(function () {
 	$('#copyjson').click(function () {
 		var data = getFileData();
 		if (!data) return;
+		if (!autorunstate.text().match(/without/i)) data.autorun=true;
 		copyit(JSON.stringify(data, null, "\t"));
 	});
 	
@@ -497,6 +515,8 @@ $(function () {
 		&nbsp;
 		<span id="copyurl" class="fakelink">Copy URL</span>
 		/ <span id="copyjson" class="fakelink">JSON</span>
+		(<span id="autorunstate">with</span>
+		<span id="autoruntoggle" class="fakelink">autorun</span>)
 		</span>
 		</div>
 	</div>

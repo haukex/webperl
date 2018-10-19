@@ -171,6 +171,12 @@ this will not work.
 Additional options: Setting "mergeStdOutErr" to a true value causes
 STDOUT and STDERR output to be output together, similar to the way
 they would be on the console.
+
+If you set the "autorun" option, the editor will attempt to run the
+script as soon as the runner is ready. *WARNING:* If you have
+multiple editors embedded in the page, *do not* enable "autorun"
+for more than one editor, as otherwise you will likely trigger a
+race condition, resulting in an error being shown to the user.
 -->
 
 <iframe id="perl2" sandbox="allow-scripts" class="perleditor" style="height:42em;"></iframe>
@@ -186,6 +192,7 @@ document.getElementById('perl2').src =
 			{ fn: "other.txt", text: "Hello, World!" },
 		],
 		outputs: [ "vowels.txt" ],
+		autorun: true,
 	} ));
 //iFrameResize({checkOrigin:false}, document.getElementById('perl2'));
 </script>

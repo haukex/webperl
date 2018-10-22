@@ -21,6 +21,14 @@ Other places I've written about WebPerl:
 I also gave a [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475)
 at YAPC::EU 2018 in Glasgow: [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
 
+[![DOI 10.5281/zenodo.1400490](https://zenodo.org/badge/DOI/10.5281/zenodo.1400490.svg)](https://doi.org/10.5281/zenodo.1400490)
+
+### In the Press
+
+- [Hacker News (2018-10-21)](https://news.ycombinator.com/item?id=18269071)
+- [Reddit /r/programming (2018-10-21)](https://www.reddit.com/r/programming/comments/9q65tf/run_perl_in_the_browser_with_webperl/)
+- [Reddit /r/perl: WebPerl Regex Tester (2018-09-05)](https://www.reddit.com/r/perl/comments/9d5n77/webperl_regex_tester/)
+
 
 TODOs
 -----

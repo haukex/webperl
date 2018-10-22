@@ -500,19 +500,20 @@ Unlike the JavaScript to Perl mappings, values are (currently¹) generally *copi
 Perl to JavaScript, instead of being *referenced*.
 The exceptions are Perl `sub`s and `WebPerl::JSObject`s.
 
-- Perl arrayrefs become JavaScript arrays
-- Perl hashrefs become JavaScript objects
+- Perl arrayrefs become JavaScript arrays (deep copy)
+- Perl hashrefs become JavaScript objects (deep copy)
 - Perl coderefs become JavaScript functions - 
   **Warning:** please see the discussion in
   ["Memory Management and Anonymous `sub`s"](#memory-management-and-anonymous-subs)!
 - Perl `WebPerl::JSObject`s become references to the wrapped JavaScript objects
+  (i.e. the underlying JS object is passed back to JS transparently)
 - Perl numbers/strings are copied to JavaScript via `Cpanel::JSON::XS::encode_json`
   (with its `allow_nonref` option enabled). This means that the choice
   for whether to encode a Perl scalar as a JavaScript number or string is
   left up to the module, and is subject to the usual ambiguities when
   serializing Perl scalars. See
   [the `Cpanel::JSON::XS` documentation](https://metacpan.org/pod/Cpanel::JSON::XS).
-- Other references, including objects, are currently not supported.
+- Other references, including Perl objects, are currently not supported.
 
 ¹ So far, the focus of WebPerl has been to replace JavaScript with Perl, and
 therefore on accessing JavaScript from Perl, and not as much the other

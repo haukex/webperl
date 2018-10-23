@@ -124,7 +124,7 @@ Release Checklist
   At a minimum there is:
 	- `web/webperl.js` - `Perl.WebPerlVersion`
 	- `emperl5/ext/WebPerl/WebPerl.pm` - `$VERSION`
-	- `pages/index.md` - download links
+	- `pages/index.md` and `pages/using.md` - download links
 
 - Update [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) values as needed, e.g.:
   

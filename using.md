@@ -30,6 +30,19 @@ Your feedback is always appreciated!
 Basic Usage
 -----------
 
+### Getting WebPerl
+
+If you plan on building WebPerl, for example if you'd like to add more CPAN
+modules, then head on over to [Building WebPerl](building.html). Otherwise, if
+you'd just like to get started quickly and work with the prebuilt WebPerl
+(includes many of the Perl core modules plus a couple extras), then download
+[`webperl_prebuilt_v0.07-beta.zip`](https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip)
+and unpack it. This ZIP file includes the contents of the
+[`web`](https://github.com/haukex/webperl/tree/master/web) directory of the
+source code, as well as the build products `emperl.*` (currently three files).
+If you'd like to work with the source code as checked out from GitHub, then you
+can copy these `emperl.*` files into the `web` directory of the source tree.
+
 ### Serving WebPerl
 
 You should serve WebPerl via a webserver of your choice, or you can

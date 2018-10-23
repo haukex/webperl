@@ -25,8 +25,10 @@ at YAPC::EU 2018 in Glasgow: [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
 
 ### In the Press
 
+- [Reddit: Your scientists were so preoccupied with whether or not they could, they didn't stop to think if they should (2018-10-22)](https://www.reddit.com/r/programmingcirclejerk/comments/9qerw5/your_scientists_were_so_preoccupied_with_whether/) 😉
 - [Hacker News (2018-10-21)](https://news.ycombinator.com/item?id=18269071)
 - [Reddit /r/programming (2018-10-21)](https://www.reddit.com/r/programming/comments/9q65tf/run_perl_in_the_browser_with_webperl/)
+- [Facebook Group "Perl Programmers" (2018-10-20)](https://www.facebook.com/groups/perlprogrammers/permalink/2141844605848316/)
 - [Reddit /r/perl: WebPerl Regex Tester (2018-09-05)](https://www.reddit.com/r/perl/comments/9d5n77/webperl_regex_tester/)
 
 

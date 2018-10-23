@@ -13,6 +13,12 @@ Please see the documentation on the main site:
 As well as the
 [GitHub Wiki](https://github.com/haukex/webperl/wiki).
 
+You can also check out all of the documentation into subdirectories
+of this project, for example:
+
+	$ git clone --branch gh-pages https://github.com/haukex/webperl.git pages
+	$ git clone https://github.com/haukex/webperl.wiki.git wiki
+
 
 Author, Copyright, and License
 ==============================

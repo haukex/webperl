@@ -5,8 +5,8 @@
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki/Using-WebPerl) \]
 
-🕸️🐪 Using WebPerl
-================
+Using WebPerl
+=============
 
 
 **Notice: WebPerl is very much in beta.**

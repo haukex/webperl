@@ -5,8 +5,8 @@ Notes -
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
 
-🕸️🐪 Misc. Notes on WebPerl
-=========================
+Misc. Notes on WebPerl
+======================
 
 
 Links

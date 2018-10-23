@@ -5,8 +5,8 @@ Building -
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki/Building-WebPerl) \]
 
-🕸️🐪 Building WebPerl
-===================
+Building WebPerl
+================
 
 
 **Notice: WebPerl is very much in beta.**

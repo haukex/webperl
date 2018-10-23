@@ -5,8 +5,8 @@
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
 
-🕸️🐪 Welcome to WebPerl!
-======================
+Welcome to WebPerl!
+===================
 
 
 WebPerl uses the power of [WebAssembly](https://webassembly.org/) and
@@ -67,7 +67,7 @@ described in [Serving WebPerl](using.html#serving-webperl).
 (Note: In `webperl_demo.html`, you'll likely see "AJAX Failed!", which is to be
 expected since your webserver won't know how to handle the example AJAX request.)
 
-Have fun! ️🐪
+Have fun!
 
 
 ***

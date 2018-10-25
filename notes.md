@@ -128,8 +128,7 @@ Release Checklist
 
 - Update [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) values as needed, e.g.:
   
-      $ perl -wMstrict -MDigest -le 'open my $fh, "<:raw", "web/webperl.js" or die $!;
-        print Digest->new("SHA-256")->addfile($fh)->b64digest'
+      $ perl -wMstrict -MDigest::SRI=sri -le 'print sri "SHA-256","web/webperl.js"'
 
 - Build and create dist, e.g. `build/build.pl --reconfig --dist=webperl_prebuilt_v0.07-beta`
 

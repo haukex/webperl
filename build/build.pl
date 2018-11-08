@@ -361,9 +361,9 @@ if ($needs_reconfig || !-e $destdir || $opts{remakeout}) {
 	$destdir->subdir('dev')->mkpath(1);
 	# we make them hard links so that edits to WebPerl.pm don't require a full
 	# rebuild of the output directory (a rebuild of emperl.js is enough)
-	safelink( $C{PERLSRCDIR}->file('ext','WebPerl','WebPerl.t'),
+	safelink( $C{PERLSRCDIR}->file('ext','WebPerl','t','WebPerl.t'),
 		$destdir->file('dev','WebPerl.t') );
-	safelink( $C{PERLSRCDIR}->file('ext','WebPerl','WebPerl.pm'),
+	safelink( $C{PERLSRCDIR}->file('ext','WebPerl','lib','WebPerl.pm'),
 		$destdir->file('lib','5.28.0','wasm','WebPerl.pm') ); #TODO: should figure this directory out dynamically
 	
 	#TODO Later: Provide an easy way for users to add files to the virtual file system

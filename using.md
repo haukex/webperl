@@ -36,7 +36,7 @@ If you plan on building WebPerl, for example if you'd like to add more CPAN
 modules, then head on over to [Building WebPerl](building.html). Otherwise, if
 you'd just like to get started quickly and work with the prebuilt WebPerl
 (includes many of the Perl core modules plus a couple extras), then download
-[`webperl_prebuilt_v0.07-beta.zip`](https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip)
+[`webperl_prebuilt_v0.09-beta.zip`](https://github.com/haukex/webperl/releases/download/v0.09-beta/webperl_prebuilt_v0.09-beta.zip)
 and unpack it. This ZIP file includes the contents of the
 [`web`](https://github.com/haukex/webperl/tree/master/web) directory of the
 source code, as well as the build products `emperl.*` (currently three files).

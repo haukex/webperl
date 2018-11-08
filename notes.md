@@ -5,8 +5,31 @@ Notes -
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
 
-🕸️🐪 Misc. Notes on WebPerl
-=========================
+Misc. Notes on WebPerl
+======================
+
+
+Links
+-----
+
+Other places I've written about WebPerl:
+
+- [Run Perl 5 in the Browser!](https://www.perlmonks.org/?node_id=1220426)
+- [WebPerl Regex Tester (beta)](https://www.perlmonks.org/?node_id=1221705)
+- [Embedding WebPerl Code Demos into Other Pages](https://www.perlmonks.org/?node_id=1223812)
+
+I also gave a [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475)
+at YAPC::EU 2018 in Glasgow: [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
+
+[![DOI 10.5281/zenodo.1400490](https://zenodo.org/badge/DOI/10.5281/zenodo.1400490.svg)](https://doi.org/10.5281/zenodo.1400490)
+
+### In the Press
+
+- [Reddit: Your scientists were so preoccupied with whether or not they could, they didn't stop to think if they should (2018-10-22)](https://www.reddit.com/r/programmingcirclejerk/comments/9qerw5/your_scientists_were_so_preoccupied_with_whether/) 😉
+- [Hacker News (2018-10-21)](https://news.ycombinator.com/item?id=18269071)
+- [Reddit /r/programming (2018-10-21)](https://www.reddit.com/r/programming/comments/9q65tf/run_perl_in_the_browser_with_webperl/)
+- [Facebook Group "Perl Programmers" (2018-10-20)](https://www.facebook.com/groups/perlprogrammers/permalink/2141844605848316/)
+- [Reddit /r/perl: WebPerl Regex Tester (2018-09-05)](https://www.reddit.com/r/perl/comments/9d5n77/webperl_regex_tester/)
 
 
 TODOs
@@ -36,6 +59,13 @@ TODOs
 	- Add Perl.Util functions for making file uploads and downloads easier
 		- Plus an example showing how to use it to run a "legacy" Perl script with inputs and output
 	- Perhaps create a CPAN Bundle:: module or similar for `build.pl` deps?
+	- There is some potential for restructuring:
+		- `Perl.glue()` and `Perl.dispatch()` could go into `WebPerl.xs` (?)
+		- Parts of `webperl.js` could go into `common_preamble.js` or `WebPerl.xs`,
+		  so that `emperl.js` is runnable on its own in a Web Worker (?)
+		  (see notes in `perlrunner.html` / `e12f1aa25a000`)
+		- `nodeperl_dev_prerun.js` could probably be merged into that as well
+	- Regarding the funky syntax highlighting on GitHub: <https://github.com/atom/language-html/issues/88#issuecomment-431361414>
 
 3. See Also
 	
@@ -44,6 +74,16 @@ TODOs
 	- See also `TODO`s in the source tree by grepping for `TODO`
 	  or using the included `findtodo.sh`.
 
+
+SSL
+---
+
+	$ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.crt
+	...
+	Common Name (e.g. server FQDN or YOUR name) []: localhost
+	...
+	$ plackup --enable-ssl --ssl-key-file=selfsigned.key --ssl-cert-file=selfsigned.crt web/webperl.psgi
+	# then go to https://localhost:5000 and accept the certificate warning
 
 Possible Improvements
 ---------------------
@@ -94,12 +134,11 @@ Release Checklist
   At a minimum there is:
 	- `web/webperl.js` - `Perl.WebPerlVersion`
 	- `emperl5/ext/WebPerl/WebPerl.pm` - `$VERSION`
-	- `pages/index.md` - download links
+	- `pages/index.md` and `pages/using.md` - download links
 
 - Update [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) values as needed, e.g.:
   
-      $ perl -wMstrict -MDigest -le 'open my $fh, "<:raw", "web/webperl.js" or die $!;
-        print Digest->new("SHA-256")->addfile($fh)->b64digest'
+      $ perl -wMstrict -MDigest::SRI=sri -le 'print sri "SHA-256","web/webperl.js"'
 
 - Build and create dist, e.g. `build/build.pl --reconfig --dist=webperl_prebuilt_v0.07-beta`
 

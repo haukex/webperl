@@ -5,8 +5,8 @@ Building -
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki/Building-WebPerl) \]
 
-🕸️🐪 Building WebPerl
-===================
+Building WebPerl
+================
 
 
 **Notice: WebPerl is very much in beta.**
@@ -47,6 +47,15 @@ The source code is in two repositories:
 
 You only need to check out the first of the two, the `emperl5` repository
 is checked out by the build script.
+
+Some of the central source files of WebPerl are:
+
+- [`webperl/build/build.pl`](https://github.com/haukex/webperl/blob/master/build/build.pl)
+- [`emperl5/hints/emscripten.sh`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/hints/emscripten.sh)
+- [`emperl5/perlmain_noexit_patch`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/perlmain_noexit_patch)
+- [`emperl5/ext/WebPerl/WebPerl.xs`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/ext/WebPerl/WebPerl.xs)
+- [`emperl5/ext/WebPerl/WebPerl.pm`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/ext/WebPerl/WebPerl.pm)
+- [`webperl/web/webperl.js`](https://github.com/haukex/webperl/blob/master/web/webperl.js)
 
 
 Running the Build
@@ -157,6 +166,9 @@ so for example `Cpanel/JSON/XS` instead of `Cpanel::JSON::XS`
 Note that the build script does **not** automatically fetch modules'
 dependencies, for now you will need to resolve them and add them to
 `EMPERL_EXTENSIONS` yourself. (This may be improved upon in the future.)
+You can try out the script
+[`experiments/depend.pl`](https://github.com/haukex/webperl/blob/master/experiments/depend.pl),
+which uses the MetaCPAN API to resolve dependencies.
 
 
 ***

@@ -5,8 +5,8 @@
 Legal -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
 
-🕸️🐪 WebPerl Author, Copyright, and License
-=========================================
+WebPerl Author, Copyright, and License
+======================================
 
 
 **WebPerl - <http://webperl.zero-g.net>**

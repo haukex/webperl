@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Perl Editor</title>
+
+<!-- ##### WebPerl - http://webperl.zero-g.net #####
+
+Copyright (c) 2018 Hauke Daempfling (haukex@zero-g.net)
+at the Leibniz Institute of Freshwater Ecology and Inland Fisheries (IGB),
+Berlin, Germany, http://www.igb-berlin.de
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl 5 itself: either the GNU General Public
+License as published by the Free Software Foundation (either version 1,
+or, at your option, any later version), or the "Artistic License" which
+comes with Perl 5.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the licenses for details.
+
+You should have received a copy of the licenses along with this program.
+If not, see http://perldoc.perl.org/index-licence.html
+##### -->
+
+<!-- Please see the documentation on how to use this in index.html. -->
+
+<!--cacheable--><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
+<!--cacheable--><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
+<link rel="stylesheet" href="perleditor.css" />
+
+<!-- Optional "IFrame Resizer": -->
+<!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.6.2/iframeResizer.contentWindow.min.js" integrity="sha256-dEPtZVO6cj6PAmBeDzFskohUob+woyzF6TaNcYpAk84=" crossorigin="anonymous"></script>
+<!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/codemirror.min.js" integrity="sha256-uRIJ6Wfou5cTtmcCvQNA9lvsYl8sUbZXxnfG+P79ssY=" crossorigin="anonymous"></script>
+<!--cacheable--><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.2/mode/perl/perl.min.js" integrity="sha256-Uu9QBfi8gU6J/MzQunal8ewmY+i/BbCkBrcAXA5bcCM=" crossorigin="anonymous"></script>
+<!--cacheable--><script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script>
+"use strict";
+
+var mergeStdOutErr = false; // Possible To-Do for Later: could make an options hash
+var perlRunner; // the Perl runner iframe found by findPerlRunner()
+var buttonBlockers = {}; // for updateButtonState()
+var lastExitStatus; // for runnerState()
+var loadedRunnerIframe = false; // for findPerlRunner()
+var autoRunPerl = false; // for the message listener
+
+function makeCM (textarea,plain,ro) {
+	return CodeMirror.fromTextArea( textarea[0], {
+		viewportMargin: Infinity, // so browser's search works, not good for long documents though
+		lineNumbers:true, indentWithTabs:true,
+		tabSize:4, indentUnit:4,
+		mode: plain?"text/plain":"perl",
+		readOnly: ro?true:false,
+	} );
+}
+
+function runnerState (text) {
+	$('#runnerstate').text( text
+		/* not available until WebPerl v0.09-beta:
+		+ (lastExitStatus ? ' (last exit status was '+lastExitStatus+')'
+			: '') );
+		*/ );
+}
+
+function updateButtonState () {
+	$('#runperl').prop("disabled",
+		Object.keys(buttonBlockers).length>0 );
+}
+
+function stdOutput (which, data) { // which: 1=stdout, 2=stderr
+	if (mergeStdOutErr) which = 1;
+	var div = $(which==1?'#stdout':'#stderr');
+	div.show();
+	var cm = div.data('CodeMirrorInstance');
+	if (!cm) {
+		cm = makeCM($('textarea',div),1,1);
+		div.data('CodeMirrorInstance', cm);
+	}
+	if (data && data.length)
+		cm.setValue( cm.getValue() + data );
+}
+function clearStdOutput () {
+	$('#stdout,#stderr').each(function (i) {
+		var div = $(this);
+		var cm = div.data('CodeMirrorInstance');
+		if (cm) cm.setValue('');
+		div.hide();
+	});
+}
+
+function findPerlRunner () {
+	// assume calling this function means the runner isn't available
+	buttonBlockers.runnerState = 1;
+	updateButtonState();
+	// poll for perlRunner, which gets set by the message listener
+	var warnAt = Date.now() + 15*1000; // milliseconds
+	var loadIframe = Date.now() + 3*1000; // milliseconds
+	var pollId;
+	pollId = window.setInterval( function () {
+		if (perlRunner)
+			window.clearInterval(pollId);
+		else if (!loadedRunnerIframe && self===top && Date.now()>loadIframe) {
+			console.debug("Perl Editor is attempting to load Perl Runner...");
+			/* This is a special case: We appear to be the toplevel window,
+			 * and are unable to contact the runner within a fixed amount of time.
+			 * So we assume that someone has linked directly to this page instead
+			 * of loading it in an IFrame, so we'll load the runner ourselves. */
+			$('<iframe/>',{name:"perlrunner",sandbox:"allow-scripts",
+				src:"perlrunner.html",style:"display:none;"})
+					.appendTo('body');
+			loadedRunnerIframe = true;
+		}
+		else {
+			if (window.parent && window.parent.frames["perlrunner"])
+				window.parent.frames["perlrunner"].postMessage(
+					{perlRunnerDiscovery:1}, '*');
+			if ( Date.now()>warnAt ) {
+				$('#runnererrors>pre').text("Perl does not appear to have loaded yet, still waiting...");
+				$('#runnererrors').show();
+				warnAt = Date.now() + 5*1000; // milliseconds
+			}
+		}
+	}, 100);
+}
+
+window.addEventListener('message', function (event) {
+	var data = event.data;
+	if (data["perlRunnerState"]) {
+		if ( data.perlRunnerState=="Ready" ) {
+			perlRunner = event.source;
+			delete buttonBlockers.runnerState;
+			updateButtonState();
+			if (autoRunPerl) {
+				autoRunPerl = false;
+				$('#runperl').click();
+			}
+		}
+		else if ( data.perlRunnerState=="Ended" ) {
+			if ('exitStatus' in data)
+				lastExitStatus =  ''+data.exitStatus;
+			// we know the runner will reload itself now
+			perlRunner = null;
+			findPerlRunner();
+		}
+		runnerState("Perl is "+data.perlRunnerState);
+	}
+	else if (data["perlOutput"])
+		stdOutput(data.perlOutput.chan, data.perlOutput.data);
+	else if (data["perlOutputFiles"]) {
+		data.perlOutputFiles.forEach(function (outp) {
+			setupOutputFile(outp.fn, outp.text);
+		});
+	}
+	else if (data["perlRunnerError"]) {
+		$('#runnererrors').show();
+		$('#runnererrors>pre').append(data.perlRunnerError+"\n");
+	}
+	else if (data.substring(0,13)=="[iFrameSizer]") {} // ignore quietly
+	else console.warn("Perl Editor ignoring unknown message:",data);
+});
+
+function parseCmdLine(str) {
+	// not the prettiest code but it works
+	var re = /"((?:\\"|\\\\|[^"])*)"|'((?:\\'|\\\\|[^'])*)'|(\S+)/g;
+	var argv = [];
+	var match;
+	while ((match = re.exec(str)) !== null) {
+		     if (typeof match[1] != 'undefined') argv.push(match[1].replace(/\\\\/g,"\\").replace(/\\"/g,"\""));
+		else if (typeof match[2] != 'undefined') argv.push(match[2].replace(/\\\\/g,'\\').replace(/\\'/g,'\''));
+		else if (typeof match[3] != 'undefined') argv.push(match[3]);
+		else throw "Unexpected match "+match;
+	}
+	return argv;
+}
+function encodeCmdLine(arr) {
+	var out = [];
+	for (var i=0; i<arr.length; i++) {
+		/* Note: we only *need* to encode strings if they contain /[\s'"\\]/,
+		 * but since we want to show the users a command line similar to a shell,
+		 * I've added $ */
+		out.push( arr[i].match(/[\s'"\\\$]/)
+			? "'"+arr[i].replace(/\\/g, "\\\\").replace(/'/g, "\\'")+"'"
+			: arr[i] );
+	}
+	return out.join(' ');
+}
+
+function fetchUrl(url,cm) { // fetch the contents of a URL into a CodeMirror instance
+	cm.setValue("Fetching URL\n"+url+"\nPlease wait...");
+	buttonBlockers["fetchUrls"]++;
+	updateButtonState();
+	$.get(url, function (data) {
+			cm.setValue(data);
+		},'text').fail(function (jqXHR,textStatus,errorThrown) {
+			cm.setValue("Fetching URL\n"+url+"\nFailed!\n"+textStatus+"\n"+errorThrown);
+		}).always(function () {
+			buttonBlockers.fetchUrls--;
+			if (!buttonBlockers.fetchUrls)
+				delete buttonBlockers.fetchUrls;
+			updateButtonState();
+		});
+}
+
+function makeCodeWithFn (fn,targ,ro,isscript) {
+	var div = $('<div/>',{class:"codewithfn"});
+	
+	var fnfuncs = $('<div/>',{class:"fnfuncs"}).appendTo(div);
+	
+	var filename = $('<input/>',{class:"filename code",type:"text",
+		placeholder:"Enter a filename!"})
+			.appendTo(fnfuncs);
+	filename.val(fn);
+	// autosize the filename text box via a hidden span
+	var fn_width = $('<span/>',
+			{class:"code",style:"display:none;white-space:pre;"}
+		).insertAfter(filename);
+	filename.on('input', function () {
+		var newfn = filename.val();
+		fn_width.text( newfn );
+		filename.width( fn_width.width()+10 );
+		if (newfn.length)
+			filename.removeClass("badfilename");
+		else
+			filename.addClass("badfilename");
+	});
+	/* we need to trigger this handler once when the input
+	 * field is added to the document, we do this below */
+	
+	var filefuncs = $('<div/>',{class:"filefuncs text"})
+		.appendTo(fnfuncs);
+	
+	var conf = $('<span/>', {})
+		.append(
+			"&ensp;",
+			"Are you sure?",
+			"&ensp;",
+			$('<span/>',{class:"fakelink",text:"Yes"})
+				.click(function () {
+					div.remove();
+					if (isscript) $('#addscript').show();
+				}),
+			"&ensp;",
+			$('<span/>',{class:"fakelink",text:"Cancel"})
+				.click(function () { conf.hide(); }),
+		);
+	$('<span/>',{class:"fakelink",text:"Delete"})
+		.appendTo(filefuncs).click(function () {
+			conf.show();
+		});
+	conf.hide();
+	conf.appendTo(filefuncs);
+	
+	var ta = $('<textarea/>').appendTo(div);
+	targ.before(div);
+	filename.trigger('input'); // see above
+	var cm = makeCM(ta, !(isscript||fn.match(/\.pl$/i)), ro);
+	div.data('CodeMirrorInstance', cm);
+	return {div:div,ta:ta,cm:cm};
+}
+
+function pickNewFilename (inNotOut) {
+	var x = inNotOut ? 'input' : 'output';
+	for (var i=1; i<1000; i++) {
+		var fn = x+i+".txt";
+		var found = $('div.'+x+'s .filename')
+			.filter(function(){ return $(this).val() == fn });
+		if (!found.length)
+			return fn;
+	}
+	$('#runnererrors>pre').text('Too many '+x+' files');
+	$('#runnererrors').show();
+	throw 'Too many '+x+' files';
+}
+
+function setupOutputFile (fn, text) {
+	var cm;
+	if (fn) {
+		var founddiv = $('div.outputs')
+			.filter(function(){ return $('.filename',this).val() == fn });
+		if (founddiv.length)
+			cm = founddiv.data('CodeMirrorInstance');
+	}
+	else
+		fn = pickNewFilename(false);
+	if (!cm) {
+		var cfn = makeCodeWithFn(fn, $('#outputhere'), 1);
+		cfn.div.addClass("outputs");
+		cm = cfn.cm;
+	}
+	cm.setValue( text ? text : '' );
+}
+
+function setupInputFile (inp) {
+	var fn = inp["fn"] ? inp.fn : pickNewFilename(true);
+	var cfn = makeCodeWithFn(fn, $('#inputhere'), 0);
+	cfn.div.addClass("inputs");
+	if (inp["text"])
+		cfn.cm.setValue(inp.text);
+	else if (inp["url"])
+		fetchUrl(inp.url, cfn.cm);
+}
+
+function getFileData () {
+	var filedata = {};
+	// command-line args
+	filedata.cmdline = $('#argv').val();
+	var argv = parseCmdLine( filedata.cmdline );
+	if ( argv.length<1 || argv[0]!="perl" ) {
+		$('#runnererrors>pre').text('Invalid command line, command must be "perl"');
+		$('#runnererrors').show();
+		return;
+	} // else
+	argv.shift();
+	$('#runnererrors>pre').text('');
+	$('#runnererrors').hide();
+	filedata.argv = argv;
+	// script
+	var scriptdiv = $('#script');
+	if (scriptdiv.is(':visible')) {
+		filedata.script = scriptdiv.data('CodeMirrorInstance').getValue();
+		filedata.script_fn = scriptdiv.find('.filename').val();
+	}
+	// inputs
+	$('.inputs').each(function () {
+		var div = $(this);
+		var fn = $('.filename',div).val();
+		var text = div.data('CodeMirrorInstance').getValue();
+		if (!filedata["inputs"]) filedata.inputs = [];
+		filedata.inputs.push( { fn:fn, text:text } );
+	});
+	// outputs
+	$('.outputs').each(function () {
+		var fn = $(this).find('.filename').val();
+		if (!filedata["outputs"]) filedata.outputs = [];
+		filedata.outputs.push(fn);
+	});
+	return filedata;
+}
+
+function copyit (what) {
+	var pageurl = $('#pageurl');
+	pageurl.val(what);
+	pageurl.show();
+	pageurl[0].select();
+	document.execCommand("copy");
+	pageurl.hide();
+}
+
+$(function () {
+	
+	var hashdata = window.location.hash.substr(1);
+	var hash = hashdata.length>0 ? JSON.parse(decodeURIComponent(hashdata)) : {};
+	
+	$('#showtools').click(function () {
+		$('#thetools,#footer').toggle();
+		$('#showtools').text( $('#thetools').is(':visible')
+			? 'Hide Tools' : 'Show Tools' );
+	});
+	$('#webperllink').click(function () {
+		$('#webperlurl').show();
+	});
+	
+	// script
+	var addscript = $('#addscript');
+	if ( hash["script"] || hash["script_url"] ) {
+		var fn = hash["script_fn"] ? hash.script_fn : 'script.pl';
+		var cfn = makeCodeWithFn(fn, $('#perlctrl'), 0, 1);
+		cfn.div.attr("id", "script");
+		if (hash["script"])
+			cfn.cm.setValue(hash.script);
+		else if (hash["script_url"])
+			fetchUrl(hash.script_url, cfn.cm);
+		addscript.hide();
+	}
+	else
+		addscript.show();
+	$('#addscript .fakelink').click(function () {
+		addscript.hide();
+		if ($('#script').length) return;
+		var cfn = makeCodeWithFn('script.pl', $('#perlctrl'), 0, 1);
+		cfn.div.attr("id", "script");
+		cfn.cm.setValue("use warnings;\nuse strict;\n\n");
+	});
+	
+	// command line
+	var argv_inp = $('#argv');
+	var argv_autosize = $('<span/>',
+			{class:"code",style:"display:none;white-space:pre;"}
+		).insertAfter(argv_inp);
+	argv_inp.on('input', function () {
+		argv_autosize.text( argv_inp.val() );
+		argv_inp.width( argv_autosize.width()+10 );
+	});
+	if (hash["cmdline"])
+		argv_inp.val(hash.cmdline);
+	else if (hash["argv"])
+		argv_inp.val("perl "+encodeCmdLine(hash.argv));
+	argv_inp.trigger('input');
+	
+	// input files
+	$('.inputs').remove();
+	if ( hash["inputs"] ) hash.inputs.forEach(function(inp) {
+		setupInputFile(inp);
+	});
+	$('#addinput').click(function () {
+		setupInputFile( {} );
+	});
+	
+	// stdout/stderr
+	var mergestdoe = $('#mergestdoe');
+	var stdout_fn = $('#stdout .filename');
+	if (hash["mergeStdOutErr"]) {
+		mergeStdOutErr = true;
+		stdout_fn.val("STDOUT+STDERR");
+		mergestdoe.text("Split STDOUT+ERR");
+	}
+	else {
+		mergeStdOutErr = false;
+		stdout_fn.val("STDOUT");
+	}
+	clearStdOutput();
+	mergestdoe.click(function () {
+		clearStdOutput();
+		mergeStdOutErr = !mergeStdOutErr;
+		stdout_fn.val( mergeStdOutErr ? "STDOUT+STDERR" : "STDOUT" );
+		mergestdoe.text( mergeStdOutErr ? "Split STDOUT+ERR" : "Merge STDOUT+ERR" );
+	});
+	
+	// output files
+	$('.outputs').remove();
+	if ( hash["outputs"] ) hash.outputs.forEach(function(outp) {
+		setupOutputFile(outp);
+	});
+	$('#addoutput').click(function () {
+		setupOutputFile();
+	});
+	
+	// autorun option
+	if (hash["autorun"])
+		autoRunPerl = true;
+	var autorunstate = $('#autorunstate');
+	$('#autoruntoggle').click(function () {
+		// the text keeps state (bit of a hack, I know)
+		autorunstate.text(
+			  autorunstate.text().match(/without/i)
+			? "with" : "without" );
+	});
+	
+	// "run perl" button
+	$('#runperl').click( function () {
+		clearStdOutput();
+		var rp_data = getFileData();
+		if (!rp_data) return;
+		delete rp_data.cmdline;
+		// send message to runner
+		buttonBlockers.runnerState = 1;
+		updateButtonState();
+		lastExitStatus = null;
+		runnerState("Requesting Perl Run...");
+		perlRunner.postMessage({ runPerl: rp_data }, '*');
+	});
+	
+	// "copy url / json" function
+	$('#copyurl').click(function () {
+		var data = getFileData();
+		if (!data) return;
+		delete data.argv;
+		if (!autorunstate.text().match(/without/i)) data.autorun=true;
+		if (mergeStdOutErr) data.mergeStdOutErr=true;
+		var loc = new URL(window.location);
+		loc.hash = encodeURIComponent(JSON.stringify(data));
+		copyit(loc);
+	});
+	$('#copyjson').click(function () {
+		var data = getFileData();
+		if (!data) return;
+		if (!autorunstate.text().match(/without/i)) data.autorun=true;
+		if (mergeStdOutErr) data.mergeStdOutErr=true;
+		copyit(JSON.stringify(data, null, "\t"));
+	});
+	
+	// start looking for the Perl runner
+	findPerlRunner();
+});
+
+</script>
+
+</head>
+<body>
+
+<div id="inputhere" style="display:none;"></div>
+
+<div id="perlctrl">
+	<button id="runperl"><code>perl</code> &#x25BA;</button>
+	<input type="text" id="argv" class="code" value='perl' />
+</div>
+
+<div id="runnerstate" class="text">
+	Loading...
+</div>
+
+<div id="runnererrors" style="display:none;">
+	<pre></pre>
+</div>
+
+<div id="stdout" class="codewithfn" style="display:none;">
+	<input type="text" class="filename code" readonly="readonly" value="STDOUT" size="14" />
+	<textarea></textarea>
+</div>
+
+<div id="stderr" class="codewithfn" style="display:none;">
+	<input type="text" class="filename code" readonly="readonly" value="STDERR" size="14" />
+	<textarea></textarea>
+</div>
+
+<div id="outputhere" style="display:none;"></div>
+
+<div class="text">
+	<textarea id="pageurl" style="display:none;"></textarea>
+	<div id="misctools">
+		<span id="showtools" class="fakelink">Show Tools</span>
+		<span id="thetools" style="display:none;">
+		&nbsp;
+		<span id="addscript" style="display:none;">&bull;
+		<span class="fakelink">Add Script</span>
+		</span>
+		&bull;
+		<span id="addinput" class="fakelink">Add Input File</span>
+		&bull;
+		<span id="addoutput" class="fakelink">Add Output File</span>
+		&bull;
+		<span id="mergestdoe" class="fakelink">Merge STDOUT+ERR</span>
+		&bull;
+		<span id="copyurl" class="fakelink">Copy URL</span>
+		/ <span id="copyjson" class="fakelink">JSON</span>
+		(<span id="autorunstate">with</span>
+		<span id="autoruntoggle" class="fakelink">autorun</span>)
+		</span>
+		</div>
+	</div>
+</div>
+
+<div class="text" id="footer" style="display:none;">
+	Powered by <a href="http://webperl.zero-g.net/" target="_blank" id="webperllink">WebPerl</a> (beta)
+	<!-- Link with target="_blank" may not work in a sandboxed iframe, so provide URL: -->
+	<span id="webperlurl" style="display:none;">&nbsp; <code>http://webperl.zero-g.net/</code></span>
+</div>
+
+</body>
+</html>

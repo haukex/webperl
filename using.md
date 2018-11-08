@@ -5,8 +5,8 @@
 [Legal](legal.html) -
 [GitHub Wiki](https://github.com/haukex/webperl/wiki/Using-WebPerl) \]
 
-🕸️🐪 Using WebPerl
-================
+Using WebPerl
+=============
 
 
 **Notice: WebPerl is very much in beta.**
@@ -29,6 +29,19 @@ Your feedback is always appreciated!
 
 Basic Usage
 -----------
+
+### Getting WebPerl
+
+If you plan on building WebPerl, for example if you'd like to add more CPAN
+modules, then head on over to [Building WebPerl](building.html). Otherwise, if
+you'd just like to get started quickly and work with the prebuilt WebPerl
+(includes many of the Perl core modules plus a couple extras), then download
+[`webperl_prebuilt_v0.07-beta.zip`](https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip)
+and unpack it. This ZIP file includes the contents of the
+[`web`](https://github.com/haukex/webperl/tree/master/web) directory of the
+source code, as well as the build products `emperl.*` (currently three files).
+If you'd like to work with the source code as checked out from GitHub, then you
+can copy these `emperl.*` files into the `web` directory of the source tree.
 
 ### Serving WebPerl
 
@@ -219,6 +232,8 @@ after having passed them to JavaScript, as that will probably cause mysterious b
 
 Emscripten provides a virtual file system that also provides a few "fake" files such
 as `/home/web_user`, `/dev`, and others, so that it resembles a normal *NIX file system.
+This filesystem resides entirely in memory in the browser.
+
 Perl's libraries (`*.pm`) are installed into this virtual file system at `/opt/perl`.
 Note that because the `perl` binary is compiled to WebAssembly and XS libraries are
 statically linked into it, you won't find any `perl` binary or shared library files in the
@@ -368,7 +383,7 @@ This option was added in `v0.05-beta`.
 Enable this option at any time to get additional trace-level output
 to `console.debug()`. Defaults to `false`.
 
-#### `Perl.addStateChangeListener`
+#### `Perl.addStateChangeListener(function)`
 
 Pass this function a `function (from,to) {...}` to register a new handler
 for state changes of the Perl interpreter.
@@ -377,7 +392,7 @@ The states currently are:
 
 - `"Uninitialized"` - `Perl.init` has not been called yet.
 - `"Initializing"` - `Perl.init` is currently operating.
-- `"Ready" - `Perl.init` is finished and `Perl.start` can be called.
+- `"Ready"` - `Perl.init` is finished and `Perl.start` can be called.
 - `"Running"` - The Perl interpreter is running, `Perl.eval` and `Perl.end` may be called
 - `"Ended"` - The Perl interpreter has ended.
   ~~You might receive several state change notifications for this state.~~
@@ -479,9 +494,11 @@ stored in a Perl scalar `$foo` pointing to a JavaScript object `foo`:
   regular Perl data structure (deep copy). Note that JavaScript functions are
   kept wrapped inside anonymous Perl `sub`s.
 - `jscode` returns a string of JavaScript code that represents a reference
-  to the JavaScript object. You should treat the string as an opaque value,
-  no guarantees are made about its format and whether it may change in future
-  releases. *Do not* call JavaScript's `delete` on this value.
+  to the JavaScript object. **Warning:** Treat this value as read-only in
+  JavaScript! *Do not* assign to this value, call JavaScript's `delete` on
+  this value, etc. (calling methods that may mutate the object is ok, though).
+  You should treat the string as an opaque value, no guarantees are made about
+  its format and whether it may change in future releases.
   This is an advanced function that should not normally be needed,
   unless you are building strings of JavaScript to run. In that case, you
   may need to wrap the value in parentheses for it to evaluate correctly in
@@ -504,19 +521,20 @@ Unlike the JavaScript to Perl mappings, values are (currently¹) generally *copi
 Perl to JavaScript, instead of being *referenced*.
 The exceptions are Perl `sub`s and `WebPerl::JSObject`s.
 
-- Perl arrayrefs become JavaScript arrays
-- Perl hashrefs become JavaScript objects
+- Perl arrayrefs become JavaScript arrays (deep copy)
+- Perl hashrefs become JavaScript objects (deep copy)
 - Perl coderefs become JavaScript functions - 
   **Warning:** please see the discussion in
   ["Memory Management and Anonymous `sub`s"](#memory-management-and-anonymous-subs)!
 - Perl `WebPerl::JSObject`s become references to the wrapped JavaScript objects
+  (i.e. the underlying JS object is passed back to JS transparently)
 - Perl numbers/strings are copied to JavaScript via `Cpanel::JSON::XS::encode_json`
   (with its `allow_nonref` option enabled). This means that the choice
   for whether to encode a Perl scalar as a JavaScript number or string is
   left up to the module, and is subject to the usual ambiguities when
   serializing Perl scalars. See
   [the `Cpanel::JSON::XS` documentation](https://metacpan.org/pod/Cpanel::JSON::XS).
-- Other references, including objects, are currently not supported.
+- Other references, including Perl objects, are currently not supported.
 
 ¹ So far, the focus of WebPerl has been to replace JavaScript with Perl, and
 therefore on accessing JavaScript from Perl, and not as much the other

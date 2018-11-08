@@ -124,7 +124,11 @@ GITSTUFF: {
 	my $myhead = git 'log', '-1', '--format=%h', $C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	my $remhead = git 'log', '-1', '--format=%h', 'origin/'.$C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	say STDERR "# Local branch is at $myhead, remote is $remhead";
-	if ($myhead ne $remhead) { #TODO Later: This should also check which git commit is newer!
+	if ($myhead ne $remhead) {
+		git 'merge-base', '--is-ancestor', $remhead, $myhead, {allow_exit=>[0,1]};
+		if ($?==0) {
+			say STDERR "# However, it looks like $myhead is newer than $remhead, won't ask for update";
+			last GITSTUFF }
 		if (prompt("Would you like to update? WARNING: Unsaved local changes may be lost! [Yn]","y")=~/^\s*y/i) {
 			eval {
 				if ($C{CLOBBER_BRANCH}) {

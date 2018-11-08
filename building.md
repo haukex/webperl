@@ -58,7 +58,7 @@ Some of the central source files of WebPerl are:
 - [`emperl5/hints/emscripten.sh`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/hints/emscripten.sh)
 - [`emperl5/perlmain_noexit_patch`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/perlmain_noexit_patch)
 - [`emperl5/ext/WebPerl/WebPerl.xs`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/ext/WebPerl/WebPerl.xs)
-- [`emperl5/ext/WebPerl/WebPerl.pm`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/ext/WebPerl/WebPerl.pm)
+- [`emperl5/ext/WebPerl/lib/WebPerl.pm`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/ext/WebPerl/lib/WebPerl.pm)
 - [`webperl/web/webperl.js`](https://github.com/haukex/webperl/blob/master/web/webperl.js)
 
 

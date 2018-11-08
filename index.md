@@ -46,15 +46,16 @@ Quick Start
 -----------
 
 - Prerequisites: `perl` (a recent version is recommended, e.g. v5.26 and up),
-  [`plackup` from Plack](https://metacpan.org/pod/distribution/Plack/script/plackup),
-  [Plack::Middleware::CrossOrigin](https://metacpan.org/pod/Plack::Middleware::CrossOrigin),
-  and [Cpanel::JSON::XS](https://metacpan.org/pod/Cpanel::JSON::XS).
+  and [`cpanm`](https://metacpan.org/pod/App::cpanminus) to easily install
+  dependencies (otherwise, see the file `cpanfile` for the dependencies and
+  use the module installer of your choce).
 
 - In a shell:
   
       $ wget https://github.com/haukex/webperl/releases/download/v0.09-beta/webperl_prebuilt_v0.09-beta.zip
       $ unzip webperl_prebuilt_v0.09-beta.zip
       $ cd webperl_prebuilt_v0.09-beta
+      $ cpanm --installdeps .
       $ plackup webperl.psgi
       HTTP::Server::PSGI: Accepting connections at http://0:5000/
 

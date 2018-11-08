@@ -1,0 +1,15 @@
+
+# Install the dependencies for "build" via:
+# $ cpanm --installdeps .
+
+requires 'Data::Dump';
+requires 'Path::Class';
+requires 'IPC::Run3::Shell', '0.56';
+requires 'URI';
+requires 'Net::SSLeay', 1.49;
+requires 'IO::Socket::SSL', '1.56';
+requires 'Cpanel::JSON::XS';
+requires 'File::Copy::Recursive';
+requires 'File::Replace', '0.08';
+requires 'Pod::Strip';
+requires 'Archive::Zip';

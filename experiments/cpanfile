@@ -1,0 +1,7 @@
+
+# Install the dependencies for "experiments" via:
+# $ cpanm --installdeps .
+
+requires 'Data::Dump';
+requires 'Graph';
+requires 'MetaCPAN::Client';

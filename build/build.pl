@@ -371,11 +371,12 @@ if ($needs_reconfig || !-e $destdir || $opts{remakeout}) {
 
 {
 	say STDERR "# Making emperl.js...";
-	if ($opts{forceemperl} || $opts{remakeout})
-		{ $C{PERLSRCDIR}->file('emperl.js')->remove
-			or die "failed to delete emperl.js" }
+	my $targ = $C{PERLSRCDIR}->file('emperl.js');
+	if ( ($opts{forceemperl} || $opts{remakeout}) && -e $targ )
+		{ $targ->remove or die "failed to delete $targ: $!" }
 	my $d = pushd($C{PERLSRCDIR});
 	emmake 'make', 'emperl.js';
+	die "Target file not generated?" unless -e $targ;
 	say STDERR "# Done making emperl.js";
 }
 for my $f (qw/ emperl.js emperl.wasm emperl.data /) {

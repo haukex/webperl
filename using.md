@@ -410,11 +410,11 @@ Defaults to a simple implementation that logs via `console.debug()`.
 
 #### `Perl.makeOutputTextarea(id)`
 
-This function will create a new DOM `<textarea>` element, set up a `Perl.output`
-handler that redirects Perl's output into the `<textarea>`, and return the
-DOM element. You may optionally pass this function a string argument giving
-a DOM ID. You will need to add the `<textarea>` to your DOM yourself
-(see `webperl_demo.html` for an example).
+This function will create a new DOM `<textarea>` element, set up a
+`Perl.output` handler that redirects Perl's output (merged STDOUT and STDERR)
+into the `<textarea>`, and return the DOM element. You may optionally pass this
+function a string argument giving a DOM ID. You will need to add the
+`<textarea>` to your DOM yourself (see `webperl_demo.html` for an example).
 
 
 WebPerl.pm

@@ -18,6 +18,7 @@ Other places I've written about WebPerl:
 - [Run Perl 5 in the Browser!](https://www.perlmonks.org/?node_id=1220426)
 - [WebPerl Regex Tester (beta)](https://www.perlmonks.org/?node_id=1221705)
 - [Embedding WebPerl Code Demos into Other Pages](https://www.perlmonks.org/?node_id=1223812)
+- [WebPerl now has Experimental Perl 6 Support!](https://www.perlmonks.org/?node_id=1225647)
 
 I also gave a [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475)
 at YAPC::EU 2018 in Glasgow: [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)

@@ -1,9 +1,10 @@
 
 \[ Using -
 [Building](building.html) -
+[🦋](perl6.html) -
 [Notes](notes.html) -
 [Legal](legal.html) -
-[GitHub Wiki](https://github.com/haukex/webperl/wiki/Using-WebPerl) \]
+[Wiki](https://github.com/haukex/webperl/wiki/Using-WebPerl) \]
 
 Using WebPerl
 =============
@@ -13,6 +14,8 @@ Using WebPerl
 Some things may not work yet, and parts of the API may still change.
 Your feedback is always appreciated!
 
+This page documents the Perl 5 support, for the *experimental*
+Perl 6 support, see [here](perl6.html).
 
 - [Basic Usage](#basic-usage)
 	- [Serving WebPerl](#serving-webperl)

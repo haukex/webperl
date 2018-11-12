@@ -1,9 +1,10 @@
 
 \[ [Using](using.html) -
 [Building](building.html) -
+[🦋](perl6.html) -
 Notes -
 [Legal](legal.html) -
-[GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
+[Wiki](https://github.com/haukex/webperl/wiki) \]
 
 Misc. Notes on WebPerl
 ======================

@@ -23,7 +23,7 @@ your local machine!
 <script src="webperl.js"></script>
 <script type="text/perl6">
 
-print "Hello, Perl 6 World!\n";  # goes to JavaScript console by default
+say "Hello, Perl 6 World!";   # goes to JavaScript console by default
 
 my $document = EVAL(:lang<JavaScript>, 'return document');
 my $window   = EVAL(:lang<JavaScript>, 'return window');
@@ -38,19 +38,24 @@ $document.getElementById('my_button')
 Quick Start
 -----------
 
-In a console (the following assumes Linux):
+- Prerequisites: `perl` (a recent version is recommended, e.g. v5.26 and up),
+  and [`cpanm`](https://metacpan.org/pod/App::cpanminus) to easily install
+  dependencies (otherwise, see the files `cpanfile` for the dependencies and
+  use the module installer of your choce).
 
-    $ git clone https://github.com/haukex/webperl.git
-    $ cd webperl
-    $ wget https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip
-    $ unzip -j webperl_prebuilt_v0.07-beta.zip '*/emperl.*' -d web
-    $ cpanm --installdeps .
-    $ cd experiments ; cpanm --installdeps . ; cd ..
-    $ experiments/p6/6init.pl   # this patches Perl 6 support in
-    $ plackup web/webperl.psgi
+- In a shell (the following assumes Linux):
+  
+      $ git clone https://github.com/haukex/webperl.git
+      $ cd webperl
+      $ wget https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip
+      $ unzip -j webperl_prebuilt_v0.07-beta.zip '*/emperl.*' -d web
+      $ cpanm --installdeps .
+      $ cd experiments ; cpanm --installdeps . ; cd ..
+      $ experiments/p6/6init.pl   # this patches Perl 6 support in
+      $ plackup web/webperl.psgi
 
-Then point your Chrome browser at <http://localhost:5000/6demo.html>,
-and have a look at its source.
+- Then point your Chrome browser at <http://localhost:5000/6demo.html>,
+  and have a look at its source.
 
 Have fun!
 

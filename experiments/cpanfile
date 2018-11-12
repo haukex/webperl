@@ -5,3 +5,4 @@
 requires 'Data::Dump';
 requires 'Graph';
 requires 'MetaCPAN::Client';
+requires 'Path::Class';

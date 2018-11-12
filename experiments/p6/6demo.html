@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Perl 6 Demos (Experimental)</title>
+
+<script src="webperl.js"></script>
+
+<!-- Please see the documentation at http://webperl.zero-g.net/perl6.html -->
+
+<!-- Example 1: A really basic script -->
+<script type="text/perl6">
+print "Hello, Perl 6 World!\n";
+</script>
+
+<!-- Example 2: Accessing JavaScript -->
+<script type="text/perl6">
+my $document = EVAL(:lang<JavaScript>, 'return document');
+$document.getElementById('my_button')
+	.addEventListener("click", -> $event {
+		print "You clicked 'Testing!'\n";
+	} );
+</script>
+
+<!-- Optional STDOUT/STDERR text area (if you don't use this, output goes to Javascript console) -->
+<script>
+window.addEventListener("load", function () {
+	document.getElementById('output')
+		.appendChild( Raku.makeOutputTextarea() );
+});
+</script>
+
+</head>
+<body>
+
+<p>This is a demo of the
+<a href="http://webperl.zero-g.net/perl6.html" target="_blank">experimental
+Perl 6 support</a> in
+<a href="http://webperl.zero-g.net" target="_blank">WebPerl</a>!</p>
+
+<p><em>Currently only works in Chrome (needs BigInt support) and
+may take a few seconds to load.</em></p>
+
+<div id="output"></div>
+<div id="buttons">
+	<button id="my_button">Testing!</button>
+</div>
+
+</body>
+</html>

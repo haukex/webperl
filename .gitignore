@@ -7,3 +7,7 @@
 /web/_cache/
 /pages/
 /wiki/
+# For experimental P6 support:
+/web/perl6.js
+/web/6demo.html
+/web/test6.html

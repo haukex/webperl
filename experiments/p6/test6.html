@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Perl 6 Experiments</title>
+
+<script src="webperl.js"></script>
+
+<!--
+	The following is a demo of Perl 5 and Perl 6 calling each other via JavaScript.
+-->
+
+<script>
+	window.Foo = {
+		set: function (x,y) { window.Foo[x]=y }, // workaround, see P6 below
+	};
+</script>
+
+<script type="text/perl">
+	use warnings;
+	use 5.028;
+	
+	sub hello {
+		my $x = shift;
+		say "Hello from Perl 5! You said '$x'";
+	}
+	
+	my $Foo = js('window.Foo');
+	$Foo->{p5} = \&hello;
+	
+	js('document')->getElementById('btn_p5')
+		->addEventListener("click", sub {
+			say "This is Perl 5, attempting to call Perl 6...";
+			$Foo->p6("I am Perl 5!");
+		} );
+	
+	say "Perl 5 is ready.";
+</script>
+
+<script type="text/raku">
+	
+	sub hello ($x) {
+		say "Hello from Perl 6! You said '$x'"
+	}
+	
+	my $Foo = EVAL(:lang<JavaScript>, 'return window.Foo');
+	# I'm not yet sure why the following doesn't work, Foo.set is a workaround
+	#$Foo<p6> = &hello;
+	$Foo.set("p6", &hello);
+	
+	my $document = EVAL(:lang<JavaScript>, 'return document');
+	$document.getElementById('btn_p6')
+		.addEventListener("click", -> $event {
+			say "This is Perl 6, attempting to call Perl 5...";
+			$Foo.p5("I am Perl 6!");
+		} );
+	
+	say "Perl 6 is ready.";
+</script>
+
+</head>
+<body>
+
+<p>See the JS console! Don't click the buttons until both languages are ready.</p>
+
+<div id="buttons">
+	<button id="btn_p5">Perl 5</button>
+	<button id="btn_p6">Perl 6</button>
+</div>
+
+</body>
+</html>

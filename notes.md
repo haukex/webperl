@@ -27,6 +27,7 @@ at YAPC::EU 2018 in Glasgow: [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
 
 ### In the Press
 
+- [Perl Advent Calendar 2018, Day 2](http://www.perladvent.org/2018/2018-12-02.html) (by Mark Fowler)
 - [Reddit: Your scientists were so preoccupied with whether or not they could, they didn't stop to think if they should (2018-10-22)](https://www.reddit.com/r/programmingcirclejerk/comments/9qerw5/your_scientists_were_so_preoccupied_with_whether/) 😉
 - [Hacker News (2018-10-21)](https://news.ycombinator.com/item?id=18269071)
 - [Reddit /r/programming (2018-10-21)](https://www.reddit.com/r/programming/comments/9q65tf/run_perl_in_the_browser_with_webperl/)

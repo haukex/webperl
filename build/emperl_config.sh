@@ -9,7 +9,7 @@
 
 # A whitespace-separated list of modules to download and add to the build.
 # Note: Cpanel::JSON::XS is required for WebPerl!
-export EMPERL_EXTENSIONS="Cpanel::JSON::XS Devel::StackTrace"
+export EMPERL_EXTENSIONS="Cpanel::JSON::XS Devel::StackTrace Future"
 
 # Modules from the above list that have XS code need to be linked statically.
 # Add them here, separated by whitespace (see also the "static_ext" variable

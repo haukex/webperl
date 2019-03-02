@@ -8,6 +8,7 @@ not yet released: v0.09-beta
 
 - Added Perl.exitStatus
 - Updated regex_tester.html
+- Added modules Future, Digest::MD5, and Digest::SHA
 
 
 2018-09-04: v0.07-beta

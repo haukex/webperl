@@ -271,8 +271,9 @@ It is important to keep apart the different ways to access files:
 - A `<script type="text/perl" src="foo.pl"></script>` tag will cause `webperl.js`
   to fetch `foo.pl` from the *web server*, not the virtual filesystem!
   - *However*, that Perl script will *also* only see the virtual filesystem,
-    not the web server, so it won't even be able to see "itself". You can still
-    fetch things from the webserver using e.g. AJAX requests.
+    not the web server, so it won't even be able to see "itself" (`webperl.js`
+    may save files such as `/tmp/scripts.pl`, but that's *not* guaranteed).
+    You can still fetch things from the webserver using e.g. AJAX requests.
 
 While a WebPerl instance is running, you can modify files in the virtual file system
 as you might be used to from regular Perl. But the virtual filesystem is reloaded every
@@ -294,6 +295,7 @@ either. If you need to safely store files, it's best to store them on the user's
 In particular, even though you might make heavy use of `/mnt/idb` when testing with the "mini IDE",
 remember that this storage is *not* a way to distribute files to your users, and in fact, some
 users' browsers may automatically regularly clear the `IndexedDB`, or have it disabled altogether.
+It also may not work at all in a "sandboxed" `iframe`.
 For providing your application to your users, either use `<script type="text/perl">` tags,
 compile the script into the virtual file system, or use the JavaScript `Perl` object.
 

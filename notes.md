@@ -23,8 +23,8 @@ Other places I've written about WebPerl:
 Talks:
 
 - YAPC::EU 2018 in Glasgow - [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475), [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
-- *(planned)* German Perl Workshop 2019 - [talk](http://act.yapc.eu/gpw2019/talk/7616) (in German 🇩🇪)
-- *(hopefully)* YAPC::EU 2019 ([PerlCon](https://perlcon.eu/)) in Rīga
+- *(planned)* German Perl Workshop 2019 in Munich - [talk](http://act.yapc.eu/gpw2019/talk/7616) (slides in English, talk in German 🇩🇪)
+- *(planned)* YAPC::EU 2019 (PerlCon) in Rīga - [talk](https://perlcon.eu/talk/40)
 
 [![DOI 10.5281/zenodo.1400490](https://zenodo.org/badge/DOI/10.5281/zenodo.1400490.svg)](https://doi.org/10.5281/zenodo.1400490)
 

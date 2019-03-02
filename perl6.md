@@ -47,8 +47,8 @@ Quick Start
   
       $ git clone https://github.com/haukex/webperl.git
       $ cd webperl
-      $ wget https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip
-      $ unzip -j webperl_prebuilt_v0.07-beta.zip '*/emperl.*' -d web
+      $ wget https://github.com/haukex/webperl/releases/download/v0.09-beta/webperl_prebuilt_v0.09-beta.zip
+      $ unzip -j webperl_prebuilt_v0.09-beta.zip '*/emperl.*' -d web
       $ cpanm --installdeps .
       $ cd experiments ; cpanm --installdeps . ; cd ..
       $ experiments/p6/6init.pl   # this patches Perl 6 support in

@@ -1,9 +1,10 @@
 
 \[ [Using](using.html) -
 Building -
+[🦋](perl6.html) -
 [Notes](notes.html) -
 [Legal](legal.html) -
-[GitHub Wiki](https://github.com/haukex/webperl/wiki/Building-WebPerl) \]
+[Wiki](https://github.com/haukex/webperl/wiki/Building-WebPerl) \]
 
 Building WebPerl
 ================
@@ -12,6 +13,9 @@ Building WebPerl
 **Notice: WebPerl is very much in beta.**
 Some things may not work yet, and parts of the API may still change.
 Your feedback is always appreciated!
+
+This page documents the Perl 5 support, for the *experimental*
+Perl 6 support, see [here](perl6.html).
 
 
 Prerequisites

@@ -1,9 +1,10 @@
 
 \[ [Using](using.html) -
 [Building](building.html) -
+[🦋](perl6.html) -
 Notes -
 [Legal](legal.html) -
-[GitHub Wiki](https://github.com/haukex/webperl/wiki) \]
+[Wiki](https://github.com/haukex/webperl/wiki) \]
 
 Misc. Notes on WebPerl
 ======================
@@ -17,19 +18,33 @@ Other places I've written about WebPerl:
 - [Run Perl 5 in the Browser!](https://www.perlmonks.org/?node_id=1220426)
 - [WebPerl Regex Tester (beta)](https://www.perlmonks.org/?node_id=1221705)
 - [Embedding WebPerl Code Demos into Other Pages](https://www.perlmonks.org/?node_id=1223812)
+- [WebPerl now has Experimental Perl 6 Support!](https://www.perlmonks.org/?node_id=1225647)
 
-I also gave a [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475)
-at YAPC::EU 2018 in Glasgow: [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
+### Talks
+
+- YAPC::EU 2018 in Glasgow - [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475), [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
+- *(planned)* German Perl Workshop 2019 in Munich - [talk](http://act.yapc.eu/gpw2019/talk/7616) (slides in English, talk in German 🇩🇪)
+- *(planned)* YAPC::EU 2019 (PerlCon) in Rīga - [talk](https://perlcon.eu/talk/40)
 
 [![DOI 10.5281/zenodo.1400490](https://zenodo.org/badge/DOI/10.5281/zenodo.1400490.svg)](https://doi.org/10.5281/zenodo.1400490)
 
-### In the Press
+### "In the Press"
 
+- WebPerl gets a mention in Will Braswell's talk ["Perl 11 - The Future of Saint Larry's Language"](https://fosdem.org/2019/schedule/event/perl11/)
+- [Perl Advent Calendar 2018, Day 2](http://www.perladvent.org/2018/2018-12-02.html) (by Mark Fowler)
 - [Reddit: Your scientists were so preoccupied with whether or not they could, they didn't stop to think if they should (2018-10-22)](https://www.reddit.com/r/programmingcirclejerk/comments/9qerw5/your_scientists_were_so_preoccupied_with_whether/) 😉
 - [Hacker News (2018-10-21)](https://news.ycombinator.com/item?id=18269071)
 - [Reddit /r/programming (2018-10-21)](https://www.reddit.com/r/programming/comments/9q65tf/run_perl_in_the_browser_with_webperl/)
 - [Facebook Group "Perl Programmers" (2018-10-20)](https://www.facebook.com/groups/perlprogrammers/permalink/2141844605848316/)
 - [Reddit /r/perl: WebPerl Regex Tester (2018-09-05)](https://www.reddit.com/r/perl/comments/9d5n77/webperl_regex_tester/)
+
+### Prior Art
+
+Several people have built microperl with Emscripten:
+
+- Harsha <https://github.com/moodyharsh/plu>
+- Shlomi Fish <https://github.com/shlomif/perl5-for-JavaScript--take2>
+- FUJI Goro <https://github.com/gfx/perl.js>
 
 
 TODOs
@@ -37,34 +52,44 @@ TODOs
 
 1. Testing
 	
+	- How to best disable individual tests that we know won't work? (qx etc.)
+	- How to handle the many tests that call an external Perl?
+		- patching t/test.pl's runperl() seems easiest at the moment, and we can use the iframe method from the IDE
 	- Continue work on `WebPerl.t`
 		- More tests for Unicode support (Perl/JS interface, Perl.eval(), plus Emscripten's virtual FS)
 	- Focus on getting the tests running in the browser instead of node.js
 	- How to best package tests?
 		- If possible, a separate bundle, so that it can be loaded optionally and we don't need to rebuild
 		- How does `make test` find and handle all the various modules' `t`s?
-	- How to best disable individual tests that we know won't work? (qx etc.)
-	- How to handle the many tests that call an external Perl?
-		- patching t/test.pl's runperl() seems easiest at the moment, and we can use the iframe method from the IDE
 
 2. Misc
 	
 	- Write up a full RPC example
+	- Add `Future` to the WebPerl build for a little more async niceness?
+		- Would `Future::AsyncAwait` work in WebPerl? (Or maybe with a JS backend?)
+		- `Future::HTTP` (probably just as a frontend to XHR?)
+	- Improve Perl 6 integration
+		- Build a packaged Rakudo.js ourselves instead of borrowing from <https://perl6.github.io/6pad/>
+		- Perhaps get an API change or two into Rakudo.js: `STDOUT` currently gets output with HTML escapes
+		- See also notes in [Perl 6 Support 🦋](perl6.html)
 	- Investigate Emscripten's main loop concept for handling nonblocking sockets?
 	- Turn some patches from emperl5 into patches for P5P
 	- Submit some patches to Emscripten
 		- <https://github.com/kripken/emscripten/pull/7005>
 		- <https://github.com/kripken/emscripten/issues/7029>
 		- Would we need to patch Perl's signal functions if Emscripten's stubs weren't noisy?
-	- Add Perl.Util functions for making file uploads and downloads easier
+	- Add `Perl.Util` functions for making file uploads and downloads easier
 		- Plus an example showing how to use it to run a "legacy" Perl script with inputs and output
-	- Perhaps create a CPAN Bundle:: module or similar for `build.pl` deps?
 	- There is some potential for restructuring:
 		- `Perl.glue()` and `Perl.dispatch()` could go into `WebPerl.xs` (?)
 		- Parts of `webperl.js` could go into `common_preamble.js` or `WebPerl.xs`,
 		  so that `emperl.js` is runnable on its own in a Web Worker (?)
 		  (see notes in `perlrunner.html` / `e12f1aa25a000`)
 		- `nodeperl_dev_prerun.js` could probably be merged into that as well
+	- Could put a `WebPerl` stub on CPAN
+		- In theory could write a `WebPerl::Local` that contains the `WebPerl` API, and
+		  have various drivers such as `WebPerl::WebDriver` or `WebPerl::JSAny` that
+		  runs the code given to WebPerl's `js()`...
 	- Regarding the funky syntax highlighting on GitHub: <https://github.com/atom/language-html/issues/88#issuecomment-431361414>
 
 3. See Also
@@ -156,16 +181,6 @@ Release Checklist
 	3. Upload them with the appropriate `Content-Type` (see e.g. `web/webperl.psgi`) and a `Content-Encoding` of `gzip`
 
 - If there was a `pages_for_vX.XX` branch of `gh-pages`, don't forget to merge that
-
-
-Prior Art
----------
-
-Several people have built microperl with Emscripten:
-
-- Harsha <https://github.com/moodyharsh/plu>
-- Shlomi Fish <https://github.com/shlomif/perl5-for-JavaScript--take2>
-- FUJI Goro <https://github.com/gfx/perl.js>
 
 
 ***

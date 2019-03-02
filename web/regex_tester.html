@@ -116,6 +116,10 @@ sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
 
 our $RUN_CODE_IN_IFRAME=0;
 
+# Possible To-Do for Later: Subs in preamble code produce "subroutine redefined" warnings.
+# I could think about whether there's a decent way around that.
+# Example: https://www.perlmonks.org/?node_id=1225457
+
 my $run_code_body = <<'END_CODE';
 	my (@warns,@output);
 	

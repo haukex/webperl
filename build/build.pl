@@ -120,17 +120,18 @@ if (!-e $C{PERLSRCDIR}) {
 }
 GITSTUFF: {
 	my $d = pushd($C{PERLSRCDIR});
+	my $remhead;
 	eval {
 		git 'fetch';
+		$remhead = git 'log', '-1', '--format=%h', 'origin/'.$C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	1 } or do {
 		warn $@;
 		# Maybe we don't have network connectivity
-		if (prompt("Whoops, 'git fetch' failed. Continue anyway? [Yn]","y")=~/^\s*y/i)
+		if (prompt("Whoops, 'git' failed. Continue anyway? [Yn]","y")=~/^\s*y/i)
 			{ last GITSTUFF }
 		else { die "git fetch failed, aborting" }
 	};
 	my $myhead = git 'log', '-1', '--format=%h', $C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
-	my $remhead = git 'log', '-1', '--format=%h', 'origin/'.$C{PERL_BRANCH}, {chomp=>1,show_cmd=>$VERBOSE};
 	say STDERR "# Local branch is at $myhead, remote is $remhead";
 	if ($myhead ne $remhead) {
 		git 'merge-base', '--is-ancestor', $remhead, $myhead, {allow_exit=>[0,1]};
@@ -372,7 +373,7 @@ if ($needs_reconfig || !-e $destdir || $opts{remakeout}) {
 	safelink( $C{PERLSRCDIR}->file('ext','WebPerl','t','WebPerl.t'),
 		$destdir->file('dev','WebPerl.t') );
 	safelink( $C{PERLSRCDIR}->file('ext','WebPerl','lib','WebPerl.pm'),
-		$destdir->file('lib','5.28.0','wasm','WebPerl.pm') ); #TODO: should figure this directory out dynamically
+		$destdir->file('lib',$C{PERLVER}=~s/^v(?=5)//r,'wasm','WebPerl.pm') );
 	
 	#TODO Later: Provide an easy way for users to add files to the virtual file system
 	

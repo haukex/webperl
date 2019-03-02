@@ -20,7 +20,7 @@ Other places I've written about WebPerl:
 - [Embedding WebPerl Code Demos into Other Pages](https://www.perlmonks.org/?node_id=1223812)
 - [WebPerl now has Experimental Perl 6 Support!](https://www.perlmonks.org/?node_id=1225647)
 
-Talks:
+### Talks
 
 - YAPC::EU 2018 in Glasgow - [lightning talk](http://act.perlconference.org/tpc-2018-glasgow/talk/7475), [Video Link](https://youtu.be/KrGSg7uVZj0?t=29520)
 - *(planned)* German Perl Workshop 2019 in Munich - [talk](http://act.yapc.eu/gpw2019/talk/7616) (slides in English, talk in German 🇩🇪)
@@ -37,6 +37,14 @@ Talks:
 - [Reddit /r/programming (2018-10-21)](https://www.reddit.com/r/programming/comments/9q65tf/run_perl_in_the_browser_with_webperl/)
 - [Facebook Group "Perl Programmers" (2018-10-20)](https://www.facebook.com/groups/perlprogrammers/permalink/2141844605848316/)
 - [Reddit /r/perl: WebPerl Regex Tester (2018-09-05)](https://www.reddit.com/r/perl/comments/9d5n77/webperl_regex_tester/)
+
+### Prior Art
+
+Several people have built microperl with Emscripten:
+
+- Harsha <https://github.com/moodyharsh/plu>
+- Shlomi Fish <https://github.com/shlomif/perl5-for-JavaScript--take2>
+- FUJI Goro <https://github.com/gfx/perl.js>
 
 
 TODOs
@@ -173,16 +181,6 @@ Release Checklist
 	3. Upload them with the appropriate `Content-Type` (see e.g. `web/webperl.psgi`) and a `Content-Encoding` of `gzip`
 
 - If there was a `pages_for_vX.XX` branch of `gh-pages`, don't forget to merge that
-
-
-Prior Art
----------
-
-Several people have built microperl with Emscripten:
-
-- Harsha <https://github.com/moodyharsh/plu>
-- Shlomi Fish <https://github.com/shlomif/perl5-for-JavaScript--take2>
-- FUJI Goro <https://github.com/gfx/perl.js>
 
 
 ***

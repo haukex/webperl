@@ -1,0 +1,20 @@
+--- library.js.orig	2019-03-02 16:08:24.404047130 +0100
++++ library.js	2019-03-02 16:19:30.588047130 +0100
+@@ -291,7 +291,7 @@
+     // pid_t fork(void);
+     // http://pubs.opengroup.org/onlinepubs/000095399/functions/fork.html
+     // We don't support multiple processes.
+-    ___setErrNo({{{ cDefine('EAGAIN') }}});
++    ___setErrNo({{{ cDefine('ENOTSUP') }}});
+     return -1;
+   },
+   vfork: 'fork',
+@@ -817,7 +817,7 @@
+     // int system(const char *command);
+     // http://pubs.opengroup.org/onlinepubs/000095399/functions/system.html
+     // Can't call external programs.
+-    ___setErrNo({{{ cDefine('EAGAIN') }}});
++    ___setErrNo({{{ cDefine('ENOTSUP') }}});
+     return -1;
+   },
+ 

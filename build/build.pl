@@ -92,8 +92,16 @@ my $needs_reconfig = !!$opts{reconfig};
 	# Emscripten's fork() (and system()) stubs return EAGAIN, meaning "Resource temporarily unavailable".
 	# So perl will wait 5 seconds and try again, which is not helpful to us, since Emscripten doesn't support those functions at all.
 	# This patch fixes that on the Emscripten side, so the stubs return ENOTSUP.
+	# first, we need to take a guess which version of the patch to apply.
+	my $libraryjs = file($ENV{EMSCRIPTEN}, 'src', 'library.js')->slurp;
+	my $patchf;
+	if ( $libraryjs=~/\b\QERRNO_CODES.EAGAIN\E\b/ )
+		{ $patchf = 'emscripten_1.38.10_eagain.patch' }
+	elsif ( $libraryjs=~/\b\QcDefine('EAGAIN')\E/ )
+		{ $patchf = 'emscripten_1.38.28_eagain.patch' }
+	else { die "Could not figure out which library.js patch to use" }
 	#TODO Later: we should probably verify the Emscripten version too, and in the future we may need different patches for different versions
-	if ( try_patch_file( file($FindBin::Bin,'emscripten_1.38.10_eagain.patch') ) ) {
+	if ( try_patch_file( file($FindBin::Bin,$patchf) ) ) {
 		say STDERR "# Emscripten was newly patched, forcing a rebuild";
 		# not sure if the following is needed, but playing it safe:
 		run 'emcc', '--clear-cache';  # force Emscripten to rebuild libs (takes a bit of time)

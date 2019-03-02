@@ -29,13 +29,18 @@ export EMPERL_OUTPUTDIR="$BASEDIR/work/outputperl"
 # Note to self: In build.pl, we take advantage of the fact that on Perls >=v5.10.0, "$^V" is the same as the tag name.
 export EMPERL_PERLVER="v5.28.0"
 export EMPERL_PREFIX="/opt/perl"
+# Note: strace shows this is how file_packager.py is called: ["/usr/bin/python", "/home/haukex/emsdk/emscripten/1.38.28/tools/file_packager.py", "emperl.data", "--from-emcc", "--export-name=Module", "--preload", "/home/haukex/code/webperl/work/outputperl/opt/perl@/opt/perl", "--no-heap-copy"]
 export EMPERL_PRELOAD_FILE="$EMPERL_OUTPUTDIR$EMPERL_PREFIX@$EMPERL_PREFIX"
 export EMPERL_OPTIMIZ="-O2"
-export EMPERL_LINK_FLAGS="--pre-js common_preamble.js -s EXPORTED_FUNCTIONS=['_main','_emperl_end_perl','_Perl_call_sv','_Perl_call_pv','_Perl_call_method','_Perl_call_argv','_Perl_eval_pv','_Perl_eval_sv','_webperl_eval_perl'] -s EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','cwrap']"
+# Note: We explicitly disable ERROR_ON_UNDEFINED_SYMBOLS because it was enabled by default in Emscripten 1.38.13.
+#TODO Later: Why does --no-heap-copy not get rid of the "in memory growth we are forced to copy it again" assertion warning? (https://github.com/emscripten-core/emscripten/commit/ec764ace634f13bab5ae932912da53fe93ee1b69)
+export EMPERL_LINK_FLAGS="--pre-js common_preamble.js --no-heap-copy -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s EXPORTED_FUNCTIONS=['_main','_emperl_end_perl','_Perl_call_sv','_Perl_call_pv','_Perl_call_method','_Perl_call_argv','_Perl_eval_pv','_Perl_eval_sv','_webperl_eval_perl'] -s EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','cwrap']"
+
+export EMPERL_DEBUG_FLAGS=""
+#export EMPERL_DEBUG_FLAGS="-s ASSERTIONS=2 -s STACK_OVERFLOW_CHECK=2"
 # Note: not including "-s SAFE_HEAP=1" in the debug flags because we're building to WebAssembly, which doesn't require alignment
 #TODO Later: Can some of the SAFE_HEAP functionality (null pointer access I think?) be replaced by the WASM error traps?
 # http://kripken.github.io/emscripten-site/docs/compiling/WebAssembly.html#binaryen-codegen-options
-export EMPERL_DEBUG_FLAGS="-s ASSERTIONS=2 -s STACK_OVERFLOW_CHECK=2"
 
 # Location and branch of the perl git repository that contains the emperl branch
 export EMPERL_PERL_REPO="https://github.com/haukex/emperl5.git"

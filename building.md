@@ -51,10 +51,10 @@ is checked out by the build script.
 Some of the central source files of WebPerl are:
 
 - [`webperl/build/build.pl`](https://github.com/haukex/webperl/blob/master/build/build.pl)
-- [`emperl5/hints/emscripten.sh`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/hints/emscripten.sh)
-- [`emperl5/perlmain_noexit_patch`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/perlmain_noexit_patch)
-- [`emperl5/ext/WebPerl/WebPerl.xs`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/ext/WebPerl/WebPerl.xs)
-- [`emperl5/ext/WebPerl/lib/WebPerl.pm`](https://github.com/haukex/emperl5/blob/emperl_v5.28.0/ext/WebPerl/lib/WebPerl.pm)
+- [`emperl5/hints/emscripten.sh`](https://github.com/haukex/emperl5/blob/emperl_v5.28.1/hints/emscripten.sh)
+- [`emperl5/perlmain_noexit_patch`](https://github.com/haukex/emperl5/blob/emperl_v5.28.1/perlmain_noexit_patch)
+- [`emperl5/ext/WebPerl/WebPerl.xs`](https://github.com/haukex/emperl5/blob/emperl_v5.28.1/ext/WebPerl/WebPerl.xs)
+- [`emperl5/ext/WebPerl/lib/WebPerl.pm`](https://github.com/haukex/emperl5/blob/emperl_v5.28.1/ext/WebPerl/lib/WebPerl.pm)
 - [`webperl/web/webperl.js`](https://github.com/haukex/webperl/blob/master/web/webperl.js)
 
 

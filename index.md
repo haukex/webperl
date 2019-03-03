@@ -36,7 +36,7 @@ js('document')->getElementById('my_button')
 </script>
 ```
 
-- [**Download `webperl_prebuilt_v0.07-beta.zip`**](https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip)
+- [**Download `webperl_prebuilt_v0.09-beta.zip`**](https://github.com/haukex/webperl/releases/download/v0.09-beta/webperl_prebuilt_v0.09-beta.zip)
 - [**Get the sources on GitHub**](https://github.com/haukex/webperl)
 
 For web applications written with WebPerl, see:
@@ -49,14 +49,16 @@ Quick Start
 -----------
 
 - Prerequisites: `perl` (a recent version is recommended, e.g. v5.26 and up),
-  [`plackup` from Plack](https://metacpan.org/pod/distribution/Plack/script/plackup),
-  and [Cpanel::JSON::XS](https://metacpan.org/pod/Cpanel::JSON::XS).
+  and [`cpanm`](https://metacpan.org/pod/App::cpanminus) to easily install
+  dependencies (otherwise, see the file `cpanfile` for the dependencies and
+  use the module installer of your choce).
 
 - In a shell:
   
-      $ wget https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip
-      $ unzip webperl_prebuilt_v0.07-beta.zip
-      $ cd webperl_prebuilt_v0.07-beta
+      $ wget https://github.com/haukex/webperl/releases/download/v0.09-beta/webperl_prebuilt_v0.09-beta.zip
+      $ unzip webperl_prebuilt_v0.09-beta.zip
+      $ cd webperl_prebuilt_v0.09-beta
+      $ cpanm --installdeps .
       $ plackup webperl.psgi
       HTTP::Server::PSGI: Accepting connections at http://0:5000/
 

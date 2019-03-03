@@ -39,8 +39,8 @@ If not, see http://perldoc.perl.org/index-licence.html
 	-->
 
 <!--script src="../webperl.js"></script-->
-<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
-	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></script>
+<script src="https://webperlcdn.zero-g.net/v0.09-beta/webperl.js"
+	integrity="sha256-1RaYAh/WfDl3WZl+BDpSuSycg4x88pfkAFSxhWjBONk=" crossorigin="anonymous"></script>
 <script>
 "use strict";
 
@@ -60,7 +60,6 @@ function reportErr (err) {
 }
 
 Perl.addStateChangeListener(function (from,to) {
-	if (from==to) return; // won't be needed as of v0.09-beta
 	if (to=="Ended" && currentClient) {
 		for (var chan=1;chan<=2;chan++) // flush buffers
 			if (stdbuf[chan].length) {

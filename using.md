@@ -39,7 +39,7 @@ If you plan on building WebPerl, for example if you'd like to add more CPAN
 modules, then head on over to [Building WebPerl](building.html). Otherwise, if
 you'd just like to get started quickly and work with the prebuilt WebPerl
 (includes many of the Perl core modules plus a couple extras), then download
-[`webperl_prebuilt_v0.07-beta.zip`](https://github.com/haukex/webperl/releases/download/v0.07-beta/webperl_prebuilt_v0.07-beta.zip)
+[`webperl_prebuilt_v0.09-beta.zip`](https://github.com/haukex/webperl/releases/download/v0.09-beta/webperl_prebuilt_v0.09-beta.zip)
 and unpack it. This ZIP file includes the contents of the
 [`web`](https://github.com/haukex/webperl/tree/master/web) directory of the
 source code, as well as the build products `emperl.*` (currently three files).
@@ -399,10 +399,19 @@ The states currently are:
 - `"Initializing"` - `Perl.init` is currently operating.
 - `"Ready"` - `Perl.init` is finished and `Perl.start` can be called.
 - `"Running"` - The Perl interpreter is running, `Perl.eval` and `Perl.end` may be called
-- `"Ended"` - The Perl interpreter has ended. You might receive several
-  state change notifications for this state.
+- `"Ended"` - The Perl interpreter has ended.
+  ~~You might receive several state change notifications for this state.~~
+  This is no longer the case as of WebPerl `v0.09-beta`:
+  you should only receive one event per state change.
 
 This function was added in WebPerl `v0.05-beta`.
+
+#### `Perl.exitStatus`
+
+This property should be **read only**! After Perl's state has changed
+to `Ended`, you can retrieve the exit code here.
+
+This property was added in WebPerl `v0.09-beta`.
 
 #### `Perl.stateChanged`
 

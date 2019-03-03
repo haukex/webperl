@@ -28,7 +28,7 @@ var Perl = {
 	trace: false,         // user may enable this
 	endAfterMain: false,  // user may enable this (before Perl.init)
 	noMountIdbfs: false,  // user may enable this (before Perl.start)
-	WebPerlVersion: 'v0.07-beta',  // user may read (only!) this
+	WebPerlVersion: 'v0.09-beta',  // user may read (only!) this
 	state: "Uninitialized",  // user may read (only!) this
 	exitStatus: undefined,   // user may read (only!) this
 	Util: {},

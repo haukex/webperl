@@ -3,12 +3,17 @@ WebPerl Changelog
 =================
 
 
-not yet released: v0.09-beta
+2019-03-03: v0.09-beta
 ----------------------
 
+- Updated for Emscripten 1.38.28 and Perl v5.28.1
+- Added experimental Perl 6 support
+- Added modules Future, Digest::MD5, and Digest::SHA
 - Added Perl.exitStatus
 - Updated regex_tester.html
-- Added modules Future, Digest::MD5, and Digest::SHA
+- Added "Code Demo Editor" in web/democode/
+- Added "cpanfile"s for dependencies
+- Minor fixes and updates to build.pl
 
 
 2018-09-04: v0.07-beta

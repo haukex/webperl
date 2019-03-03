@@ -232,8 +232,11 @@ if (-e $config_sh) {
 	if ($perl_mtime>$our_mtime)
 		{ say STDERR "# config.sh is newer than emperl_config.sh" }
 	else {
-		say STDERR "# config.sh is OLDER than emperl_config.sh, forcing a reconfig";
-		$needs_reconfig=1 }
+		say STDERR "# config.sh is OLDER than emperl_config.sh";
+		exit 1 if prompt("Did you remember to run '. emperl_config.sh'? [yN]","n")!~/^\s*y/i;
+		say STDERR "# ok, forcing a reconfig";
+		$needs_reconfig=1;
+	}
 }
 
 if ($needs_reconfig) {

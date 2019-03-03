@@ -65,7 +65,7 @@ TODOs
 2. Misc
 	
 	- Write up a full RPC example
-	- Add `Future` to the WebPerl build for a little more async niceness?
+	- `Future`
 		- Would `Future::AsyncAwait` work in WebPerl? (Or maybe with a JS backend?)
 		- `Future::HTTP` (probably just as a frontend to XHR?)
 	- Improve Perl 6 integration
@@ -83,8 +83,9 @@ TODOs
 	- There is some potential for restructuring:
 		- `Perl.glue()` and `Perl.dispatch()` could go into `WebPerl.xs` (?)
 		- Parts of `webperl.js` could go into `common_preamble.js` or `WebPerl.xs`,
-		  so that `emperl.js` is runnable on its own in a Web Worker (?)
+		  so that `emperl.js` is **runnable on its own in a Web Worker (?)**
 		  (see notes in `perlrunner.html` / `e12f1aa25a000`)
+		  → this might be interesting for running tests?!
 		- `nodeperl_dev_prerun.js` could probably be merged into that as well
 	- Could put a `WebPerl` stub on CPAN
 		- In theory could write a `WebPerl::Local` that contains the `WebPerl` API, and

@@ -177,9 +177,8 @@ Release Checklist
 - Create a release on GitHub and upload the `webperl_prebuilt_*.zip` as an asset
 
 - Uploading to AWS S3:
-	1. Run `gzip -9` on `emperl.*` and `webperl.js`
-	2. Rename them to remove the `.gz` ending
-	3. Upload them with the appropriate `Content-Type` (see e.g. `web/webperl.psgi`) and a `Content-Encoding` of `gzip`
+	1. `for X in emperl.* webperl.js; do gzip -v -9 $X && mv -v $X.gz $X ; done`
+	2. Upload them with the appropriate `Content-Type` (see e.g. `web/webperl.psgi`) and a `Content-Encoding` of `gzip`
 
 - If there was a `pages_for_vX.XX` branch of `gh-pages`, don't forget to merge that
 

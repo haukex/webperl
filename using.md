@@ -401,7 +401,8 @@ The states currently are:
 - `"Running"` - The Perl interpreter is running, `Perl.eval` and `Perl.end` may be called
 - `"Ended"` - The Perl interpreter has ended.
   ~~You might receive several state change notifications for this state.~~
-  This is no longer the case as of WebPerl `v0.09-beta`.
+  This is no longer the case as of WebPerl `v0.09-beta`:
+  you should only receive one event per state change.
 
 This function was added in WebPerl `v0.05-beta`.
 

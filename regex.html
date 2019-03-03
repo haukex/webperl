@@ -35,8 +35,7 @@ with the following differences:
 -->
 
 <meta name="viewport" content="width=600" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css"
-	integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
+<!--cacheable--><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css" integrity="sha256-oSrCnRYXvHG31SBifqP2PM1uje7SJUyX0nTwO2RJV54=" crossorigin="anonymous" />
 <style>
 body {
 	margin: 0.4em;
@@ -110,10 +109,9 @@ textarea.samp_ta {
 </style>
 
 <!--script src="webperl.js"></script-->
-<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
-	integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></script>
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"
-	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://webperlcdn.zero-g.net/v0.09-beta/webperl.js"
+	integrity="sha256-1RaYAh/WfDl3WZl+BDpSuSycg4x88pfkAFSxhWjBONk=" crossorigin="anonymous"></script>
+<!--cacheable--><script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
 <script type="text/perl">
 use warnings;
@@ -126,6 +124,10 @@ sub pp { Data::Dumper->new([@_])->Useqq(1)->Terse(1)->Pair('=>')
 	->Sortkeys(1)->Quotekeys(0)->Indent(0)->Purity(1)->Dump }
 
 our $RUN_CODE_IN_IFRAME=1;
+
+# Possible To-Do for Later: Subs in preamble code produce "subroutine redefined" warnings.
+# I could think about whether there's a decent way around that.
+# Example: https://www.perlmonks.org/?node_id=1225457
 
 my $run_code_body = <<'END_CODE';
 	my (@warns,@output);
@@ -161,11 +163,18 @@ END_CODE
 my $runcode_iframe;
 my $runcode_message_callback; # assume a single callback for now
 if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/
+	my $webperlurl;
+	$jq->('script')->each(sub { $webperlurl=$_[1]->{src} if $_[1]->{src}=~/\bwebperl\.js\z/ });
+	if (!$webperlurl) {
+		warn "Warning: Could not determine URL of webperl.js\n";
+		$webperlurl = 'webperl.js';  # probably won't work due to same-origin
+	}
 	my $iframe_html = <<~'END_IFRAME_HTML';
 		<html>
 		<head>
-		<script src="https://webperlcdn.zero-g.net/v0.07-beta/webperl.js"
-			integrity="sha256-jL8SB7St5ou4+hb0frK0k6VCQXsWQ1wolDrdU7i4juc=" crossorigin="anonymous"></scr__ipt>
+		<!--script src="__WEBPERLURL__"></scr__ipt-->
+		<script src="https://webperlcdn.zero-g.net/v0.09-beta/webperl.js"
+			integrity="sha256-1RaYAh/WfDl3WZl+BDpSuSycg4x88pfkAFSxhWjBONk=" crossorigin="anonymous"></scr__ipt>
 		<script>
 		Perl.noMountIdbfs=true; // we're sandboxed
 		</scr__ipt>
@@ -190,8 +199,10 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 		END_IFRAME_HTML
 	$iframe_html=~s#</\w+\K__(?=\w+>)##ig;
 	$iframe_html=~s/__RUNCODEBODY__/$run_code_body/;
+	$iframe_html=~s/__WEBPERLURL__/$webperlurl/g;
 	my $iframe_blob_url = js('URL')->createObjectURL(
 		WebPerl::js_new('Blob',[$iframe_html],{type=>"text/html;charset=utf-8"}) );
+	#TODO Later: Why does the message passing not work when I remove the "sandbox" attr?
 	my $iframe = $jq->('<iframe/>', {id=>'PerlEval_IFrame', sandbox=>'allow-scripts',
 		src=>$iframe_blob_url} )->hide->appendTo('body');
 	$runcode_iframe = $iframe->[0]{contentWindow};
@@ -217,14 +228,20 @@ if ($RUN_CODE_IN_IFRAME) { # https://www.html5rocks.com/en/tutorials/security/sa
 	my $start_time = time;
 	my $intid; $intid = $window->setInterval(sub {
 		if (time-$start_time>10) {
-			$window->alert("Failed to get response from Perl in IFrame, loading failed?");
-			$window->clearInterval($intid);
+			if ($window->confirm("Perl does not appear to have loaded yet, keep waiting?\n"
+			    ."(If you are on a slow connection, click OK to keep waiting.)")) {
+				$start_time = time;
+			}
+			else {
+				$window->clearInterval($intid);
+			}
 		}
 		elsif ($got_response)
 			{ $window->clearInterval($intid) }
 		else { update() }
 	}, 500);
 }
+$jq->('#loading')->text('Loading (Stage 2/2)...');
 
 sub sample_init {
 	my $samp = shift;
@@ -276,6 +293,7 @@ sub newsamp {
 	update();
 	return $samp;
 }
+#TODO: Adding samples causes the code table to grow, but not shrink when they are removed
 $addsamp->click(sub { newsamp('')->click });
 
 # $re_debug is actually a parameter to update()/actual_update(), but since
@@ -344,6 +362,7 @@ $ta_flags->keyup( \&update);
 
 js('$(window)')->on('hashchange',\&hashchange);
 
+#TODO: The auto-sizing causes the textarea to grow on Chrome mobile
 $ta_regex->on('input', sub { # autoexpand for new lines
 	$ta_regex->height($ta_regex->[0]{scrollHeight});
 });
@@ -582,7 +601,7 @@ sub hashchange {
 <div style="margin-bottom:1em;font-size:1.2em;text-align:center;"><b>Perl Regex Tester</b>
 - powered by <a href="http://webperl.zero-g.net" target="_blank">WebPerl</a> (beta)</div>
 
-<div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;">Loading...</div>
+<div id="loading" style="position:absolute;left:40%;font-size:1.2em;font-weight:bold;color:red;">Loading (Stage 1/2)...</div>
 
 <div style="margin-bottom:1em;">
 <div>

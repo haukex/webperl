@@ -153,8 +153,8 @@ Release Checklist
 
 - Update version numbers everywhere; use `grep` to find them, for example:
   
-      $ grep -Er --exclude-dir=work --exclude-dir=.git --exclude-dir=emperl5 --exclude=emperl.* '0\.0[0-9]' .
-      $ ( cd emperl5; grep -Er '0\.0[0-9]' `git diff --numstat --diff-filter=A v5.28.0 HEAD | cut -f3` )
+      $ grep -Er --exclude-dir=hostperl --exclude-dir=.git --exclude-dir=emperl5 --exclude=emperl.* '0\.[01][0-9]' .
+      $ ( cd emperl5; grep -Er '0\.[01][0-9]' `git diff --numstat --diff-filter=ACMRT v5.28.1 HEAD | cut -f3` )
   
   At a minimum there is:
 	- `web/webperl.js` - `Perl.WebPerlVersion`

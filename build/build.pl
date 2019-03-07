@@ -95,9 +95,9 @@ my $needs_reconfig = !!$opts{reconfig};
 	# first, we need to take a guess which version of the patch to apply.
 	my $libraryjs = file($ENV{EMSCRIPTEN}, 'src', 'library.js')->slurp;
 	my $patchf;
-	if ( $libraryjs=~/\b\QERRNO_CODES.EAGAIN\E\b/ )
+	if ( $libraryjs=~/\b\Q___setErrNo(ERRNO_CODES.\E(EAGAIN|ENOTSUP)\b/ )
 		{ $patchf = 'emscripten_1.38.10_eagain.patch' }
-	elsif ( $libraryjs=~/\b\QcDefine('EAGAIN')\E/ )
+	elsif ( $libraryjs=~/\b\QcDefine('EAGAIN')\E/ ) # note that this appears in 1.38.1* versions too
 		{ $patchf = 'emscripten_1.38.28_eagain.patch' }
 	else { die "Could not figure out which library.js patch to use" }
 	#TODO Later: we should probably verify the Emscripten version too, and in the future we may need different patches for different versions

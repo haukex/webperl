@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>WebPerl Sync HTTP Demo</title>
+
+<!--
+This is a demo of dynamically loading modules via synchronous
+XMLHttpRequests.
+
+WARNING: Please note that https://xhr.spec.whatwg.org/ says:
+"Synchronous XMLHttpRequest outside of workers is in the process of
+being removed from the web platform as it has detrimental effects to
+the end user’s experience. (This is a long process that takes many
+years.)"
+
+The method was first described by LanX at
+https://www.perlmonks.org/?node_id=1225490
+Thank you! :-)
+-->
+
+<script src="webperl.js"></script>
+<script type="text/perl">
+use warnings;
+use 5.028;
+use WebPerl qw/js js_new/;
+
+BEGIN {
+	push @INC, sub {
+		my (undef,$file) = @_;
+		
+		# sadly, MetaCPAN doesn't send CORS headers (yet)
+		#my $url = 'https://fastapi.metacpan.org/v1/source/'
+		#	. ( $file =~ s/\//::/r =~ s/\.pm$//ir );
+		
+		# this requires one to copy Dump.pm into web/Data/:
+		my $url = $file;
+		
+		my $xhr = js_new('XMLHttpRequest');
+		$xhr->open('GET', $url, 0);
+		$xhr->send();
+		if ($xhr->{status}==200)
+			{ return \$xhr->{responseText} }
+		else { return }
+	};
+}
+
+use Data::Dump 'pp';
+js('window')->alert(pp({Hello=>"World!"}));
+
+</script>
+
+</head>
+<body>
+
+<p>Output: see JS console</p>
+
+</body>
+</html>

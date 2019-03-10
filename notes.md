@@ -73,6 +73,8 @@ TODOs
 		- Perhaps get an API change or two into Rakudo.js: `STDOUT` currently gets output with HTML escapes
 		- See also notes in [Perl 6 Support 🦋](perl6.html)
 	- Investigate Emscripten's main loop concept for handling nonblocking sockets?
+	- Use Multiplicity for re-starting perl? (Thanks to Nick Clark for the idea)
+	- Add Regex::Debugger into regex tester? (Thanks to Renee for the idea)
 	- Turn some patches from emperl5 into patches for P5P
 	- Submit some patches to Emscripten
 		- <https://github.com/kripken/emscripten/pull/7005>

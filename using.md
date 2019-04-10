@@ -529,7 +529,7 @@ The exceptions are Perl `sub`s and `WebPerl::JSObject`s.
 
 - Perl arrayrefs become JavaScript arrays (deep copy)
 - Perl hashrefs become JavaScript objects (deep copy)
-- Perl coderefs become JavaScript functions - 
+- Perl coderefs become JavaScript functions² -
   **Warning:** please see the discussion in
   ["Memory Management and Anonymous `sub`s"](#memory-management-and-anonymous-subs)!
 - Perl `WebPerl::JSObject`s become references to the wrapped JavaScript objects
@@ -549,6 +549,13 @@ For example, currently, `Perl.eval()` always returns a string, but could in the
 future be extended to return more than that, similar to `WebPerl::js()`,
 and then the passing of Perl values to JavaScript could be accomplished
 differently as well.
+
+² **Remember** that Perl `sub`s without an explicit `return` statement will
+implicitly return the value of the last statement (if it is an expression).
+This value will in turn be passed to JavaScript, which may be inefficient
+if this value is not needed, and it may cause errors if the return value cannot
+be encoded to JavaScript. Therefore it is recommended to get into the
+habit of adding an explicit `return;` at the end of `sub`s passed to JS.
 
 ### `js_new()`
 

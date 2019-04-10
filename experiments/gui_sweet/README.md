@@ -1,29 +1,23 @@
 
-WebPerl Basic GUI Example
-=========================
+WebPerl Advanced GUI Example
+============================
 
-This is a demo of a very basic GUI using WebPerl. It consists of a
-local web server, which includes code to access an SQLite database,
-and this web server also serves up WebPerl code to a browser, where
-the GUI is implemented as HTML with Perl.
+Similar to the "WebPerl Basic GUI Example", this is a demo of a GUI
+using WebPerl, but using [Bootstrap](https://getbootstrap.com/)
+and [jQuery](https://jquery.com/) instead of plain JavaScript,
+and [Mojolicious](https://mojolicious.org/) instead of plain Plack.
 
 To get this to work, you will need to copy the `webperl.js` and the
-three `emperl.*` files from the main `web` directory to the `web`
+three `emperl.*` files from the main `web` directory to the `public`
 subdirectory in this project.
-
-Note that this should not be considered production-ready, as there
-are several key features missing, such as HTTPS or access control.
 
 Also, a limitation is that the server does not know when the browser
 window is closed, so it must be stopped manually.
 
-You can pack this application into a single executable using:
-
-	DOING_PAR_PACKER=1 pp -o gui_basic -z 9 -x -a gui_basic_app.psgi -a web gui_basic.pl
-
+You can pack this application into a single executable using `do_pp.pl`.
 Note: I'm not yet sure why, but sometimes this fails with errors such
 as *"error extracting info from -c/-x file"*, in that case just try
-the above command again.
+the command again.
 
 
 Author, Copyright, and License

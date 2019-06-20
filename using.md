@@ -229,7 +229,7 @@ Note that the above only applies to *anonymous* `sub`s. `sub`s that exist
 in Perl's symbol table will persist in Perl's memory anyway, and no table entry
 is generated for them, because it is assumed you won't delete them from the
 symbol table - so please don't do that. Also, don't rename or redefine `sub`s
-after having passed them to JavaScript, as that will probably cause mysterious behvaior.
+after having passed them to JavaScript, as that will probably cause mysterious behavior.
 
 ### Virtual Filesystem
 

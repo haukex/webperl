@@ -27,7 +27,7 @@ export EMPERL_OUTPUTDIR="$BASEDIR/work/outputperl"
 
 # Don't edit the following options unless you know what you're doing!
 # Note to self: In build.pl, we take advantage of the fact that on Perls >=v5.10.0, "$^V" is the same as the tag name.
-export EMPERL_PERLVER="v5.28.1"
+export EMPERL_PERLVER="v5.30.0"
 export EMPERL_PREFIX="/opt/perl"
 # Note: strace shows this is how file_packager.py is called: ["/usr/bin/python", "/home/haukex/emsdk/emscripten/1.38.28/tools/file_packager.py", "emperl.data", "--from-emcc", "--export-name=Module", "--preload", "/home/haukex/code/webperl/work/outputperl/opt/perl@/opt/perl", "--no-heap-copy"]
 export EMPERL_PRELOAD_FILE="$EMPERL_OUTPUTDIR$EMPERL_PREFIX@$EMPERL_PREFIX"

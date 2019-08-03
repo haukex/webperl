@@ -3,6 +3,12 @@ WebPerl Changelog
 =================
 
 
+2019-08-03: v0.11-beta
+----------------------
+
+- Updated for Emscripten 1.38.31 / latest Fastcomp (1.38.40) and Perl v5.30.0
+
+
 2019-03-03: v0.09-beta
 ----------------------
 

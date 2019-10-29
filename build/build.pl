@@ -161,6 +161,7 @@ GITSTUFF: {
 		unless $tags=~/^\Q$C{PERLVER}\E$/m;
 	my $branches = git 'branch', '--list', {show_cmd=>$VERBOSE};
 	die "could not find branch '$C{PERL_BRANCH}', is this the right repository?"
+		. " (or the WebPerl author forgot to push tags to the emperl5 repo)"
 		unless $branches=~/^\*?\s*\b\Q$C{PERL_BRANCH}\E$/m;
 	say STDERR "# Found tag '$C{PERLVER}' and branch '$C{PERL_BRANCH}' in $C{PERLSRCDIR}";
 }

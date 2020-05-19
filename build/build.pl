@@ -97,6 +97,8 @@ my $needs_reconfig = !!$opts{reconfig};
 	my $patchf;
 	if ( $libraryjs=~/\b\Q___setErrNo(ERRNO_CODES.\E(EAGAIN|ENOTSUP)\b/ )
 		{ $patchf = 'emscripten_1.38.10_eagain.patch' }
+	elsif ( $libraryjs=~/no shell available\s+setErrNo\Q({{{ cDefine('EAGAIN') }}})\E/ )
+		{ $patchf = 'emscripten_1.39.16_eagain.patch' }
 	elsif ( $libraryjs=~/\b\QcDefine('EAGAIN')\E/ ) # note that this appears in 1.38.1* versions too
 		{ $patchf = 'emscripten_1.38.28_eagain.patch' }
 	else { die "Could not figure out which library.js patch to use" }

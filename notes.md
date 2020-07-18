@@ -31,6 +31,7 @@ Other places I've written about WebPerl:
 
 ### "In the Press"
 
+- WebPerl gets a mention in Sawyer X's talk ["Guac!"](https://www.youtube.com/watch?v=sTEshbh2lYQ) about [`Guacamole`](https://metacpan.org/pod/Guacamole) at The Perl Conference in the Cloud 2020
 - WebPerl gets another mention in Will Braswell's talk ["The Perl Family Tree: Discover Your Heritage"](https://www.youtube.com/watch?v=ZM-KHZJpy84) at The Perl Conference 2019 in Pittsburgh
 - WebPerl gets a mention in Will Braswell's talk ["Perl 11 - The Future of Saint Larry's Language"](https://fosdem.org/2019/schedule/event/perl11/) at FOSDEM '19
 - [Perl Advent Calendar 2018, Day 2](http://www.perladvent.org/2018/2018-12-02.html) (by Mark Fowler)

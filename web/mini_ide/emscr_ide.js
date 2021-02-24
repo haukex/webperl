@@ -123,6 +123,7 @@ function make_emscr_ide (textarea, callbacks) {
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
+		//TODO: do we need to do URL.revokeObjectURL(link.href); ?
 	});
 	
 	file_open.click(function () {
